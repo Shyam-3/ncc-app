@@ -2,6 +2,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import { NCC_RANKS, ROMAN_YEAR_MAP } from '../config/constants';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -9,11 +10,14 @@ interface UserProfile {
   name: string;
   email: string;
   role: string;
+  status?: 'pending' | 'active' | 'inactive' | 'rejected';
   dateOfBirth?: string;
   division?: 'SD' | 'SW';
   regimentalNumber?: string;
   platoon?: 'Alpha' | 'Bravo' | 'Charlie' | 'Delta';
   dateOfEnrollment?: string;
+  nccYear?: string;
+  rank?: string;
   year?: string;
   department?: string;
   rollNo?: string;
@@ -21,7 +25,6 @@ interface UserProfile {
   phone?: string;
   bloodGroup?: string;
   address?: string;
-  rank?: string;
 }
 
 const Profile: React.FC = () => {
@@ -33,8 +36,11 @@ const Profile: React.FC = () => {
   
   const [editForm, setEditForm] = useState({
     name: '',
-    platoon: '' as 'Alpha' | 'Bravo' | 'Charlie' | 'Delta' | '',
+    phone: '',
+    bloodGroup: '',
+    address: '',
   });
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -47,7 +53,9 @@ const Profile: React.FC = () => {
           setProfile(data);
           setEditForm({
             name: data.name || '',
-            platoon: data.platoon || '',
+            phone: data.phone || '',
+            bloodGroup: data.bloodGroup || '',
+            address: data.address || '',
           });
         }
       } catch (error) {
@@ -65,26 +73,71 @@ const Profile: React.FC = () => {
     if (profile) {
       setEditForm({
         name: profile.name || '',
-        platoon: profile.platoon || '',
+        phone: profile.phone || '',
+        bloodGroup: profile.bloodGroup || '',
+        address: profile.address || '',
       });
+      setEditErrors({});
       setShowEditModal(true);
     }
   };
 
+  const handleEditChange = (name: string, value: string) => {
+    if (editErrors[name]) {
+      setEditErrors(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const validateEditForm = () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!editForm.name.trim()) {
+      nextErrors.name = 'Full name is required';
+    }
+
+    if (!editForm.phone.trim()) {
+      nextErrors.phone = 'Phone number is required';
+    } else if (!editForm.phone.match(/^\d{10}$/)) {
+      nextErrors.phone = 'Phone number must be exactly 10 digits';
+    }
+
+    if (!editForm.bloodGroup.trim()) {
+      nextErrors.bloodGroup = 'Blood group is required';
+    } else if (!editForm.bloodGroup.match(/^(A\+|A-|B\+|B-|AB\+|AB-|O\+|O-)$/)) {
+      nextErrors.bloodGroup = 'Invalid blood group';
+    }
+
+    setEditErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSaveChanges = async () => {
     if (!currentUser || !profile) return;
+    if (!validateEditForm()) return;
 
     setSaving(true);
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         name: editForm.name,
-        platoon: editForm.platoon || null,
+        phone: editForm.phone || null,
+        bloodGroup: editForm.bloodGroup || null,
+        address: editForm.address || null,
       });
 
       setProfile({
         ...profile,
         name: editForm.name,
-        platoon: editForm.platoon as any,
+        phone: editForm.phone || '',
+        bloodGroup: editForm.bloodGroup || '',
+        address: editForm.address || '',
       });
 
       toast.success('Profile updated successfully');
@@ -114,6 +167,25 @@ const Profile: React.FC = () => {
     );
   }
 
+  const formatDate = (value?: string) => {
+    if (!value) return '-';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString();
+  };
+
+  const formatYear = (value?: string) => {
+    if (!value) return '-';
+    const cleaned = value.replace(' Year', '').trim();
+    return ROMAN_YEAR_MAP[cleaned] || cleaned;
+  };
+
+  const getRankName = (code?: string) => {
+    if (!code) return 'Cadet';
+    return NCC_RANKS.find(r => r.code === code)?.name || code;
+  };
+
+  const getNccYear = (value?: string) => formatYear(value || '1st Year');
+
   return (
     <Container className="py-5">
       <Row className="justify-content-center">
@@ -122,7 +194,7 @@ const Profile: React.FC = () => {
             <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
               <h3 className="mb-0">
                 <i className="bi bi-person-circle me-2"></i>
-                My Profile
+                Profile
               </h3>
               <Button variant="light" size="sm" onClick={handleOpenEdit}>
                 <i className="bi bi-pencil me-1"></i>
@@ -130,31 +202,37 @@ const Profile: React.FC = () => {
               </Button>
             </Card.Header>
             <Card.Body className="p-4">
-              {/* Personal Information */}
               <h5 className="mb-3 text-primary">
                 <i className="bi bi-person-fill me-2"></i>
-                Personal Information
+                Personal
               </h5>
-              <Row className="mb-4">
-                <Col xs={12} sm={6} className="mb-3">
-                  <Form.Label className="fw-bold text-muted small">Full Name</Form.Label>
-                  <div className="d-flex align-items-center">
-                    <p className="mb-0">{profile.name}</p>
-                    <Badge bg="success" className="ms-2">Editable</Badge>
-                  </div>
+              <Row className="mb-4 g-3">
+                <Col xs={12} md={6}>
+                  <Form.Label className="fw-bold text-muted small">Name</Form.Label>
+                  <p className="mb-0">{profile.name || '-'}</p>
                 </Col>
-                <Col xs={12} sm={6} className="mb-3">
+                <Col xs={12} md={6}>
+                  <Form.Label className="fw-bold text-muted small">Date of Birth</Form.Label>
+                  <p className="mb-0">{formatDate(profile.dateOfBirth)}</p>
+                </Col>
+                <Col xs={12} md={6}>
                   <Form.Label className="fw-bold text-muted small">Email</Form.Label>
-                  <p className="mb-0">{profile.email}</p>
+                  <p className="mb-0">{profile.email || '-'}</p>
                 </Col>
-                <Col xs={12} sm={6} className="mb-3">
-                  <Form.Label className="fw-bold text-muted small">Role</Form.Label>
+                <Col xs={12} md={6}>
+                  <Form.Label className="fw-bold text-muted small">Account Status</Form.Label>
                   <div>
-                    <Badge bg={
-                      profile.role === 'superadmin' ? 'danger' :
-                      profile.role === 'admin' ? 'primary' :
-                      profile.role === 'subadmin' ? 'info' : 'secondary'
-                    }>
+                    <Badge bg={profile.status === 'active' ? 'success' : profile.status === 'pending' ? 'warning' : 'secondary'}>
+                      {(profile.status || 'unknown').toString().toUpperCase()}
+                    </Badge>
+                    <Badge
+                      bg={
+                        profile.role === 'superadmin' ? 'danger' :
+                        profile.role === 'admin' ? 'primary' :
+                        profile.role === 'subadmin' ? 'info' : 'secondary'
+                      }
+                      className="ms-2"
+                    >
                       {profile.role.toUpperCase()}
                     </Badge>
                   </div>
@@ -163,13 +241,12 @@ const Profile: React.FC = () => {
 
               <hr />
 
-              {/* NCC Details */}
               <h5 className="mb-3 text-primary">
                 <i className="bi bi-shield-fill me-2"></i>
-                NCC Details
+                NCC
               </h5>
-              <Row className="mb-4">
-                <Col xs={12} sm={6} className="mb-3">
+              <Row className="mb-4 g-3">
+                <Col xs={12} md={4}>
                   <Form.Label className="fw-bold text-muted small">Division</Form.Label>
                   <div>
                     {profile.division ? (
@@ -177,106 +254,84 @@ const Profile: React.FC = () => {
                         {profile.division}
                       </Badge>
                     ) : (
-                      <span className="text-muted">Not set</span>
+                      <span className="text-muted">-</span>
                     )}
                   </div>
                 </Col>
-                <Col xs={12} sm={6} className="mb-3">
+                <Col xs={12} md={4}>
+                  <Form.Label className="fw-bold text-muted small">Rank</Form.Label>
+                  <p className="mb-0">{getRankName(profile.rank || 'CDT')}</p>
+                </Col>
+                <Col xs={12} md={4}>
                   <Form.Label className="fw-bold text-muted small">Regimental Number</Form.Label>
                   <p className="mb-0">{profile.regimentalNumber || '-'}</p>
                 </Col>
-                <Col xs={12} sm={6} className="mb-3">
+                <Col xs={12} md={4}>
+                  <Form.Label className="fw-bold text-muted small">Year</Form.Label>
+                  <p className="mb-0">{getNccYear(profile.nccYear)}</p>
+                </Col>
+                <Col xs={12} md={4}>
                   <Form.Label className="fw-bold text-muted small">Platoon</Form.Label>
-                  <div className="d-flex align-items-center">
+                  <div>
                     {profile.platoon ? (
                       <Badge bg="secondary">{profile.platoon}</Badge>
                     ) : (
-                      <span className="text-muted">Not set</span>
+                      <span className="text-muted">-</span>
                     )}
-                    <Badge bg="success" className="ms-2">Editable</Badge>
                   </div>
+                </Col>
+                <Col xs={12} md={4}>
+                  <Form.Label className="fw-bold text-muted small">Date of Enrollment</Form.Label>
+                  <p className="mb-0">{formatDate(profile.dateOfEnrollment)}</p>
                 </Col>
               </Row>
 
-              {/* Cadet Data */}
-              {profile.role === 'member' && (
-                <>
-                  <hr />
-                  <h5 className="mb-3 text-primary">
-                    <i className="bi bi-mortarboard-fill me-2"></i>
-                    Academic Details
-                  </h5>
-                  <Row className="mb-4">
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Register Number</Form.Label>
-                      <p className="mb-0">{profile.registerNumber || '-'}</p>
-                    </Col>
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Roll No</Form.Label>
-                      <p className="mb-0">{profile.rollNo || '-'}</p>
-                    </Col>
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Year</Form.Label>
-                      <p className="mb-0">{profile.year || '-'}</p>
-                    </Col>
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Department</Form.Label>
-                      <p className="mb-0">{profile.department || '-'}</p>
-                    </Col>
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Rank</Form.Label>
-                      <p className="mb-0">{profile.rank || '-'}</p>
-                    </Col>
-                  </Row>
+              <hr />
 
-                  <hr />
+              <h5 className="mb-3 text-primary">
+                <i className="bi bi-mortarboard-fill me-2"></i>
+                Academic
+              </h5>
+              <Row className="mb-4 g-3">
+                <Col xs={12} md={3}>
+                  <Form.Label className="fw-bold text-muted small">Year</Form.Label>
+                  <p className="mb-0">{formatYear(profile.year || '1st Year')}</p>
+                </Col>
+                <Col xs={12} md={3}>
+                  <Form.Label className="fw-bold text-muted small">Department</Form.Label>
+                  <p className="mb-0">{profile.department || '-'}</p>
+                </Col>
+                <Col xs={12} md={3}>
+                  <Form.Label className="fw-bold text-muted small">Roll Number</Form.Label>
+                  <p className="mb-0">{profile.rollNo || '-'}</p>
+                </Col>
+                <Col xs={12} md={3}>
+                  <Form.Label className="fw-bold text-muted small">Register Number</Form.Label>
+                  <p className="mb-0">{profile.registerNumber || '-'}</p>
+                </Col>
+              </Row>
 
-                  <h5 className="mb-3 text-primary">
-                    <i className="bi bi-shield me-2"></i>
-                    NCC Details
-                  </h5>
-                  <Row className="mb-4">
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Regimental Number</Form.Label>
-                      <p className="mb-0">{profile.regimentalNumber || '-'}</p>
-                    </Col>
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Date of Enrollment</Form.Label>
-                      <p className="mb-0">{profile.dateOfEnrollment ? new Date(profile.dateOfEnrollment).toLocaleDateString() : '-'}</p>
-                    </Col>
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Date of Birth</Form.Label>
-                      <p className="mb-0">{profile.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString() : '-'}</p>
-                    </Col>
-                  </Row>
+              <hr />
 
-                  <hr />
+              <h5 className="mb-3 text-primary">
+                <i className="bi bi-telephone-fill me-2"></i>
+                Additional
+              </h5>
+              <Row className="mb-4 g-3">
+                <Col xs={12} md={4}>
+                  <Form.Label className="fw-bold text-muted small">Phone Number</Form.Label>
+                  <p className="mb-0">+91 {profile.phone || '-'}</p>
+                </Col>
+                <Col xs={12} md={4}>
+                  <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
+                  <p className="mb-0">{profile.bloodGroup || '-'}</p>
+                </Col>
+                <Col xs={12} md={12}>
+                  <Form.Label className="fw-bold text-muted small">Address</Form.Label>
+                  <p className="mb-0">{profile.address || '-'}</p>
+                </Col>
+              </Row>
 
-                  <h5 className="mb-3 text-primary">
-                    <i className="bi bi-telephone-fill me-2"></i>
-                    Contact Information
-                  </h5>
-                  <Row className="mb-4">
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Phone</Form.Label>
-                      <p className="mb-0">{profile.phone || '-'}</p>
-                    </Col>
-                    <Col xs={12} sm={6} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
-                      <p className="mb-0">{profile.bloodGroup || '-'}</p>
-                    </Col>
-                    <Col xs={12} className="mb-3">
-                      <Form.Label className="fw-bold text-muted small">Address</Form.Label>
-                      <p className="mb-0">{profile.address || '-'}</p>
-                    </Col>
-                  </Row>
-                </>
-              )}
-
-              <Alert variant="info" className="mt-3">
-                <i className="bi bi-info-circle me-2"></i>
-                Fields marked with <Badge bg="success">Editable</Badge> can be modified. Other fields are read-only.
-              </Alert>
             </Card.Body>
           </Card>
         </Col>
@@ -294,28 +349,61 @@ const Profile: React.FC = () => {
               <Form.Control
                 type="text"
                 value={editForm.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({ ...editForm, name: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('name', e.target.value)}
                 placeholder="Enter your full name"
+                isInvalid={Boolean(editErrors.name)}
               />
+              {editErrors.name && <Form.Text className="text-danger d-block mt-1">{editErrors.name}</Form.Text>}
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="editPlatoon">
-              <Form.Label>Platoon</Form.Label>
+            <Form.Group className="mb-3" controlId="editPhone">
+              <Form.Label>Phone Number</Form.Label>
+              <Form.Control
+                type="number"
+                value={editForm.phone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('phone', e.target.value)}
+                onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
+                placeholder="10-digit mobile"
+                min="0"
+                isInvalid={Boolean(editErrors.phone)}
+              />
+              {editErrors.phone && <Form.Text className="text-danger d-block mt-1">{editErrors.phone}</Form.Text>}
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="editBloodGroup">
+              <Form.Label>Blood Group</Form.Label>
               <Form.Select
-                value={editForm.platoon}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditForm({ ...editForm, platoon: e.target.value as any })}
+                value={editForm.bloodGroup}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('bloodGroup', e.target.value)}
+                isInvalid={Boolean(editErrors.bloodGroup)}
               >
-                <option value="" disabled>Select Platoon</option>
-                <option value="Alpha">Alpha</option>
-                <option value="Bravo">Bravo</option>
-                <option value="Charlie">Charlie</option>
-                <option value="Delta">Delta</option>
+                <option value="" disabled>Select Blood Group</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
               </Form.Select>
+              {editErrors.bloodGroup && <Form.Text className="text-danger d-block mt-1">{editErrors.bloodGroup}</Form.Text>}
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="editAddress">
+              <Form.Label>Address</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editForm.address}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleEditChange('address', e.target.value)}
+                placeholder="Enter your full address"
+              />
             </Form.Group>
 
             <Alert variant="warning" className="small">
               <i className="bi bi-exclamation-triangle me-2"></i>
-              Other fields can only be modified by administrators.
+              Only name and additional details can be modified by cadets.
             </Alert>
           </Form>
         </Modal.Body>

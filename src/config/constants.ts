@@ -80,6 +80,20 @@ export type Department = typeof DEPARTMENTS[number];
 export const ACADEMIC_YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'] as const;
 export type AcademicYear = typeof ACADEMIC_YEARS[number];
 
+// Year display helpers
+export const ROMAN_YEAR_MAP: Record<string, string> = {
+  '1st': 'I',
+  '2nd': 'II',
+  '3rd': 'III',
+  '4th': 'IV',
+  '5th': 'V',
+  '1': 'I',
+  '2': 'II',
+  '3': 'III',
+  '4': 'IV',
+  '5': 'V',
+};
+
 // Notification channels
 export const NOTIFICATION_CHANNELS = {
   IN_APP: 'in_app',
