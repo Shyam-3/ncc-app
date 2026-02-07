@@ -1,0 +1,66 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+    
+    function validImageFile() {
+      return request.resource.contentType.matches('image/.*') &&
+        request.resource.size < 10 * 1024 * 1024; // 10MB max
+    }
+    
+    function validDocFile() {
+      return request.resource.contentType.matches('(application/pdf|application/msword|application/vnd.openxmlformats-officedocument.*)') &&
+        request.resource.size < 15 * 1024 * 1024; // 15MB max
+    }
+    
+    // Gallery photos
+    match /gallery/{albumId}/{photoId} {
+      allow read: if true; // Public
+      allow write: if (isAdmin() || isSuperAdmin()) && validImageFile();
+      allow delete: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Cadet profile photos
+    match /cadets/{cadetId}/profile/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if (request.auth.uid == cadetId || isAdmin() || isSuperAdmin()) && validImageFile();
+    }
+    
+    // Documents (reports, certificates, etc.)
+    match /documents/{category}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if (isAdmin() || isSuperAdmin()) && validDocFile();
+    }
+    
+    // Event photos/attachments
+    match /events/{eventId}/{fileName} {
+      allow read: if true; // Public
+      allow write: if (isAdmin() || isSuperAdmin()) && validImageFile();
+    }
+    
+    // Achievements proof
+    match /achievements/{cadetId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if (request.auth.uid == cadetId || isAdmin() || isSuperAdmin()) && validImageFile();
+    }
+    
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

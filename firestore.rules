@@ -1,0 +1,149 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+    
+    function isSubAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'subadmin';
+    }
+    
+    function isMember() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'member';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      // Allow owner to create their own record, or admins to create during approvals
+      allow create: if isAuthenticated() && (request.auth.uid == userId || isAdmin() || isSuperAdmin());
+      // Allow owner to update own profile, admins/superadmins can update credentials and role
+      allow update: if isOwner(userId) || isAdmin() || isSuperAdmin();
+      // Narrow role-only updates path (kept for clarity)
+      allow update: if (isAdmin() || isSuperAdmin()) && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
+      allow delete: if isSuperAdmin();
+    }
+
+    // Pending cadet registrations awaiting approval
+    match /pendingCadets/{candidateId} {
+      allow read: if isAdmin() || isSuperAdmin();
+      // Allow unauthenticated users to create registration (write-once)
+      allow create: if true;
+      // Only admins can update/delete
+      allow update, delete: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Cadets collection
+    match /cadets/{cadetId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Events collection
+    match /events/{eventId} {
+      allow read: if true; // Public
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Attendance sessions
+    match /attendanceSessions/{sessionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isSuperAdmin();
+      
+      match /marks/{markId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin() || isSuperAdmin();
+      }
+    }
+    
+    // Duties
+    match /duties/{dutyId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Gallery
+    match /gallery/{albumId} {
+      allow read: if true; // Public
+      allow write: if isAdmin() || isSuperAdmin();
+      
+      match /photos/{photoId} {
+        allow read: if true;
+        allow write: if isAdmin() || isSuperAdmin();
+      }
+    }
+    
+    // Alumni
+    match /alumni/{alumniId} {
+      allow read: if true; // Public if opted in
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+
+    // Announcements (public feed)
+    match /announcements/{announcementId} {
+      allow read: if true; // public announcements
+      allow create: if isAdmin() || isSuperAdmin();
+      allow update: if isAdmin() || isSuperAdmin();
+      allow delete: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Parade logs
+    match /paradeLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Achievements
+    match /achievements/{achievementId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Reports
+    match /reports/{reportId} {
+      allow read: if isAdmin() || isSuperAdmin() || isSubAdmin();
+      // subadmins can write only for on-duty reports; admins/superadmins can write any
+      allow write: if isAdmin() || isSuperAdmin() || (isSubAdmin() && request.resource.data.type == 'on_duty');
+    }
+    
+    // CMS pages (About, Contact, Unit Structure, etc.)
+    match /cms/{docId} {
+      // Publicly readable content, only admins can write
+      allow read: if true;
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Audit logs
+    match /auditLogs/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAdmin() || isSuperAdmin();
+      allow update, delete: if false; // Immutable
+    }
+  }
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>/</loc></url>
+  <url><loc>/about</loc></url>
+  <url><loc>/activities/camps</loc></url>
+  <url><loc>/activities/social-service</loc></url>
+  <url><loc>/activities/parades</loc></url>
+  <url><loc>/events/national-days</loc></url>
+  <url><loc>/gallery/photos</loc></url>
+  <url><loc>/gallery/videos</loc></url>
+  <url><loc>/cadets/list</loc></url>
+  <url><loc>/cadets/ranks</loc></url>
+  <url><loc>/cadets/achievements</loc></url>
+  <url><loc>/resources</loc></url>
+  <url><loc>/alumni</loc></url>
+  <url><loc>/contact</loc></url>
+  <url><loc>/notifications</loc></url>
+</urlset>

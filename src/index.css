@@ -1,0 +1,563 @@
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --success-color: #198754;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #0dcaf0;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom utilities */
+.min-vh-100 {
+  min-height: 100vh;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Card hover effects */
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Animation utility classes */
+.fade-in {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+.stagger > * {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: slideUp 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.15s; }
+.stagger > *:nth-child(3) { animation-delay: 0.25s; }
+.stagger > *:nth-child(4) { animation-delay: 0.35s; }
+.stagger > *:nth-child(5) { animation-delay: 0.45s; }
+.stagger > *:nth-child(6) { animation-delay: 0.55s; }
+
+/* Hover lift refinement */
+.hover-lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 0.75rem 1.25rem rgba(0,0,0,0.18);
+}
+
+/* Fade-in when visible helper */
+.is-visible { opacity: 1 !important; transform: none !important; }
+
+/* Navbar styling */
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Right align navbar toggle button on mobile */
+.navbar-toggler {
+  margin-left: auto;
+}
+
+/* Desktop: Right-align nav items */
+@media (min-width: 768px) {
+  .navbar-collapse {
+    justify-content: flex-end;
+  }
+  
+  .navbar-nav {
+    align-items: center;
+    justify-content: flex-end;
+  }
+  
+  /* When items wrap to next line, align them from the right */
+  .navbar-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* Mobile: Sidebar nav with backdrop blur */
+@media (max-width: 767px) {
+  /* Create backdrop blur when navbar is open */
+  .navbar-collapse.show::before,
+  .navbar-collapse.collapsing::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: -1;
+  }
+  
+  /* Sidebar from right */
+  .navbar-collapse {
+    position: fixed;
+    top: 56px; /* Height of navbar */
+    right: 0;
+    bottom: 0;
+    /* Consistent drawer width across phones: ~60vw, min 200px, max 320px */
+    width: clamp(200px, 60vw, 320px);
+    background: transparent !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1040;
+    padding: 1rem 0;
+    text-align: left;
+  }
+  
+  .navbar-collapse.show {
+    transform: translateX(0);
+  }
+  
+  .navbar-collapse.collapsing {
+    height: auto !important;
+    transform: translateX(100%);
+  }
+  
+  .navbar-nav {
+    align-items: flex-start;
+    text-align: left !important;
+    padding: 0 1rem;
+  }
+  
+  .navbar-nav .nav-link,
+  .navbar-nav .dropdown-toggle {
+    text-align: left;
+    width: 100%;
+    padding: 0.75rem 0.5rem;
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+  
+  .navbar-nav .nav-link:hover,
+  .navbar-nav .dropdown-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  
+  /* Sidebar dropdown inherits transparent + blur and fills sidebar width */
+  .navbar-nav .dropdown-menu {
+    position: static;
+    float: none;
+    display: block; /* ensure full width inside sidebar flow */
+    width: 100%;
+    margin: 0;
+    background: transparent !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: none;
+    box-shadow: none;
+    padding: 0.25rem 0;
+  }
+  
+  .navbar-nav .dropdown-item {
+    color: rgba(255, 255, 255, 0.9) !important;
+    padding: 0.5rem 1rem;
+  }
+  
+  .navbar-nav .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* Navbar brand responsive sizing */
+.navbar-brand {
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .navbar-brand {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .navbar-brand {
+    font-size: 0.85rem;
+  }
+}
+
+/* Truncate long user names in navbar */
+.truncate-name {
+  max-width: 120px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .truncate-name {
+    max-width: 80px;
+  }
+}
+
+/* Prevent word breaking in cards - use hyphenation instead */
+.card-title,
+.card-text,
+.card h1,
+.card h2,
+.card h3,
+.card h4,
+.card h5,
+.card h6,
+.card p {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+}
+
+/* Responsive card typography */
+.card h3 {
+  font-size: 1.5rem;
+}
+
+.card h4 {
+  font-size: 1.25rem;
+}
+
+.card h5 {
+  font-size: 1.1rem;
+}
+
+/* Small screens - reduce card heading sizes */
+@media (max-width: 768px) {
+  .card h3 {
+    font-size: 1.25rem;
+  }
+  
+  .card h4 {
+    font-size: 1.1rem;
+  }
+  
+  .card h5 {
+    font-size: 1rem;
+  }
+  
+  .card p,
+  .card .text-muted {
+    font-size: 0.9rem;
+  }
+}
+
+/* Extra small screens - further reduce */
+@media (max-width: 576px) {
+  .card h3 {
+    font-size: 1.1rem;
+  }
+  
+  .card h4 {
+    font-size: 1rem;
+  }
+  
+  .card h5 {
+    font-size: 0.95rem;
+  }
+  
+  .card p,
+  .card .text-muted {
+    font-size: 0.85rem;
+  }
+}
+
+/* Very small screens - minimal text */
+@media (max-width: 400px) {
+  .card h3 {
+    font-size: 1rem;
+  }
+  
+  .card h4 {
+    font-size: 0.95rem;
+  }
+  
+  .card h5 {
+    font-size: 0.9rem;
+  }
+  
+  .card p,
+  .card .text-muted {
+    font-size: 0.8rem;
+  }
+}
+
+/* Button text responsive sizing */
+.btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  .btn-sm {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Ensure navbar items don't overflow */
+.navbar-nav {
+  flex-wrap: wrap;
+}
+
+.navbar-nav .nav-link {
+  white-space: nowrap;
+  padding: 0.5rem 0.75rem;
+}
+
+@media (max-width: 992px) {
+  .navbar-nav .nav-link {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-nav .nav-link {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+  }
+}
+
+/* Footer styling */
+footer {
+  margin-top: auto;
+}
+
+/* Loading spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+}
+
+/* Responsive icon sizes in cards */
+.card-body i[style*="fontSize"] {
+  font-size: 48px !important;
+}
+
+@media (max-width: 768px) {
+  .card-body i[style*="fontSize"] {
+    font-size: 40px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body i[style*="fontSize"] {
+    font-size: 36px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .card-body i[style*="fontSize"] {
+    font-size: 32px !important;
+  }
+}
+
+/* Ensure single-word titles don't break */
+.card h3,
+.card h4,
+.card h5 {
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+}
+
+/* Only allow breaking for very long compound words or multiple words */
+.card .text-muted,
+.card p {
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+/* Card body padding adjustment for small screens */
+@media (max-width: 576px) {
+  .card-body {
+    padding: 1rem 0.75rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .card-body {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Carousel caption responsive text */
+.carousel-caption h1,
+.carousel-caption h2,
+.carousel-caption h3,
+.carousel-caption h4 {
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+@media (max-width: 768px) {
+  .carousel-caption {
+    padding-bottom: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .carousel-caption {
+    padding: 0.5rem 1rem 0.75rem;
+  }
+}
+
+/* Form labels and text */
+.form-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+@media (max-width: 576px) {
+  .form-label {
+    font-size: 0.875rem;
+  }
+}
+
+/* Container padding adjustments */
+@media (max-width: 576px) {
+  .container,
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* Display utilities for better text control */
+.text-no-wrap {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Force cards to stack vertically on all screen sizes */
+.row.g-4 > [class*="col-"],
+.row.g-3 > [class*="col-"] {
+  margin-bottom: 1rem;
+}
+
+/* Ensure cards always take full width on extra small screens */
+@media (max-width: 575.98px) {
+  .row > [class*="col-xs-12"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* Footer responsive styling */
+footer h6 {
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+footer ul li {
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+footer p {
+  font-size: 0.875rem;
+}
+
+@media (max-width: 576px) {
+  footer h5 {
+    font-size: 1.1rem;
+  }
+  
+  footer h6 {
+    font-size: 0.875rem;
+  }
+  
+  footer p,
+  footer ul li {
+    font-size: 0.8rem;
+  }
+  
+  footer .bi {
+    font-size: 0.85rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .navbar,
+  .btn,
+  footer {
+    display: none !important;
+  }
+}
