@@ -28,6 +28,7 @@ import {
     Register,
     Resources,
     RoleManagement,
+    CadetManagement,
     SocialService,
     UserManagement,
     Videos,
@@ -145,7 +146,7 @@ const App: React.FC = () => {
                 path="/admin/cadets"
                 element={
                   <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
-                    <div className="container py-5"><h2>Cadet Management</h2></div>
+                    <CadetManagement />
                   </ProtectedRoute>
                 }
               />

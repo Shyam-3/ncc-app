@@ -25,6 +25,7 @@ interface UserData {
   role: UserRole;
   createdAt: string;
   status: string;
+  tempPassword?: string;
   regimentalNumber?: string;
   division?: 'SD' | 'SW';
   platoon?: 'Alpha' | 'Bravo' | 'Charlie' | 'Delta';
@@ -113,6 +114,10 @@ const UserManagement: React.FC = () => {
   const openEdit = (u: UserData) => {
     setEditUser(u);
     setEditForm({ email: u.email || '', tempPassword: u.tempPassword || '' });
+  };
+
+  const togglePwdVisibility = (uid: string) => {
+    setShowPwd(prev => ({ ...prev, [uid]: !prev[uid] }));
   };
 
   const handleApprove = async (candidate: PendingCadet) => {
@@ -221,6 +226,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
+
   // Filter and sort pending cadets
   const filteredPending = useMemo(() => {
     // First, filter out cadets whose emails are already in users collection (already approved)
@@ -297,10 +303,6 @@ const UserManagement: React.FC = () => {
     setDivisionFilterUsers('ALL');
     setPlatoonFilterUsers('ALL');
     setSearchTermUsers('');
-  };
-
-  const togglePwdVisibility = (uid: string) => {
-    setShowPwd(prev => ({ ...prev, [uid]: !prev[uid] }));
   };
 
   const handleDeleteUser = async (u: UserData) => {
@@ -582,6 +584,7 @@ const UserManagement: React.FC = () => {
       </Table>
     </>
   ), [filteredUsers, divisionFilterUsers, platoonFilterUsers, searchTermUsers, showPwd]);
+
 
   if (loading) {
     return (
