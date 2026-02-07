@@ -10,7 +10,7 @@ const AttendanceView: React.FC = () => {
   const [sessions, setSessions] = useState<(AttendanceSession & { id: string })[]>([]);
   const [cadet, setCadet] = useState<(Cadet & { id: string }) | null>(null);
   const [marks, setMarks] = useState<Record<string, AttendanceMark>>({});
-  const [sessionFilter, setSessionFilter] = useState<string>('');
+  const [sessionFilter, setSessionFilter] = useState<string>('ALL');
 
   useEffect(() => {
     if (!currentUser) return;
@@ -48,7 +48,7 @@ const AttendanceView: React.FC = () => {
   }, [marks, sessions.length]);
 
   const filteredSessions = useMemo(() => {
-    return sessions.filter(s => !sessionFilter || s.type === sessionFilter);
+    return sessions.filter(s => sessionFilter === 'ALL' || s.type === sessionFilter);
   }, [sessions, sessionFilter]);
 
   if (loading) {
@@ -97,7 +97,8 @@ const AttendanceView: React.FC = () => {
         <Form.Group controlId="filterType" className="w-auto">
           <Form.Label className="me-2">Filter by Type</Form.Label>
           <Form.Select value={sessionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSessionFilter(e.target.value)}>
-            <option value="">All Types</option>
+            <option value="" disabled>Select Type</option>
+            <option value="ALL">All Types</option>
             {[...new Set(sessions.map(s => s.type))].map(t => <option key={t} value={t}>{t}</option>)}
           </Form.Select>
         </Form.Group>

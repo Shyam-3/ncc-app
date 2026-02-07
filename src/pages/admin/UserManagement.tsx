@@ -378,6 +378,7 @@ const UserManagement: React.FC = () => {
             value={platoonFilter}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPlatoonFilter(e.target.value as any)}
           >
+            <option value="" disabled>Select Platoon</option>
             <option value="ALL">All Platoons</option>
             <option value="Alpha">Alpha</option>
             <option value="Bravo">Bravo</option>
@@ -491,6 +492,7 @@ const UserManagement: React.FC = () => {
             value={platoonFilterUsers}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPlatoonFilterUsers(e.target.value as any)}
           >
+            <option value="" disabled>Select Platoon</option>
             <option value="ALL">All Platoons</option>
             <option value="Alpha">Alpha</option>
             <option value="Bravo">Bravo</option>

@@ -8,6 +8,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -59,17 +60,28 @@ const Login: React.FC = () => {
 
                 <Form.Group className="mb-3" controlId="password">
                   <Form.Label>Password</Form.Label>
-                  <Form.Control
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                    required
-                  />
+                  <div className="position-relative">
+                    <Form.Control
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                      required
+                      className="pe-5"
+                    />
+                    <Button
+                      variant="link"
+                      type="button"
+                      onClick={() => setShowPassword(prev => !prev)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="position-absolute end-0 top-50 translate-middle-y text-muted p-0 me-2"
+                    >
+                      <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </Button>
+                  </div>
                 </Form.Group>
 
-                <div className="d-flex justify-content-between mb-3">
-                  <Form.Check type="checkbox" label="Remember me" />
+                <div className="d-flex justify-content-end mb-3">
                   <Link to="/forgot-password" className="text-decoration-none">
                     Forgot password?
                   </Link>

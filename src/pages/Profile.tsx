@@ -305,7 +305,7 @@ const Profile: React.FC = () => {
                 value={editForm.platoon}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditForm({ ...editForm, platoon: e.target.value as any })}
               >
-                <option value="">Select Platoon</option>
+                <option value="" disabled>Select Platoon</option>
                 <option value="Alpha">Alpha</option>
                 <option value="Bravo">Bravo</option>
                 <option value="Charlie">Charlie</option>

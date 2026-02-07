@@ -58,6 +58,8 @@ const Register: React.FC = () => {
   
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const validateForm = (): boolean => {
@@ -312,28 +314,50 @@ const Register: React.FC = () => {
                   <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="password">
                       <Form.Label>Password <span className="text-danger">*</span></Form.Label>
-                      <Form.Control
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className={getFieldClass('password')}
-                        placeholder="At least 6 characters"
-                      />
+                      <div className="position-relative">
+                        <Form.Control
+                          type={showPassword ? 'text' : 'password'}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          className={`${getFieldClass('password')} pe-5`}
+                          placeholder="At least 6 characters"
+                        />
+                        <Button
+                          variant="link"
+                          type="button"
+                          onClick={() => setShowPassword(prev => !prev)}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          className="position-absolute end-0 top-50 translate-middle-y text-muted p-0 me-2"
+                        >
+                          <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                        </Button>
+                      </div>
                       {errors.password && <Form.Text className="text-danger d-block mt-1">{errors.password}</Form.Text>}
                     </Form.Group>
                   </Col>
                   <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="confirmPassword">
                       <Form.Label>Confirm Password <span className="text-danger">*</span></Form.Label>
-                      <Form.Control
-                        type="password"
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        className={getFieldClass('confirmPassword')}
-                        placeholder="Re-enter password"
-                      />
+                      <div className="position-relative">
+                        <Form.Control
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleChange}
+                          className={`${getFieldClass('confirmPassword')} pe-5`}
+                          placeholder="Re-enter password"
+                        />
+                        <Button
+                          variant="link"
+                          type="button"
+                          onClick={() => setShowConfirmPassword(prev => !prev)}
+                          aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                          className="position-absolute end-0 top-50 translate-middle-y text-muted p-0 me-2"
+                        >
+                          <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                        </Button>
+                      </div>
                       {errors.confirmPassword && <Form.Text className="text-danger d-block mt-1">{errors.confirmPassword}</Form.Text>}
                     </Form.Group>
                   </Col>
@@ -401,7 +425,7 @@ const Register: React.FC = () => {
                         onChange={handleChange}
                         className={getFieldClass('platoon')}
                       >
-                        <option value="">Select Platoon</option>
+                        <option value="" disabled>Select Platoon</option>
                         {PLATOONS.map(platoon => (
                           <option key={platoon} value={platoon}>{platoon}</option>
                         ))}
@@ -472,7 +496,7 @@ const Register: React.FC = () => {
                         onChange={handleChange}
                         className={getFieldClass('department')}
                       >
-                        <option value="">Select Department</option>
+                        <option value="" disabled>Select Department</option>
                         {DEPARTMENTS.map(dept => (
                           <option key={dept} value={dept}>{dept}</option>
                         ))}
@@ -545,7 +569,7 @@ const Register: React.FC = () => {
                         onChange={handleChange}
                         className={getFieldClass('bloodGroup')}
                       >
-                        <option value="">Select Blood Group</option>
+                        <option value="" disabled>Select Blood Group</option>
                         <option value="A+">A+</option>
                         <option value="A-">A-</option>
                         <option value="B+">B+</option>

@@ -93,7 +93,7 @@ const OnDutyReportForm: React.FC = () => {
             <Form.Group controlId="cadet">
               <Form.Label>Select Cadet *</Form.Label>
               <Form.Select value={cadetId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCadetId(e.target.value)} required>
-                <option value="" disabled>-- Choose Cadet --</option>
+                <option value="" disabled>Select Cadet</option>
                 {cadets.map(c => (
                   <option key={c.id} value={c.id}>{c.registerNumber} — {c.rollNo} ({c.platoon})</option>
                 ))}
@@ -110,6 +110,7 @@ const OnDutyReportForm: React.FC = () => {
             <Form.Group controlId="dutyType">
               <Form.Label>Duty Type *</Form.Label>
               <Form.Select value={dutyType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDutyType(e.target.value)} required>
+                <option value="" disabled>Select Duty Type</option>
                 <option value="orderly">Orderly</option>
                 <option value="office">Office</option>
                 <option value="quarter_guard">Quarter Guard</option>

@@ -406,7 +406,7 @@ const AttendanceManagement: React.FC = () => {
                   <Form.Group controlId="year">
                     <Form.Label>Year</Form.Label>
                     <Form.Select value={gYear} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGYear(e.target.value)} required>
-                      <option value="" disabled>Select year</option>
+                      <option value="" disabled>Select Year</option>
                       {BASE_YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
                     </Form.Select>
                   </Form.Group>
@@ -415,6 +415,7 @@ const AttendanceManagement: React.FC = () => {
                   <Form.Group controlId="division">
                     <Form.Label>Division</Form.Label>
                     <Form.Select value={gDivision} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGDivision(e.target.value)} required>
+                      <option value="" disabled>Select Division</option>
                       <option value="SD">SD</option>
                       <option value="SW">SW</option>
                     </Form.Select>
@@ -453,6 +454,7 @@ const AttendanceManagement: React.FC = () => {
                   <Form.Group controlId="type">
                     <Form.Label>Type</Form.Label>
                     <Form.Select value={gType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGType(e.target.value)}>
+                      <option value="" disabled>Select Type</option>
                       {Object.entries(EVENT_TYPES).map(([k, v]) => (
                         <option key={k} value={v}>{k.toLowerCase()}</option>
                       ))}
@@ -615,7 +617,7 @@ const AttendanceManagement: React.FC = () => {
                 <Form.Group controlId="reportYearFilter">
                   <Form.Label>Year Filter</Form.Label>
                   <Form.Select value={reportYearFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setReportYearFilter(e.target.value)}>
-                    <option value="" disabled>Select year</option>
+                    <option value="" disabled>Select Year</option>
                     {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                   </Form.Select>
                 </Form.Group>
@@ -624,6 +626,7 @@ const AttendanceManagement: React.FC = () => {
                 <Form.Group controlId="reportDivisionFilter">
                   <Form.Label>Division Filter</Form.Label>
                   <Form.Select value={reportDivisionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setReportDivisionFilter(e.target.value)}>
+                    <option value="" disabled>Select Division</option>
                     <option value="SD">SD</option>
                     <option value="SW">SW</option>
                   </Form.Select>
@@ -633,7 +636,7 @@ const AttendanceManagement: React.FC = () => {
                 <Form.Group controlId="sessionSelect2">
                   <Form.Label>Select Session</Form.Label>
                   <Form.Select value={selectedSessionId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedSessionId(e.target.value)}>
-                    <option value="" disabled>Select a session</option>
+                    <option value="" disabled>Select Session</option>
                     {sessions
                       .filter(s => !reportYearFilter || (s.year || '') === reportYearFilter)
                       .map(s => <option key={s.id} value={s.id}>{s.date} — {s.title} {s.platoon ? `(${s.platoon})` : ''} {s.year ? `(${s.year})` : ''}</option>)}

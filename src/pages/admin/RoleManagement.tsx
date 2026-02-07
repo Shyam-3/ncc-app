@@ -141,6 +141,7 @@ const RoleManagement: React.FC = () => {
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleRoleChange(user.uid, e.target.value as UserRole)}
                         disabled={updating === user.uid}
                       >
+                        <option value="" disabled>Select Role</option>
                         <option value="member">Member</option>
                         <option value="subadmin">Sub-Admin</option>
                         <option value="admin">Admin</option>
