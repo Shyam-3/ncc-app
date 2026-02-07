@@ -6,4 +6,5 @@ export { default as Navbar } from './layout/Navbar';
 export { default as AnimatedSection } from './common/AnimatedSection';
 export { default as Markdown } from './common/Markdown';
 export { default as ProtectedRoute } from './common/ProtectedRoute';
+export { default as ScrollToTop } from './common/ScrollToTop';
 

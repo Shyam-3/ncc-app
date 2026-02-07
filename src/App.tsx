@@ -1,7 +1,7 @@
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
-import { Navbar as AppNavbar, Footer, ProtectedRoute } from './components';
+import { Navbar as AppNavbar, Footer, ProtectedRoute, ScrollToTop } from './components';
 import { AuthProvider } from './contexts/AuthContext';
 import { AnnouncementsAdmin, NotificationsPage } from './features/announcements';
 import { AttendanceManagement, AttendanceView } from './features/attendance';
@@ -44,6 +44,7 @@ const Unauthorized: React.FC = () => (
 const App: React.FC = () => {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <div className="d-flex flex-column min-vh-100">
           <AppNavbar />
