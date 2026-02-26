@@ -22,6 +22,7 @@ interface FormData {
   
   // Academic Details
   year: '1st Year' | '2nd Year' | '';
+  residentialStatus: 'Day Scholar' | 'Hosteller' | '';
   department: string;
   rollNo: string;
   registerNumber: string;
@@ -48,6 +49,7 @@ const Register: React.FC = () => {
     platoon: '',
     dateOfEnrollment: '',
     year: '',
+    residentialStatus: '',
     department: '',
     rollNo: '',
     registerNumber: '',
@@ -110,6 +112,10 @@ const Register: React.FC = () => {
     // Academic Details Validation
     if (!formData.year) {
       newErrors.year = 'Year is required';
+    }
+    
+    if (!formData.residentialStatus) {
+      newErrors.residentialStatus = 'Residential status is required';
     }
     
     if (!formData.department) {
@@ -189,6 +195,21 @@ const Register: React.FC = () => {
     }));
   };
 
+  const handleResidentialStatusChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value as 'Day Scholar' | 'Hosteller';
+    if (errors.residentialStatus) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.residentialStatus;
+        return newErrors;
+      });
+    }
+    setFormData(prev => ({
+      ...prev,
+      residentialStatus: value
+    }));
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -217,6 +238,7 @@ const Register: React.FC = () => {
         
         // Academic Details
         year: formData.year,
+        residentialStatus: formData.residentialStatus,
         department: formData.department,
         rollNo: formData.rollNo,
         registerNumber: formData.registerNumber,
@@ -456,7 +478,7 @@ const Register: React.FC = () => {
                 </h5>
 
                 <Row className="g-3">
-                  <Col xs={12}>
+                  <Col xs={12} md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Year <span className="text-danger">*</span></Form.Label>
                       <div>
@@ -482,6 +504,34 @@ const Register: React.FC = () => {
                         />
                       </div>
                       {errors.year && <Form.Text className="text-danger d-block mt-1">{errors.year}</Form.Text>}
+                    </Form.Group>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Residential Status <span className="text-danger">*</span></Form.Label>
+                      <div>
+                        <Form.Check
+                          inline
+                          type="radio"
+                          label="Day Scholar"
+                          name="residentialStatus"
+                          value="Day Scholar"
+                          checked={formData.residentialStatus === 'Day Scholar'}
+                          onChange={handleResidentialStatusChange}
+                          id="residential_day"
+                        />
+                        <Form.Check
+                          inline
+                          type="radio"
+                          label="Hosteller"
+                          name="residentialStatus"
+                          value="Hosteller"
+                          checked={formData.residentialStatus === 'Hosteller'}
+                          onChange={handleResidentialStatusChange}
+                          id="residential_hosteller"
+                        />
+                      </div>
+                      {errors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{errors.residentialStatus}</Form.Text>}
                     </Form.Group>
                   </Col>
                 </Row>

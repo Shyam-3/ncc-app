@@ -22,6 +22,7 @@ interface CadetUser {
   nccYear?: string;
   rank?: string;
   year?: string;
+  residentialStatus?: string;
   department?: string;
   rollNo?: string;
   registerNumber?: string;
@@ -50,6 +51,7 @@ const CadetManagement: React.FC = () => {
     nccYear: '',
     rank: 'CDT',
     year: '',
+    residentialStatus: '',
     department: '',
     rollNo: '',
     registerNumber: '',
@@ -139,6 +141,7 @@ const CadetManagement: React.FC = () => {
       nccYear: u.nccYear || '1st Year',
       rank: u.rank || 'CDT',
       year: u.year || '1st Year',
+      residentialStatus: u.residentialStatus || '',
       department: u.department || '',
       rollNo: u.rollNo || '',
       registerNumber: u.registerNumber || '',
@@ -174,6 +177,7 @@ const CadetManagement: React.FC = () => {
     if (!cadetEditForm.nccYear) nextErrors.nccYear = 'Year is required';
     if (!cadetEditForm.rank) nextErrors.rank = 'Rank is required';
     if (!cadetEditForm.year) nextErrors.year = 'Academic year is required';
+    if (!cadetEditForm.residentialStatus) nextErrors.residentialStatus = 'Residential status is required';
     if (!cadetEditForm.department) nextErrors.department = 'Department is required';
     if (!cadetEditForm.rollNo.trim()) nextErrors.rollNo = 'Roll number is required';
     if (!cadetEditForm.registerNumber.trim()) {
@@ -204,6 +208,7 @@ const CadetManagement: React.FC = () => {
         nccYear: cadetEditForm.nccYear,
         rank: cadetEditForm.rank,
         year: cadetEditForm.year,
+        residentialStatus: cadetEditForm.residentialStatus,
         department: cadetEditForm.department,
         rollNo: cadetEditForm.rollNo,
         registerNumber: cadetEditForm.registerNumber,
@@ -219,6 +224,7 @@ const CadetManagement: React.FC = () => {
         nccYear: cadetEditForm.nccYear,
         rank: cadetEditForm.rank,
         year: cadetEditForm.year,
+        residentialStatus: cadetEditForm.residentialStatus,
         department: cadetEditForm.department,
         rollNo: cadetEditForm.rollNo,
         registerNumber: cadetEditForm.registerNumber,
@@ -233,6 +239,7 @@ const CadetManagement: React.FC = () => {
         nccYear: cadetEditForm.nccYear,
         rank: cadetEditForm.rank,
         year: cadetEditForm.year,
+        residentialStatus: cadetEditForm.residentialStatus,
         department: cadetEditForm.department,
         rollNo: cadetEditForm.rollNo,
         registerNumber: cadetEditForm.registerNumber,
@@ -456,6 +463,10 @@ const CadetManagement: React.FC = () => {
                   <p className="mb-0">{formatYear(cadetView.year || '1st Year')}</p>
                 </Col>
                 <Col xs={12} md={3}>
+                  <Form.Label className="fw-bold text-muted small">Residential Status</Form.Label>
+                  <p className="mb-0">{cadetView.residentialStatus || '-'}</p>
+                </Col>
+                <Col xs={12} md={3}>
                   <Form.Label className="fw-bold text-muted small">Department</Form.Label>
                   <p className="mb-0">{cadetView.department || '-'}</p>
                 </Col>
@@ -463,6 +474,8 @@ const CadetManagement: React.FC = () => {
                   <Form.Label className="fw-bold text-muted small">Roll Number</Form.Label>
                   <p className="mb-0">{cadetView.rollNo || '-'}</p>
                 </Col>
+              </Row>
+              <Row className="g-3 mb-3">
                 <Col xs={12} md={3}>
                   <Form.Label className="fw-bold text-muted small">Register Number</Form.Label>
                   <p className="mb-0">{cadetView.registerNumber || '-'}</p>
@@ -593,6 +606,21 @@ const CadetManagement: React.FC = () => {
                       ))}
                     </Form.Select>
                     {cadetEditErrors.year && <Form.Text className="text-danger">{cadetEditErrors.year}</Form.Text>}
+                  </Form.Group>
+                </Col>
+                <Col xs={12} md={3}>
+                  <Form.Group controlId="editCadetResidentialStatus">
+                    <Form.Label>Residential Status *</Form.Label>
+                    <Form.Select
+                      value={cadetEditForm.residentialStatus}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('residentialStatus', e.target.value)}
+                      isInvalid={Boolean(cadetEditErrors.residentialStatus)}
+                    >
+                      <option value="" disabled>Select Status</option>
+                      <option value="Day Scholar">Day Scholar</option>
+                      <option value="Hosteller">Hosteller</option>
+                    </Form.Select>
+                    {cadetEditErrors.residentialStatus && <Form.Text className="text-danger">{cadetEditErrors.residentialStatus}</Form.Text>}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={3}>

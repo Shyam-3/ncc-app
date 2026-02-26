@@ -32,6 +32,7 @@ interface UserData {
   dateOfBirth?: string;
   dateOfEnrollment?: string;
   year?: string;
+  residentialStatus?: string;
   department?: string;
   rollNo?: string;
   registerNumber?: string;
@@ -53,6 +54,7 @@ interface PendingCadet {
   dateOfBirth: string;
   dateOfEnrollment: string;
   year: '1st Year' | '2nd Year';
+  residentialStatus: string;
   department: string;
   rollNo: string;
   registerNumber: string;
@@ -165,6 +167,7 @@ const UserManagement: React.FC = () => {
         dateOfEnrollment: candidate.dateOfEnrollment,
         rank: candidate.rank || 'CDT',
         year: candidate.year,
+        residentialStatus: candidate.residentialStatus,
         department: candidate.department,
         rollNo: candidate.rollNo,
         registerNumber: candidate.registerNumber,

@@ -30,6 +30,7 @@ export interface Cadet {
   
   // Academic Details
   year: AcademicYear | string;
+  residentialStatus?: string;
   department: Department | string;
   rollNo: string;
   registerNumber: string;

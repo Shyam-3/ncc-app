@@ -19,6 +19,7 @@ interface UserProfile {
   nccYear?: string;
   rank?: string;
   year?: string;
+  residentialStatus?: string;
   department?: string;
   rollNo?: string;
   registerNumber?: string;
@@ -43,6 +44,7 @@ const Profile: React.FC = () => {
     nccYear: '',
     rank: 'CDT',
     year: '',
+    residentialStatus: '',
     department: '',
     rollNo: '',
     registerNumber: '',
@@ -71,6 +73,7 @@ const Profile: React.FC = () => {
             nccYear: data.nccYear || '1st Year',
             rank: data.rank || 'CDT',
             year: data.year || '1st Year',
+            residentialStatus: data.residentialStatus || '',
             department: data.department || '',
             rollNo: data.rollNo || '',
             registerNumber: data.registerNumber || '',
@@ -100,6 +103,7 @@ const Profile: React.FC = () => {
         nccYear: profile.nccYear || '1st Year',
         rank: profile.rank || 'CDT',
         year: profile.year || '1st Year',
+        residentialStatus: profile.residentialStatus || '',
         department: profile.department || '',
         rollNo: profile.rollNo || '',
         registerNumber: profile.registerNumber || '',
@@ -145,6 +149,10 @@ const Profile: React.FC = () => {
       nextErrors.bloodGroup = 'Invalid blood group';
     }
 
+    if (!editForm.residentialStatus.trim()) {
+      nextErrors.residentialStatus = 'Residential status is required';
+    }
+
     if (isAdminEditor) {
       if (!editForm.regimentalNumber.trim()) nextErrors.regimentalNumber = 'Regimental number is required';
       if (!editForm.platoon) nextErrors.platoon = 'Platoon is required';
@@ -180,6 +188,7 @@ const Profile: React.FC = () => {
           nccYear: editForm.nccYear,
           rank: editForm.rank,
           year: editForm.year,
+          residentialStatus: editForm.residentialStatus,
           department: editForm.department,
           rollNo: editForm.rollNo,
           registerNumber: editForm.registerNumber,
@@ -197,6 +206,7 @@ const Profile: React.FC = () => {
           nccYear: editForm.nccYear,
           rank: editForm.rank,
           year: editForm.year,
+          residentialStatus: editForm.residentialStatus,
           department: editForm.department,
           rollNo: editForm.rollNo,
           registerNumber: editForm.registerNumber,
@@ -209,6 +219,7 @@ const Profile: React.FC = () => {
           name: editForm.name,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
+          residentialStatus: editForm.residentialStatus,
           address: editForm.address || '',
         });
 
@@ -217,6 +228,7 @@ const Profile: React.FC = () => {
           name: editForm.name,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
+          residentialStatus: editForm.residentialStatus,
           address: editForm.address || '',
         });
       }
@@ -385,6 +397,10 @@ const Profile: React.FC = () => {
                   <p className="mb-0">{formatYear(profile.year || '1st Year')}</p>
                 </Col>
                 <Col xs={12} md={3}>
+                  <Form.Label className="fw-bold text-muted small">Residential Status</Form.Label>
+                  <p className="mb-0">{profile.residentialStatus || '-'}</p>
+                </Col>
+                <Col xs={12} md={3}>
                   <Form.Label className="fw-bold text-muted small">Department</Form.Label>
                   <p className="mb-0">{profile.department || '-'}</p>
                 </Col>
@@ -392,6 +408,8 @@ const Profile: React.FC = () => {
                   <Form.Label className="fw-bold text-muted small">Roll Number</Form.Label>
                   <p className="mb-0">{profile.rollNo || '-'}</p>
                 </Col>
+              </Row>
+              <Row className="mb-4 g-3">
                 <Col xs={12} md={3}>
                   <Form.Label className="fw-bold text-muted small">Register Number</Form.Label>
                   <p className="mb-0">{profile.registerNumber || '-'}</p>
@@ -544,6 +562,21 @@ const Profile: React.FC = () => {
 
                 <Row className="g-3">
                   <Col xs={12} md={6}>
+                    <Form.Group className="mb-3" controlId="editResidentialStatus">
+                      <Form.Label>Residential Status *</Form.Label>
+                      <Form.Select
+                        value={editForm.residentialStatus}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('residentialStatus', e.target.value)}
+                        isInvalid={Boolean(editErrors.residentialStatus)}
+                      >
+                        <option value="" disabled>Select Status</option>
+                        <option value="Day Scholar">Day Scholar</option>
+                        <option value="Hosteller">Hosteller</option>
+                      </Form.Select>
+                      {editErrors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{editErrors.residentialStatus}</Form.Text>}
+                    </Form.Group>
+                  </Col>
+                  <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="editDepartment">
                       <Form.Label>Department *</Form.Label>
                       <Form.Select
@@ -559,7 +592,10 @@ const Profile: React.FC = () => {
                       {editErrors.department && <Form.Text className="text-danger d-block mt-1">{editErrors.department}</Form.Text>}
                     </Form.Group>
                   </Col>
-                  <Col xs={12} md={3}>
+                </Row>
+
+                <Row className="g-3">
+                  <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="editRollNo">
                       <Form.Label>Roll Number *</Form.Label>
                       <Form.Control
@@ -571,7 +607,7 @@ const Profile: React.FC = () => {
                       {editErrors.rollNo && <Form.Text className="text-danger d-block mt-1">{editErrors.rollNo}</Form.Text>}
                     </Form.Group>
                   </Col>
-                  <Col xs={12} md={3}>
+                  <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="editRegisterNumber">
                       <Form.Label>Register Number *</Form.Label>
                       <Form.Control
@@ -623,6 +659,20 @@ const Profile: React.FC = () => {
               {editErrors.bloodGroup && <Form.Text className="text-danger d-block mt-1">{editErrors.bloodGroup}</Form.Text>}
             </Form.Group>
 
+            <Form.Group className="mb-3" controlId="editResidentialStatus">
+              <Form.Label>Residential Status</Form.Label>
+              <Form.Select
+                value={editForm.residentialStatus}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('residentialStatus', e.target.value)}
+                isInvalid={Boolean(editErrors.residentialStatus)}
+              >
+                <option value="" disabled>Select Status</option>
+                <option value="Day Scholar">Day Scholar</option>
+                <option value="Hosteller">Hosteller</option>
+              </Form.Select>
+              {editErrors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{editErrors.residentialStatus}</Form.Text>}
+            </Form.Group>
+
             <Form.Group className="mb-3" controlId="editAddress">
               <Form.Label>Address</Form.Label>
               <Form.Control
@@ -636,7 +686,7 @@ const Profile: React.FC = () => {
 
             <Alert variant="warning" className="small">
               <i className="bi bi-exclamation-triangle me-2"></i>
-              Only name and additional details can be modified by cadets.
+              Only name, residential status, and additional details can be modified by cadets.
             </Alert>
           </Form>
         </Modal.Body>

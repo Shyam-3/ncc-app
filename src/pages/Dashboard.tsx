@@ -136,11 +136,11 @@ const Dashboard: React.FC = () => {
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
-                    <i className="bi bi-clipboard-data text-danger" style={{ fontSize: '48px' }}></i>
+                    <i className="bi bi-file-earmark-text text-danger" style={{ fontSize: '48px' }}></i>
                     <h3 className="mt-3">On-Duty</h3>
-                    <p className="text-muted small">Duty reports</p>
+                    <p className="text-muted small">Generate letters</p>
                   </div>
-                  <Button as={Link} to="/admin/reports/on-duty" variant="danger" className="mt-2">
+                  <Button as={Link} to="/admin/reports/on-duty-letter" variant="danger" className="mt-2">
                     Go
                   </Button>
                 </Card.Body>

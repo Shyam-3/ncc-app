@@ -131,6 +131,11 @@ service cloud.firestore {
       // subadmins can write only for on-duty reports; admins/superadmins can write any
       allow write: if isAdmin() || isSuperAdmin() || (isSubAdmin() && request.resource.data.type == 'on_duty');
     }
+
+    // Report templates (admin managed)
+    match /reportTemplates/{templateId} {
+      allow read, write: if isAdmin() || isSuperAdmin();
+    }
     
     // CMS pages (About, Contact, Unit Structure, etc.)
     match /cms/{docId} {
