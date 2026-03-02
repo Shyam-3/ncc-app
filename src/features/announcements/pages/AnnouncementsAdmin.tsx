@@ -1,4 +1,5 @@
 import { db } from '@/config/firebase';
+import { formatISTDateTime } from '@/utils/dateTime';
 import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
@@ -105,7 +106,7 @@ const AnnouncementsAdmin: React.FC = () => {
                       <tr key={it.id}>
                         <td>{it.title}</td>
                         <td style={{maxWidth: 480}}>{it.body}</td>
-                        <td>{it.createdAt?.toDate ? it.createdAt.toDate().toLocaleString() : '-'}</td>
+                        <td>{it.createdAt?.toDate ? formatISTDateTime(it.createdAt.toDate()) : '-'}</td>
                         <td className="text-end">
                           <Button variant="outline-danger" size="sm" onClick={() => it.id && remove(it.id)}>Delete</Button>
                         </td>

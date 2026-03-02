@@ -6,7 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AnnouncementsAdmin, NotificationsPage } from './features/announcements';
 import { AttendanceManagement, AttendanceView } from './features/attendance';
 import { About, CmsEditor } from './features/cms';
-import { OnDutyReportForm, OnDutyLetterReport, ReportsTemplateManager } from './features/reports';
+import { OnDutyLetterReport, ReportsTemplateManager, ReportsWorkspace } from './features/reports';
 import {
     Achievements,
     Alumni,
@@ -170,6 +170,22 @@ const App: React.FC = () => {
                 path="/admin/reports"
                 element={
                   <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+                    <ReportsWorkspace />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reports/generators/on-duty-letter"
+                element={
+                  <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+                    <OnDutyLetterReport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reports/templates"
+                element={
+                  <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
                     <ReportsTemplateManager />
                   </ProtectedRoute>
                 }
@@ -179,22 +195,6 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
                     <AnnouncementsAdmin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/reports/on-duty"
-                element={
-                  <ProtectedRoute requiredRoles={['subadmin', 'admin', 'superadmin']}>
-                    <OnDutyReportForm />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/reports/on-duty-letter"
-                element={
-                  <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
-                    <OnDutyLetterReport />
                   </ProtectedRoute>
                 }
               />

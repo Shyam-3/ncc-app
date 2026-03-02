@@ -136,21 +136,6 @@ const Dashboard: React.FC = () => {
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
-                    <i className="bi bi-file-earmark-text text-danger" style={{ fontSize: '48px' }}></i>
-                    <h3 className="mt-3">On-Duty</h3>
-                    <p className="text-muted small">Generate letters</p>
-                  </div>
-                  <Button as={Link} to="/admin/reports/on-duty-letter" variant="danger" className="mt-2">
-                    Go
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Col>
-
-            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-              <Card className="text-center h-100 shadow-sm hover-lift">
-                <Card.Body className="d-flex flex-column justify-content-between">
-                  <div>
                     <i className="bi bi-briefcase text-info" style={{ fontSize: '48px' }}></i>
                     <h3 className="mt-3">Duties</h3>
                     <p className="text-muted small">Duty rosters</p>
@@ -172,10 +157,10 @@ const Dashboard: React.FC = () => {
                   <div>
                     <i className="bi bi-file-earmark-text text-secondary" style={{ fontSize: '48px' }}></i>
                     <h3 className="mt-3">Reports</h3>
-                    <p className="text-muted small">Analytics</p>
+                    <p className="text-muted small">Doc generators & templates</p>
                   </div>
                   <Button as={Link} to="/admin/reports" variant="secondary" className="mt-2">
-                    View
+                    Open
                   </Button>
                 </Card.Body>
               </Card>

@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { getCadetByUserId, listenMarks, listenSessions } from '@/features/attendance/service';
 import { AttendanceMark, AttendanceSession, Cadet } from '@/types';
+import { formatISTDateTime } from '@/utils/dateTime';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Badge, Card, Col, Form, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
 
@@ -127,7 +128,7 @@ const AttendanceView: React.FC = () => {
                 <td>{s.type}</td>
                 <td>{s.platoon || 'All'}</td>
                 <td>{mark?.status || '-'}</td>
-                <td>{mark?.timestamp ? new Date(mark.timestamp).toLocaleString() : '-'}</td>
+                <td>{mark?.timestamp ? formatISTDateTime(mark.timestamp) : '-'}</td>
               </tr>
             );
           })}

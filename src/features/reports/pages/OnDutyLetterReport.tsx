@@ -1,11 +1,24 @@
 import { ACADEMIC_YEARS, DEPARTMENTS, ROMAN_YEAR_MAP } from '@/config/constants';
+import { Markdown } from '@/components';
 import { db } from '@/config/firebase';
+import { toISTDateInputValue, formatISTDate } from '@/utils/dateTime';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
-import { DEFAULT_ON_DUTY_TEMPLATE, getOnDutyTemplate, type OnDutyTemplate } from '../templateService';
+import {
+  DEFAULT_ON_DUTY_HEADER_TEMPLATE,
+  DEFAULT_ON_DUTY_TEMPLATE,
+  ON_DUTY_HEADER_TEMPLATE_DOC_ID,
+  ON_DUTY_TEMPLATE_DOC_ID,
+  getOnDutyHeaderTemplate,
+  getOnDutyTemplate,
+  getOnDutyTemplateById,
+  listReportTemplates,
+  type ReportTemplate,
+  type OnDutyTemplate,
+} from '../templateService';
 
 interface CadetUser {
   uid: string;
@@ -23,6 +36,8 @@ interface CadetUser {
 
 interface OnDutyLetterForm {
   letterDate: string;
+  letterTemplateId: string;
+  headerTemplateId: string;
   reason: string;
   reasonOther: string;
   location: string;
@@ -79,6 +94,12 @@ const OnDutyLetterReport: React.FC = () => {
     content: DEFAULT_ON_DUTY_TEMPLATE,
     logoUrl: '',
   });
+  const [headerTemplate, setHeaderTemplate] = useState<OnDutyTemplate>({
+    content: DEFAULT_ON_DUTY_HEADER_TEMPLATE,
+    logoUrl: '',
+  });
+  const [letterTemplateOptions, setLetterTemplateOptions] = useState<ReportTemplate[]>([]);
+  const [headerTemplateOptions, setHeaderTemplateOptions] = useState<ReportTemplate[]>([]);
 
   const [divisionFilter, setDivisionFilter] = useState<'ALL' | 'SD' | 'SW'>('ALL');
   const [yearFilter, setYearFilter] = useState<'ALL' | string>('ALL');
@@ -87,13 +108,15 @@ const OnDutyLetterReport: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [formData, setFormData] = useState<OnDutyLetterForm>({
-    letterDate: new Date().toISOString().slice(0, 10),
-    reason: '',
+    letterDate: toISTDateInputValue(),
+    letterTemplateId: ON_DUTY_TEMPLATE_DOC_ID,
+    headerTemplateId: ON_DUTY_HEADER_TEMPLATE_DOC_ID,
+    reason: 'Camp',
     reasonOther: '',
-    location: '',
+    location: 'College Premises',
     locationOther: '',
-    fromDate: '',
-    toDate: '',
+    fromDate: toISTDateInputValue(),
+    toDate: toISTDateInputValue(),
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -107,6 +130,8 @@ const OnDutyLetterReport: React.FC = () => {
     initialized.current = true;
     void fetchCadets();
     void fetchTemplate();
+    void fetchHeaderTemplate();
+    void fetchTemplateOptions();
   }, []);
 
   const fetchCadets = async () => {
@@ -134,6 +159,67 @@ const OnDutyLetterReport: React.FC = () => {
       toast.error('Failed to load saved template');
     }
   };
+
+  const fetchHeaderTemplate = async () => {
+    try {
+      const data = await getOnDutyHeaderTemplate();
+      setHeaderTemplate(data);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load on-duty header template');
+    }
+  };
+
+  const fetchTemplateOptions = async () => {
+    try {
+      const templates = await listReportTemplates();
+      const letters = templates.filter(item => item.id !== ON_DUTY_HEADER_TEMPLATE_DOC_ID);
+      const headers = templates.filter(item => item.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID || item.title.toLowerCase().includes('header') || item.id.toLowerCase().includes('header'));
+
+      setLetterTemplateOptions(letters.length ? letters : [{
+        id: ON_DUTY_TEMPLATE_DOC_ID,
+        title: 'On-Duty Letter Template',
+        content: DEFAULT_ON_DUTY_TEMPLATE,
+      } as ReportTemplate]);
+
+      setHeaderTemplateOptions(headers.length ? headers : [{
+        id: ON_DUTY_HEADER_TEMPLATE_DOC_ID,
+        title: 'On-Duty Header Template',
+        content: DEFAULT_ON_DUTY_HEADER_TEMPLATE,
+      } as ReportTemplate]);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load template options');
+    }
+  };
+
+  useEffect(() => {
+    if (!letterTemplateOptions.length || !headerTemplateOptions.length) return;
+
+    setFormData(prev => {
+      const firstLetterId = letterTemplateOptions[0]?.id || prev.letterTemplateId;
+      const firstHeaderId = headerTemplateOptions[0]?.id || prev.headerTemplateId;
+
+      let nextLetterId = prev.letterTemplateId || firstLetterId;
+      let nextHeaderId = prev.headerTemplateId || firstHeaderId;
+
+      if (nextLetterId === nextHeaderId) {
+        const alternateHeader = headerTemplateOptions.find(option => option.id !== nextLetterId)?.id;
+        if (alternateHeader) {
+          nextHeaderId = alternateHeader;
+        } else {
+          const alternateLetter = letterTemplateOptions.find(option => option.id !== nextHeaderId)?.id;
+          if (alternateLetter) nextLetterId = alternateLetter;
+        }
+      }
+
+      return {
+        ...prev,
+        letterTemplateId: nextLetterId,
+        headerTemplateId: nextHeaderId,
+      };
+    });
+  }, [letterTemplateOptions, headerTemplateOptions]);
 
   const filteredCadets = useMemo(() => {
     let list = [...users];
@@ -167,6 +253,15 @@ const OnDutyLetterReport: React.FC = () => {
 
         if (nextErrors[field]) {
           delete nextErrors[field];
+        }
+
+        if (field === 'letterTemplateId' || field === 'headerTemplateId') {
+          if (nextFormData.letterTemplateId && nextFormData.headerTemplateId && nextFormData.letterTemplateId === nextFormData.headerTemplateId) {
+            nextErrors.headerTemplateId = 'Header template must be different from letter template';
+          } else {
+            delete nextErrors.headerTemplateId;
+            delete nextErrors.letterTemplateId;
+          }
         }
 
         const hasBothDates = Boolean(nextFormData.fromDate) && Boolean(nextFormData.toDate);
@@ -214,6 +309,11 @@ const OnDutyLetterReport: React.FC = () => {
   const validateForm = () => {
     const errors: Record<string, string> = {};
     if (!formData.letterDate) errors.letterDate = 'Letter date is required';
+    if (!formData.letterTemplateId) errors.letterTemplateId = 'Letter template is required';
+    if (!formData.headerTemplateId) errors.headerTemplateId = 'Header template is required';
+    if (formData.letterTemplateId && formData.headerTemplateId && formData.letterTemplateId === formData.headerTemplateId) {
+      errors.headerTemplateId = 'Header template must be different from letter template';
+    }
     if (!formData.reason) errors.reason = 'Reason is required';
     if (formData.reason === 'Others' && !formData.reasonOther.trim()) errors.reasonOther = 'Please enter reason';
     if (!formData.location) errors.location = 'Location is required';
@@ -240,7 +340,23 @@ const OnDutyLetterReport: React.FC = () => {
       toast.error('Select at least one cadet');
       return;
     }
-    setShowPreview(true);
+    void openPreview();
+  };
+
+  const openPreview = async () => {
+    try {
+      const [selectedLetterTemplate, selectedHeaderTemplate] = await Promise.all([
+        getOnDutyTemplateById(formData.letterTemplateId, DEFAULT_ON_DUTY_TEMPLATE),
+        getOnDutyTemplateById(formData.headerTemplateId, DEFAULT_ON_DUTY_HEADER_TEMPLATE),
+      ]);
+
+      setTemplate(selectedLetterTemplate);
+      setHeaderTemplate(selectedHeaderTemplate);
+      setShowPreview(true);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load selected templates');
+    }
   };
 
   const selectedCadetRows = useMemo(
@@ -264,7 +380,7 @@ const OnDutyLetterReport: React.FC = () => {
           <h2 className="mb-1">On-Duty Letter Report Generator</h2>
           <p className="text-muted mb-0">Template is managed in Reports tab and dynamic placeholders use the inputs from this page.</p>
           <div className="mt-2">
-            <Button as={Link} to="/admin/reports" variant="outline-secondary" size="sm">
+            <Button as={Link} to="/admin/reports/templates" variant="outline-secondary" size="sm">
               Go to Reports Template
             </Button>
           </div>
@@ -288,6 +404,36 @@ const OnDutyLetterReport: React.FC = () => {
                         isInvalid={Boolean(formErrors.letterDate)}
                       />
                       {formErrors.letterDate && <Form.Text className="text-danger d-block">{formErrors.letterDate}</Form.Text>}
+                    </Form.Group>
+                  </Col>
+                  <Col xs={12} md={3}>
+                    <Form.Group controlId="letterTemplateId">
+                      <Form.Label>Letter Template *</Form.Label>
+                      <Form.Select
+                        value={formData.letterTemplateId}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleFormChange('letterTemplateId', e.target.value)}
+                        isInvalid={Boolean(formErrors.letterTemplateId)}
+                      >
+                        {letterTemplateOptions.map(item => (
+                          <option key={item.id} value={item.id}>{item.title}</option>
+                        ))}
+                      </Form.Select>
+                      {formErrors.letterTemplateId && <Form.Text className="text-danger d-block">{formErrors.letterTemplateId}</Form.Text>}
+                    </Form.Group>
+                  </Col>
+                  <Col xs={12} md={3}>
+                    <Form.Group controlId="headerTemplateId">
+                      <Form.Label>Header Template *</Form.Label>
+                      <Form.Select
+                        value={formData.headerTemplateId}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleFormChange('headerTemplateId', e.target.value)}
+                        isInvalid={Boolean(formErrors.headerTemplateId)}
+                      >
+                        {headerTemplateOptions.map(item => (
+                          <option key={item.id} value={item.id}>{item.title}</option>
+                        ))}
+                      </Form.Select>
+                      {formErrors.headerTemplateId && <Form.Text className="text-danger d-block">{formErrors.headerTemplateId}</Form.Text>}
                     </Form.Group>
                   </Col>
                   <Col xs={12} md={3}>
@@ -376,9 +522,10 @@ const OnDutyLetterReport: React.FC = () => {
 
                 <Alert variant="info" className="small mt-3 mb-0">
                   <div className="fw-semibold mb-1">Template Source</div>
-                  <div className="mb-1">First-page template is loaded from Reports tab.</div>
+                  <div className="mb-1">First-page body and header templates are loaded from Reports tab.</div>
+                  <div className="mb-1">Templates support Markdown/HTML, so spacing and alignment can be controlled without code changes.</div>
                   <div className="fw-semibold mt-2 mb-1">Supported placeholders</div>
-                  <div>{'{{LetterDate}}'}, {'{{Reason}}'}, {'{{Location}}'}, {'{{FromDate}}'}, {'{{ToDate}}'}, {'{{CadetCount}}'}</div>
+                  <div>{'{{LetterDate}}'}, {'{{Reason}}'}, {'{{Location}}'}, {'{{FromDate}}'}, {'{{ToDate}}'}, {'{{CadetCount}}'}, {'{{DateClause}}'}, {'{{LogoBlock}}'}</div>
                 </Alert>
               </Form>
             </Card.Body>
@@ -488,6 +635,7 @@ const OnDutyLetterReport: React.FC = () => {
         show={showPreview}
         onHide={() => setShowPreview(false)}
         formData={formData}
+        headerTemplate={headerTemplate}
         template={template}
         cadets={selectedCadetRows}
       />
@@ -499,11 +647,12 @@ interface PreviewProps {
   show: boolean;
   onHide: () => void;
   formData: OnDutyLetterForm;
+  headerTemplate: OnDutyTemplate;
   template: OnDutyTemplate;
   cadets: CadetUser[];
 }
 
-const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, template, cadets }) => {
+const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, headerTemplate, template, cadets }) => {
   const displayReason = formData.reason === 'Others' ? formData.reasonOther : formData.reason;
   const displayLocation = formData.location === 'Others' ? formData.locationOther : formData.location;
   const pageSize = 26;
@@ -511,8 +660,7 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, t
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    return formatISTDate(dateStr, { day: '2-digit', month: 'long', year: 'numeric' }, 'en-GB');
   };
 
   const templateValues: Record<string, string> = {
@@ -524,6 +672,18 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, t
     CadetCount: `${cadets.length}`,
     DateClause: buildDateClause(formatDate(formData.fromDate), formatDate(formData.toDate)),
   };
+
+  const logoUrl = headerTemplate.logoUrl || template.logoUrl;
+  const logoBlock = logoUrl
+    ? `<img src="${logoUrl}" alt="College Logo" style="width:52px; height:52px; object-fit:contain;" />`
+    : '<div style="width:52px; height:52px; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:11px;">LOGO</div>';
+
+  const headerTemplateValues: Record<string, string> = {
+    ...templateValues,
+    LogoBlock: logoBlock,
+  };
+
+  const renderedHeader = renderTemplate(headerTemplate.content, headerTemplateValues);
 
   const renderedLetter = applySingleDayGrammar(
     renderTemplate(template.content, templateValues),
@@ -549,24 +709,12 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, t
 
         <div id="print-content" style={{ overflowX: 'hidden' }}>
           <div className="od-page" style={{ width: '210mm', minHeight: '297mm', margin: '0 auto 12px auto', background: '#fff', padding: '16mm 14mm', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid #222', paddingBottom: '10px' }}>
-              {template.logoUrl ? (
-                <img src={template.logoUrl} alt="College Logo" style={{ width: '52px', height: '52px', objectFit: 'contain' }} />
-              ) : (
-                <div style={{ width: '52px', height: '52px', border: '1px solid #555', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>LOGO</div>
-              )}
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ fontWeight: 700, fontSize: '16px' }}>THIAGARAJAR COLLEGE OF ENGINEERING</div>
-                <div style={{ fontSize: '12px' }}>Madurai - 625015</div>
-                <div style={{ fontSize: '12px' }}>NCC Army Wing</div>
-              </div>
-              <div style={{ minWidth: '130px', textAlign: 'right', fontSize: '12px', alignSelf: 'flex-start' }}>
-                Date: {formatDate(formData.letterDate)}
-              </div>
+            <div style={{ fontFamily: 'Times New Roman, serif', fontSize: '13px', lineHeight: 1.5 }}>
+              <Markdown content={renderedHeader} />
             </div>
 
             <div style={{ marginTop: '14px', fontFamily: 'Times New Roman, serif', fontSize: '13px', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-              {renderedLetter}
+              <Markdown content={renderedLetter} />
             </div>
 
             <div style={{ marginTop: 'auto', textAlign: 'right', paddingTop: '28px', fontSize: '13px' }}>
@@ -591,16 +739,16 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, t
                       <th style={{ border: '1px solid #111', padding: '6px', width: '10%' }}>YEAR</th>
                       <th style={{ border: '1px solid #111', padding: '6px', width: '30%' }}>REG. NO.</th>
                       <th style={{ border: '1px solid #111', padding: '6px', width: '32%' }}>NAME OF THE CADET</th>
-                      <th style={{ border: '1px solid #111', padding: '6px', width: '20%' }}>HOSTELLER / DAY SCHOLAR</th>
+                      <th style={{ border: '1px solid #111', padding: '6px', width: '20%' }}>RESIDENTIAL STATUS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((cadet, idx) => (
                       <tr key={cadet.uid}>
                         <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{start + idx + 1}</td>
-                        <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{formatAcademicYear(cadet.year || cadet.nccYear)}</td>
+                        <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{formatAcademicYear(cadet.year)}</td>
                         <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{cadet.registerNumber || '-'}</td>
-                        <td style={{ border: '1px solid #333', padding: '6px' }}>{cadet.name || '-'}</td>
+                        <td style={{ border: '1px solid #333', padding: '6px' }}>{(cadet.name || '-').toUpperCase()}</td>
                         <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{(cadet.residentialStatus || '-').toUpperCase()}</td>
                       </tr>
                     ))}

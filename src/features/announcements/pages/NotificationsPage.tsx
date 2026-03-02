@@ -1,4 +1,5 @@
 import { db } from '@/config/firebase';
+import { formatISTDateTime } from '@/utils/dateTime';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Card, Container } from 'react-bootstrap';
@@ -41,7 +42,7 @@ const NotificationsPage: React.FC = () => {
             <Card.Body>
               <Card.Title>{it.title}</Card.Title>
               <Card.Text>{it.body}</Card.Text>
-              <div className="text-muted small">{it.createdAt?.toDate ? it.createdAt.toDate().toLocaleString() : ''}</div>
+              <div className="text-muted small">{it.createdAt?.toDate ? formatISTDateTime(it.createdAt.toDate()) : ''}</div>
             </Card.Body>
           </Card>
         ))}

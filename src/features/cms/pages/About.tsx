@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { CmsDoc, listenCms } from '@/features/cms/service';
+import { formatISTDateTime } from '@/utils/dateTime';
 import React, { useEffect, useState } from 'react';
 import { Badge, Button, Card, Col, Container, Row, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
@@ -31,7 +32,7 @@ const About: React.FC = () => {
         <div>
           <h2 className="mb-0">{doc?.title || 'About Our NCC Unit'}</h2>
           {doc?.updatedAt && (
-            <small className="text-muted">Last updated: {new Date(doc.updatedAt).toLocaleString()}</small>
+            <small className="text-muted">Last updated: {formatISTDateTime(doc.updatedAt)}</small>
           )}
         </div>
         {isAdmin() && (

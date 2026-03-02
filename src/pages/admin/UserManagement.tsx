@@ -1,5 +1,6 @@
 import { db, FIREBASE_CONFIG } from '@/config/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatISTDateTime } from '@/utils/dateTime';
 import { deleteApp, initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, getAuth, signOut } from 'firebase/auth';
 import {
@@ -434,7 +435,7 @@ const UserManagement: React.FC = () => {
               </td>
               <td>{c.regimentalNumber || 'N/A'}</td>
               <td>{c.email}</td>
-              <td>{new Date(c.createdAt).toLocaleString()}</td>
+              <td>{formatISTDateTime(c.createdAt)}</td>
               <td className="d-flex gap-2">
                 <Button variant="success" size="sm" onClick={() => setConfirm({ action: 'approve', payload: c })}>
                   Accept

@@ -2,6 +2,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import { formatISTDate } from '@/utils/dateTime';
 import { ACADEMIC_YEARS, DEPARTMENTS, NCC_RANKS, PLATOONS, ROMAN_YEAR_MAP } from '../config/constants';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -269,7 +270,7 @@ const Profile: React.FC = () => {
   const formatDate = (value?: string) => {
     if (!value) return '-';
     const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString();
+    return Number.isNaN(d.getTime()) ? '-' : formatISTDate(d);
   };
 
   const formatYear = (value?: string) => {

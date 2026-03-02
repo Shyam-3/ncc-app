@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import {
+  DEFAULT_ON_DUTY_HEADER_TEMPLATE,
   DEFAULT_ON_DUTY_TEMPLATE,
+  ON_DUTY_HEADER_TEMPLATE_DOC_ID,
   ON_DUTY_TEMPLATE_DOC_ID,
   deleteReportTemplate,
   listReportTemplates,
@@ -17,7 +19,34 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
 
-const ON_DUTY_VARIABLES = ['{{LetterDate}}', '{{Reason}}', '{{Location}}', '{{FromDate}}', '{{ToDate}}', '{{DateClause}}', '{{CadetCount}}'];
+const ON_DUTY_VARIABLES = ['{{LetterDate}}', '{{Reason}}', '{{Location}}', '{{FromDate}}', '{{ToDate}}', '{{DateClause}}', '{{CadetCount}}', '{{LogoBlock}}'];
+
+const REQUIRED_TEMPLATES: ReportTemplate[] = [
+  {
+    id: ON_DUTY_TEMPLATE_DOC_ID,
+    title: 'On-Duty Letter Template',
+    description: 'Template used by On-Duty Letter page.',
+    content: DEFAULT_ON_DUTY_TEMPLATE,
+    logoUrl: '',
+  },
+  {
+    id: ON_DUTY_HEADER_TEMPLATE_DOC_ID,
+    title: 'On-Duty Header Template',
+    description: 'Header layout used by On-Duty Letter page.',
+    content: DEFAULT_ON_DUTY_HEADER_TEMPLATE,
+    logoUrl: '',
+  },
+];
+
+const ensureRequiredTemplates = (items: ReportTemplate[]) => {
+  const existing = new Map(items.map(item => [item.id, item]));
+  REQUIRED_TEMPLATES.forEach(required => {
+    if (!existing.has(required.id)) {
+      existing.set(required.id, required);
+    }
+  });
+  return Array.from(existing.values());
+};
 
 const extractVariables = (content: string) => {
   const matches = content.match(/{{\s*[^{}]+\s*}}/g) || [];
@@ -35,11 +64,7 @@ const ReportsTemplateManager: React.FC = () => {
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
 
   const [editor, setEditor] = useState<ReportTemplate>({
-    id: ON_DUTY_TEMPLATE_DOC_ID,
-    title: 'On-Duty Letter Template',
-    description: 'Template used by On-Duty Letter page.',
-    content: DEFAULT_ON_DUTY_TEMPLATE,
-    logoUrl: '',
+    ...REQUIRED_TEMPLATES[0],
   });
   const [editingSourceId, setEditingSourceId] = useState<string>(ON_DUTY_TEMPLATE_DOC_ID);
 
@@ -72,14 +97,10 @@ const ReportsTemplateManager: React.FC = () => {
         setLoadError('');
         const items = await listReportTemplates();
 
-        if (items.length === 0) {
-          const fallback: ReportTemplate = {
-            id: ON_DUTY_TEMPLATE_DOC_ID,
-            title: 'On-Duty Letter Template',
-            description: 'Template used by On-Duty Letter page.',
-            content: DEFAULT_ON_DUTY_TEMPLATE,
-            logoUrl: '',
-          };
+        const merged = ensureRequiredTemplates(items);
+
+        if (merged.length === 0) {
+          const fallback = REQUIRED_TEMPLATES[0];
           setTemplates([fallback]);
           setEditor(fallback);
           setEditingSourceId(fallback.id);
@@ -87,8 +108,8 @@ const ReportsTemplateManager: React.FC = () => {
           return;
         }
 
-        setTemplates(items);
-        const selected = items.find(t => t.id === ON_DUTY_TEMPLATE_DOC_ID) || items[0];
+        setTemplates(merged);
+        const selected = merged.find(t => t.id === ON_DUTY_TEMPLATE_DOC_ID) || merged[0];
         setEditor(selected);
         setEditingSourceId(selected.id);
         setIsDraftTemplate(false);
@@ -204,8 +225,9 @@ const ReportsTemplateManager: React.FC = () => {
       });
 
       const refreshed = await listReportTemplates();
-      setTemplates(refreshed);
-      const selected = refreshed.find(t => t.id === normalizedId);
+      const merged = ensureRequiredTemplates(refreshed);
+      setTemplates(merged);
+      const selected = merged.find(t => t.id === normalizedId);
       if (selected) {
         setEditor(selected);
         setEditingSourceId(selected.id);
@@ -232,20 +254,15 @@ const ReportsTemplateManager: React.FC = () => {
       setSaving(true);
       await deleteReportTemplate(editor.id);
       const refreshed = await listReportTemplates();
-      setTemplates(refreshed);
+      const merged = ensureRequiredTemplates(refreshed);
+      setTemplates(merged);
 
-      if (refreshed.length > 0) {
-        const next = refreshed.find(t => t.id === ON_DUTY_TEMPLATE_DOC_ID) || refreshed[0];
+      if (merged.length > 0) {
+        const next = merged.find(t => t.id === ON_DUTY_TEMPLATE_DOC_ID) || merged[0];
         setEditor(next);
         setEditingSourceId(next.id);
       } else {
-        const fallback: ReportTemplate = {
-          id: ON_DUTY_TEMPLATE_DOC_ID,
-          title: 'On-Duty Letter Template',
-          description: 'Template used by On-Duty Letter page.',
-          content: DEFAULT_ON_DUTY_TEMPLATE,
-          logoUrl: '',
-        };
+        const fallback: ReportTemplate = REQUIRED_TEMPLATES[0];
         setEditor(fallback);
         setEditingSourceId(fallback.id);
       }
@@ -336,6 +353,7 @@ const ReportsTemplateManager: React.FC = () => {
                     </div>
                     <div className="d-flex align-items-center gap-2">
                       {template.id === ON_DUTY_TEMPLATE_DOC_ID && <Badge bg="secondary">ON-DUTY</Badge>}
+                      {template.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID && <Badge bg="dark">ON-DUTY HEADER</Badge>}
                       <i className="bi bi-chevron-right" />
                     </div>
                   </ListGroup.Item>
@@ -376,9 +394,9 @@ const ReportsTemplateManager: React.FC = () => {
                           type="text"
                           value={editor.id}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditor(prev => ({ ...prev, id: e.target.value }))}
-                          disabled={editor.id === ON_DUTY_TEMPLATE_DOC_ID || !isDraftTemplate}
+                          disabled={editor.id === ON_DUTY_TEMPLATE_DOC_ID || editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID || !isDraftTemplate}
                         />
-                        {!isDraftTemplate && editor.id !== ON_DUTY_TEMPLATE_DOC_ID && (
+                        {!isDraftTemplate && editor.id !== ON_DUTY_TEMPLATE_DOC_ID && editor.id !== ON_DUTY_HEADER_TEMPLATE_DOC_ID && (
                           <Form.Text className="text-muted">Key is locked after creation.</Form.Text>
                         )}
                       </Form.Group>
@@ -437,7 +455,10 @@ const ReportsTemplateManager: React.FC = () => {
                     </Button>
                     <Button
                       variant="outline-secondary"
-                      onClick={() => setEditor(prev => ({ ...prev, content: DEFAULT_ON_DUTY_TEMPLATE }))}
+                      onClick={() => setEditor(prev => ({
+                        ...prev,
+                        content: editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID ? DEFAULT_ON_DUTY_HEADER_TEMPLATE : DEFAULT_ON_DUTY_TEMPLATE,
+                      }))}
                       disabled={saving}
                     >
                       Reset Content

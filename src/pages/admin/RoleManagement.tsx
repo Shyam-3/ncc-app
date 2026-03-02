@@ -1,6 +1,7 @@
 import { UserRole } from '@/config/constants';
 import { db } from '@/config/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatISTDate } from '@/utils/dateTime';
 import { collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Card, Container, Form, Spinner, Table } from 'react-bootstrap';
@@ -131,7 +132,7 @@ const RoleManagement: React.FC = () => {
                   <td>{user.name || 'N/A'} {user.uid === currentUser?.uid && <Badge bg="success" className="ms-2">You</Badge>}</td>
                   <td>{user.email}</td>
                   <td><Badge bg={getRoleBadgeVariant(user.role)}>{user.role}</Badge></td>
-                  <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                  <td>{formatISTDate(user.createdAt)}</td>
                   <td><Badge bg={user.status === 'active' ? 'success' : 'secondary'}>{user.status}</Badge></td>
                   <td>
                     {user.uid !== currentUser?.uid ? (

@@ -1,6 +1,7 @@
 import { ACADEMIC_YEARS, EVENT_TYPES } from '@/config/constants';
 import { createSession, deleteSession, listCadets, listMarks, listenMarks, listenSessions, lockSession, setMark } from '@/features/attendance/service';
 import { AttendanceMark, AttendanceSession, Cadet } from '@/types';
+import { formatISTDateTime, toISTDateInputValue } from '@/utils/dateTime';
 import jsPDF from 'jspdf';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, Col, Form, Row, Spinner, Tab, Table, Tabs } from 'react-bootstrap';
@@ -17,7 +18,7 @@ const AttendanceManagement: React.FC = () => {
 
   // Generator form state
   const [gTitle, setGTitle] = useState('Parade');
-  const [gDate, setGDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [gDate, setGDate] = useState(() => toISTDateInputValue());
   const [gType, setGType] = useState<string>('parade');
   const [gYear, setGYear] = useState<string>(BASE_YEAR_OPTIONS[0] || '');
   const [gDivision, setGDivision] = useState<string>('SD');
@@ -229,7 +230,7 @@ const AttendanceManagement: React.FC = () => {
       yPosition += 10;
       
       pdf.setFontSize(10);
-      pdf.text(`Generated on: ${new Date().toLocaleString()}`, marginLeft, yPosition);
+      pdf.text(`Generated on: ${formatISTDateTime(new Date())}`, marginLeft, yPosition);
       yPosition += 8;
       
       for (const session of yearDivisionSessions) {
@@ -349,7 +350,7 @@ const AttendanceManagement: React.FC = () => {
           const m = markMap.get(c.id);
           const status = m?.status || 'A';
           const statusLabel = status === 'P' ? 'Present' : status === 'L' ? 'Late' : 'Absent';
-          const timestamp = m?.timestamp ? new Date(m.timestamp).toLocaleString() : '-';
+          const timestamp = m?.timestamp ? formatISTDateTime(m.timestamp) : '-';
           tableData.push({
             '#': idx + 1,
             'Name': c.name || '',
@@ -694,7 +695,7 @@ const AttendanceManagement: React.FC = () => {
                             <td>{c.registerNumber}</td>
                             <td>{c.platoon}</td>
                             <td>{statusLabel}</td>
-                            <td>{m?.timestamp ? new Date(m.timestamp).toLocaleString() : '-'}</td>
+                            <td>{m?.timestamp ? formatISTDateTime(m.timestamp) : '-'}</td>
                           </tr>
                         );
                       })}

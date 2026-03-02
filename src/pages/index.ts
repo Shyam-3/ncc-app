@@ -35,7 +35,7 @@ export { default as CadetList } from './cadets/CadetList';
 export { default as Ranks } from './cadets/Ranks';
 
 // Admin
-// AnnouncementsAdmin & OnDutyReportForm moved to features
+// AnnouncementsAdmin moved to features
 export { default as RoleManagement } from './admin/RoleManagement';
 export { default as UserManagement } from './admin/UserManagement';
 export { default as CadetManagement } from './admin/CadetManagement';

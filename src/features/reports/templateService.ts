@@ -17,12 +17,28 @@ export interface ReportTemplate {
 }
 
 export const ON_DUTY_TEMPLATE_DOC_ID = 'onDutyLetter';
+export const ON_DUTY_HEADER_TEMPLATE_DOC_ID = 'onDutyHeader';
 
-export const DEFAULT_ON_DUTY_TEMPLATE = `To
-The Principal,
-Thiagarajar College of Engineering, Madurai.
+export const DEFAULT_ON_DUTY_HEADER_TEMPLATE = `<div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #222; padding-bottom:10px;">
+  {{LogoBlock}}
+  <div style="flex:1; text-align:center;">
+    <div style="font-weight:700; font-size:16px;">THIAGARAJAR COLLEGE OF ENGINEERING, MADURAI - 15.</div>
+    <div style="font-size:12px; margin-top:2px;">(A Govt. aided autonomous Institution, Affiliated to Anna University)</div>
+    <div style="font-size:12px; margin-top:4px;">4 (TN) ENGR COY, NCC – MADURAI</div>
+  </div>
+</div>
 
-Respected Sir,
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:14px;">
+  <div>
+    To<br/>
+    The Principal,<br/>
+    Thiagarajar College of Engineering,<br/>
+    Madurai -15.
+  </div>
+  <div style="font-weight:600;">{{LetterDate}}</div>
+</div>`;
+
+export const DEFAULT_ON_DUTY_TEMPLATE = `Respected Sir,
 
 Sub: Request for On-Duty Permission - Reg.
 
@@ -48,6 +64,42 @@ export async function getOnDutyTemplate(): Promise<OnDutyTemplate> {
   const data = snapshot.data() as Partial<OnDutyTemplate>;
   return {
     content: data.content || DEFAULT_ON_DUTY_TEMPLATE,
+    logoUrl: data.logoUrl || '',
+  };
+}
+
+export async function getOnDutyHeaderTemplate(): Promise<OnDutyTemplate> {
+  const templateRef = doc(db, 'reportTemplates', ON_DUTY_HEADER_TEMPLATE_DOC_ID);
+  const snapshot = await getDoc(templateRef);
+
+  if (!snapshot.exists()) {
+    return {
+      content: DEFAULT_ON_DUTY_HEADER_TEMPLATE,
+      logoUrl: '',
+    };
+  }
+
+  const data = snapshot.data() as Partial<OnDutyTemplate>;
+  return {
+    content: data.content || DEFAULT_ON_DUTY_HEADER_TEMPLATE,
+    logoUrl: data.logoUrl || '',
+  };
+}
+
+export async function getOnDutyTemplateById(templateId: string, fallbackContent = ''): Promise<OnDutyTemplate> {
+  const templateRef = doc(db, 'reportTemplates', templateId);
+  const snapshot = await getDoc(templateRef);
+
+  if (!snapshot.exists()) {
+    return {
+      content: fallbackContent,
+      logoUrl: '',
+    };
+  }
+
+  const data = snapshot.data() as Partial<OnDutyTemplate>;
+  return {
+    content: data.content || fallbackContent,
     logoUrl: data.logoUrl || '',
   };
 }
