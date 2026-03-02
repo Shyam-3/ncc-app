@@ -204,7 +204,11 @@ const ReportsTemplateManager: React.FC = () => {
         return;
       }
 
-      const normalizedId = editor.id === ON_DUTY_TEMPLATE_DOC_ID ? ON_DUTY_TEMPLATE_DOC_ID : slugify(editor.id);
+      const normalizedId = isDraftTemplate
+        ? (editor.id === ON_DUTY_TEMPLATE_DOC_ID || editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID
+          ? editor.id
+          : slugify(editor.id))
+        : editingSourceId;
 
       if (!isDraftTemplate && normalizedId !== editingSourceId) {
         toast.error('Template key cannot be changed for an existing template');
