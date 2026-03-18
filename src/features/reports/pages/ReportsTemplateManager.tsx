@@ -427,6 +427,16 @@ const ReportsTemplateManager: React.FC = () => {
 
                   <Form.Group className="mb-2">
                     <Form.Label>Template Content</Form.Label>
+                    {editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID && (
+                      <Alert variant="info" className="small py-2">
+                        Edit only the top header area here (logo + college lines). Do not add date or letter body in this template.
+                      </Alert>
+                    )}
+                    {editor.id === ON_DUTY_TEMPLATE_DOC_ID && (
+                      <Alert variant="info" className="small py-2">
+                        This template starts below the header. Keep date on the right and "To" block on the left using HTML styles (for example, a flex row).
+                      </Alert>
+                    )}
                     <Form.Control
                       as="textarea"
                       rows={16}

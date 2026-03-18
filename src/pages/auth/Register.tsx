@@ -3,7 +3,7 @@ import React, { ChangeEvent, FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
-import { DEPARTMENTS, PLATOONS } from '../../config/constants';
+import { DEPARTMENT_DEFS, PLATOONS } from '../../config/constants';
 import { db } from '../../config/firebase';
 
 interface FormData {
@@ -547,8 +547,8 @@ const Register: React.FC = () => {
                         className={getFieldClass('department')}
                       >
                         <option value="" disabled>Select Department</option>
-                        {DEPARTMENTS.map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
+                        {DEPARTMENT_DEFS.map(dept => (
+                          <option key={dept.code} value={dept.code}>{dept.code}</option>
                         ))}
                       </Form.Select>
                       {errors.department && <Form.Text className="text-danger d-block mt-1">{errors.department}</Form.Text>}

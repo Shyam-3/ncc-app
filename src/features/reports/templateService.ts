@@ -24,31 +24,33 @@ export const DEFAULT_ON_DUTY_HEADER_TEMPLATE = `<div style="display:flex; align-
   <div style="flex:1; text-align:center;">
     <div style="font-weight:700; font-size:16px;">THIAGARAJAR COLLEGE OF ENGINEERING, MADURAI - 15.</div>
     <div style="font-size:12px; margin-top:2px;">(A Govt. aided autonomous Institution, Affiliated to Anna University)</div>
-    <div style="font-size:12px; margin-top:4px;">4 (TN) ENGR COY, NCC – MADURAI</div>
+    <div style="font-size:12px; margin-top:4px;">4 (TN) ENGR COY, NCC - MADURAI</div>
   </div>
-</div>
-
-<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:14px;">
-  <div>
-    To<br/>
-    The Principal,<br/>
-    Thiagarajar College of Engineering,<br/>
-    Madurai -15.
-  </div>
-  <div style="font-weight:600;">{{LetterDate}}</div>
 </div>`;
 
-export const DEFAULT_ON_DUTY_TEMPLATE = `Respected Sir,
+export const DEFAULT_ON_DUTY_TEMPLATE = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:10px;">
+  <div>
+    <div>To</div>
+    <div style="margin-left:34px; margin-top:4px;">
+      The Principal,<br/>
+      Thiagarajar College of Engineering,<br/>
+      Madurai -15.
+    </div>
+  </div>
+  <div style="font-weight:700;">{{LetterDate}}</div>
+</div>
 
-Sub: Request for On-Duty Permission - Reg.
+<p style="margin-top:22px;">Respected Sir,</p>
 
-Kindly permit the following NCC cadets to attend {{Reason}} at {{Location}} {{DateClause}} and grant them On-Duty.
+<p style="font-weight:700; margin-left:34px;">Sub: Request for On-Duty Permission - Reg.</p>
 
-Total Cadets: {{CadetCount}}
+<p style="text-align:justify; text-indent:40px; margin-top:12px;">
+  Kindly permit the following NCC cadets to attend <strong>{{Reason}}</strong> at <strong>{{Location}}</strong> {{DateClause}} and grant them On-Duty.
+</p>
 
-Thanking you,
+<p style="margin-top:10px;">Total Cadets: {{CadetCount}}</p>
 
-Yours faithfully,`;
+<p style="margin-top:64px; text-align:center;">Thanking you</p>`;
 
 export async function getOnDutyTemplate(): Promise<OnDutyTemplate> {
   const templateRef = doc(db, 'reportTemplates', ON_DUTY_TEMPLATE_DOC_ID);

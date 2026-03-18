@@ -65,16 +65,26 @@ export const PLATOONS = ['Alpha', 'Bravo', 'Charlie', 'Delta'] as const;
 export type Platoon = typeof PLATOONS[number];
 
 // Academic departments
-export const DEPARTMENTS = [
-  'Computer Science',
-  'Electronics',
-  'Mechanical',
-  'Civil',
-  'Electrical',
-  'IT'
+export interface DepartmentDef {
+  code: string;
+  name: string;
+}
+
+export const DEPARTMENT_DEFS = [
+  { code: 'IT', name: 'Information Technology' },
+  { code: 'CSE', name: 'Computer Science and Engineering' },
+  { code: 'ECE', name: 'Electronics and Communication Engineering' },
+  { code: 'EEE', name: 'Electrical and Electronics Engineering' },
+  { code: 'AMCS', name: 'Data Science' },
+  { code: 'CSE AIML', name: 'Computer Science and Engineering (AI & ML)' },
+  { code: 'MECH', name: 'Mechanical Engineering' },
+  { code: 'MECT', name: 'Mechatronics Engineering' },
+  { code: 'CIVIL', name: 'Civil Engineering' },
+  { code: 'CSBS', name: 'Computer Science and Business Systems' },
+  { code: 'ARCH', name: 'Architecture' }
 ] as const;
 
-export type Department = typeof DEPARTMENTS[number];
+export type Department = typeof DEPARTMENT_DEFS[number]['code'];
 
 // Academic years
 export const ACADEMIC_YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'] as const;

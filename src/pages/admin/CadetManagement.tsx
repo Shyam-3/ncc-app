@@ -1,4 +1,4 @@
-import { ACADEMIC_YEARS, DEPARTMENTS, NCC_RANKS, PLATOONS, ROMAN_YEAR_MAP } from '@/config/constants';
+import { ACADEMIC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, PLATOONS, ROMAN_YEAR_MAP } from '@/config/constants';
 import { db } from '@/config/firebase';
 import { formatISTDate } from '@/utils/dateTime';
 import { collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
@@ -335,8 +335,8 @@ const CadetManagement: React.FC = () => {
               >
                 <option value="" disabled>Select Department</option>
                 <option value="ALL">All Departments</option>
-                {DEPARTMENTS.map(d => (
-                  <option key={d} value={d}>{d}</option>
+                {DEPARTMENT_DEFS.map(d => (
+                  <option key={d.code} value={d.code}>{d.code}</option>
                 ))}
               </Form.Select>
             </Col>
@@ -633,8 +633,8 @@ const CadetManagement: React.FC = () => {
                       isInvalid={Boolean(cadetEditErrors.department)}
                     >
                       <option value="" disabled>Select Department</option>
-                      {DEPARTMENTS.map(d => (
-                        <option key={d} value={d}>{d}</option>
+                      {DEPARTMENT_DEFS.map(d => (
+                        <option key={d.code} value={d.code}>{d.code}</option>
                       ))}
                     </Form.Select>
                     {cadetEditErrors.department && <Form.Text className="text-danger">{cadetEditErrors.department}</Form.Text>}

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { formatISTDate } from '@/utils/dateTime';
-import { ACADEMIC_YEARS, DEPARTMENTS, NCC_RANKS, PLATOONS, ROMAN_YEAR_MAP } from '../config/constants';
+import { ACADEMIC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, PLATOONS, ROMAN_YEAR_MAP } from '../config/constants';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -586,8 +586,8 @@ const Profile: React.FC = () => {
                         isInvalid={Boolean(editErrors.department)}
                       >
                         <option value="" disabled>Select Department</option>
-                        {DEPARTMENTS.map(d => (
-                          <option key={d} value={d}>{d}</option>
+                        {DEPARTMENT_DEFS.map(d => (
+                          <option key={d.code} value={d.code}>{d.code}</option>
                         ))}
                       </Form.Select>
                       {editErrors.department && <Form.Text className="text-danger d-block mt-1">{editErrors.department}</Form.Text>}

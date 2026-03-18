@@ -1,4 +1,4 @@
-import { ACADEMIC_YEARS, DEPARTMENTS, ROMAN_YEAR_MAP } from '@/config/constants';
+import { ACADEMIC_YEARS, DEPARTMENT_DEFS, ROMAN_YEAR_MAP } from '@/config/constants';
 import { Markdown } from '@/components';
 import { db } from '@/config/firebase';
 import { toISTDateInputValue, formatISTDate } from '@/utils/dateTime';
@@ -226,7 +226,7 @@ const OnDutyLetterReport: React.FC = () => {
 
     if (divisionFilter !== 'ALL') list = list.filter(u => (u.division || '') === divisionFilter);
     if (yearFilter !== 'ALL') list = list.filter(u => (u.year || '') === yearFilter);
-    if (departmentFilter !== 'ALL') list = list.filter(u => (u.department || '') === departmentFilter);
+    if (departmentFilter !== 'ALL') list = list.filter(u => ((u.department || '').trim() === departmentFilter));
     if (residentialFilter !== 'ALL') list = list.filter(u => (u.residentialStatus || '') === residentialFilter);
 
     if (searchTerm.trim()) {
@@ -547,7 +547,7 @@ const OnDutyLetterReport: React.FC = () => {
                 <Col xs={12} sm={6} md={3}>
                   <Form.Select size="sm" value={departmentFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDepartmentFilter(e.target.value)}>
                     <option value="ALL">All Departments</option>
-                    {DEPARTMENTS.map(item => <option key={item} value={item}>{item}</option>)}
+                    {DEPARTMENT_DEFS.map(item => <option key={item.code} value={item.code}>{item.code}</option>)}
                   </Form.Select>
                 </Col>
                 <Col xs={12} sm={6} md={3}>
@@ -656,7 +656,55 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, h
   const displayReason = formData.reason === 'Others' ? formData.reasonOther : formData.reason;
   const displayLocation = formData.location === 'Others' ? formData.locationOther : formData.location;
   const pageSize = 26;
-  const totalPages = Math.ceil(cadets.length / pageSize);
+
+  type CadetTableRow =
+    | { kind: 'department'; department: string }
+    | { kind: 'cadet'; cadet: CadetUser; serial: number };
+
+  const groupedByDepartment = cadets.reduce<Record<string, CadetUser[]>>((acc, cadet) => {
+    const department = (cadet.department || '').trim() || 'UNSPECIFIED';
+    if (!acc[department]) acc[department] = [];
+    acc[department].push(cadet);
+    return acc;
+  }, {});
+
+  const departmentWiseRows: CadetTableRow[] = [];
+  const departments = Object.keys(groupedByDepartment).sort((a, b) => a.localeCompare(b));
+  let serialCounter = 1;
+
+  departments.forEach(department => {
+    departmentWiseRows.push({ kind: 'department', department });
+    groupedByDepartment[department].forEach(cadet => {
+      departmentWiseRows.push({ kind: 'cadet', cadet, serial: serialCounter });
+      serialCounter += 1;
+    });
+  });
+
+  const pagedDepartmentRows: CadetTableRow[][] = [];
+  let currentPageRows: CadetTableRow[] = [];
+
+  departmentWiseRows.forEach((row, index) => {
+    const nextRow = departmentWiseRows[index + 1];
+    const remainingSlots = pageSize - currentPageRows.length;
+
+    if (row.kind === 'department' && remainingSlots <= 1 && nextRow && nextRow.kind === 'cadet') {
+      pagedDepartmentRows.push(currentPageRows);
+      currentPageRows = [];
+    }
+
+    currentPageRows.push(row);
+
+    if (currentPageRows.length === pageSize) {
+      pagedDepartmentRows.push(currentPageRows);
+      currentPageRows = [];
+    }
+  });
+
+  if (currentPageRows.length > 0) {
+    pagedDepartmentRows.push(currentPageRows);
+  }
+
+  const totalPages = Math.max(pagedDepartmentRows.length, 1);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
@@ -675,8 +723,8 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, h
 
   const logoUrl = headerTemplate.logoUrl || template.logoUrl;
   const logoBlock = logoUrl
-    ? `<img src="${logoUrl}" alt="College Logo" style="width:52px; height:52px; object-fit:contain;" />`
-    : '<div style="width:52px; height:52px; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:11px;">LOGO</div>';
+    ? `<img src="${logoUrl}" alt="College Logo" style="width:72px; height:72px; object-fit:contain;" />`
+    : '<div style="width:72px; height:72px; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:11px;">LOGO</div>';
 
   const headerTemplateValues: Record<string, string> = {
     ...templateValues,
@@ -699,6 +747,45 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, h
       <Modal.Body style={{ background: '#efefef', overflowX: 'hidden' }}>
         <style>{`
           @media print {
+            @page {
+              size: A4;
+              margin: 8mm;
+            }
+
+            body * {
+              visibility: hidden !important;
+            }
+
+            #print-content,
+            #print-content * {
+              visibility: visible !important;
+            }
+
+            #print-content {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              margin: 0;
+              padding: 0;
+              overflow: visible !important;
+            }
+
+            .od-preview-modal,
+            .od-preview-modal .modal,
+            .od-preview-modal .modal-dialog,
+            .od-preview-modal .modal-content,
+            .od-preview-modal .modal-body {
+              position: static !important;
+              width: auto !important;
+              max-width: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: visible !important;
+              box-shadow: none !important;
+              background: #fff !important;
+            }
+
             .od-preview-modal .modal-header,
             .od-preview-modal .modal-footer { display: none !important; }
             .od-page { page-break-after: always; }
@@ -713,18 +800,16 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, h
               <Markdown content={renderedHeader} />
             </div>
 
-            <div style={{ marginTop: '14px', fontFamily: 'Times New Roman, serif', fontSize: '13px', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+            <div style={{ marginTop: '14px', fontFamily: 'Times New Roman, serif', fontSize: '13px', lineHeight: 1.7 }}>
               <Markdown content={renderedLetter} />
             </div>
 
-            <div style={{ marginTop: 'auto', textAlign: 'right', paddingTop: '28px', fontSize: '13px' }}>
+            <div style={{ marginTop: '56px', textAlign: 'right', fontSize: '13px' }}>
               <div>COY COMMANDER</div>
             </div>
           </div>
 
-          {Array.from({ length: totalPages }).map((_, pageIndex) => {
-            const start = pageIndex * pageSize;
-            const rows = cadets.slice(start, start + pageSize);
+          {pagedDepartmentRows.map((rows, pageIndex) => {
             return (
               <div key={pageIndex} className="od-page" style={{ width: '210mm', minHeight: '297mm', margin: '0 auto 12px auto', background: '#fff', padding: '14mm 12mm', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ textAlign: 'center', fontWeight: 700, marginBottom: '8px', fontSize: '14px' }}>ON-DUTY CADET LIST</div>
@@ -743,19 +828,32 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, h
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((cadet, idx) => (
-                      <tr key={cadet.uid}>
-                        <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{start + idx + 1}</td>
-                        <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{formatAcademicYear(cadet.year)}</td>
-                        <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{cadet.registerNumber || '-'}</td>
-                        <td style={{ border: '1px solid #333', padding: '6px' }}>{(cadet.name || '-').toUpperCase()}</td>
-                        <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{(cadet.residentialStatus || '-').toUpperCase()}</td>
-                      </tr>
-                    ))}
+                    {rows.map((row, idx) => {
+                      if (row.kind === 'department') {
+                        return (
+                          <tr key={`dept-${row.department}-${pageIndex}-${idx}`}>
+                            <td colSpan={5} style={{ border: '1px solid #333', padding: '6px 8px', fontWeight: 700, textAlign: 'center', background: '#fff' }}>
+                              {row.department.toUpperCase()}
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      const cadet = row.cadet;
+                      return (
+                        <tr key={cadet.uid}>
+                          <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{row.serial}</td>
+                          <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{formatAcademicYear(cadet.year || cadet.nccYear)}</td>
+                          <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{cadet.registerNumber || '-'}</td>
+                          <td style={{ border: '1px solid #333', padding: '6px' }}>{(cadet.name || '-').toUpperCase()}</td>
+                          <td style={{ border: '1px solid #333', padding: '6px', textAlign: 'center' }}>{(cadet.residentialStatus || '-').toUpperCase()}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
 
-                <div style={{ marginTop: 'auto', textAlign: 'right', paddingTop: '28px', fontSize: '13px' }}>
+                <div style={{ marginTop: '56px', textAlign: 'right', fontSize: '13px' }}>
                   <div>COY COMMANDER</div>
                 </div>
               </div>
