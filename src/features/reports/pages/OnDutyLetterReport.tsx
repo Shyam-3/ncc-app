@@ -53,6 +53,7 @@ const formatYearForSort = (value?: string) => {
   if (lower.includes('2') || lower.includes('ii')) return 2;
   if (lower.includes('3') || lower.includes('iii')) return 3;
   if (lower.includes('4') || lower.includes('iv')) return 4;
+  if (lower.includes('5') || lower.includes('v')) return 5;
   return 99;
 };
 

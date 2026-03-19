@@ -1,6 +1,5 @@
 import { db, FIREBASE_CONFIG } from '@/config/firebase';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatISTDateTime } from '@/utils/dateTime';
 import { deleteApp, initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, getAuth, signOut } from 'firebase/auth';
 import {
@@ -11,7 +10,6 @@ import {
   orderBy,
   query,
   setDoc,
-  updateDoc,
 } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Tab, Table, Tabs } from 'react-bootstrap';
@@ -26,7 +24,6 @@ interface UserData {
   role: UserRole;
   createdAt: string;
   status: string;
-  tempPassword?: string;
   regimentalNumber?: string;
   division?: 'SD' | 'SW';
   platoon?: 'Alpha' | 'Bravo' | 'Charlie' | 'Delta';
@@ -55,7 +52,7 @@ interface PendingCadet {
   dateOfBirth: string;
   dateOfEnrollment: string;
   year: '1st Year' | '2nd Year';
-  residentialStatus: string;
+  residentialStatus: 'Day Scholar' | 'Hosteller';
   department: string;
   rollNo: string;
   registerNumber: string;
@@ -67,27 +64,30 @@ interface PendingCadet {
 }
 
 const UserManagement: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile, isAdmin, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [pending, setPending] = useState<PendingCadet[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [confirm, setConfirm] = useState<{action: 'approve'|'reject'|'update'|'delete'; payload: any} | null>(null);
-  const [editUser, setEditUser] = useState<UserData | null>(null);
-  const [editForm, setEditForm] = useState<{email: string; tempPassword: string}>({ email: '', tempPassword: '' });
+  const [confirm, setConfirm] = useState<{action: 'approve'|'reject'|'delete'; payload: any} | null>(null);
 
   // Filter states for pending approvals
   const [divisionFilter, setDivisionFilter] = useState<'ALL' | 'SD' | 'SW'>('ALL');
   const [platoonFilter, setPlatoonFilter] = useState<'ALL' | 'Alpha' | 'Bravo' | 'Charlie' | 'Delta'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filter states for credentials tab
+  // Filter states for users tab
   const [divisionFilterUsers, setDivisionFilterUsers] = useState<'ALL' | 'SD' | 'SW'>('ALL');
   const [platoonFilterUsers, setPlatoonFilterUsers] = useState<'ALL' | 'Alpha' | 'Bravo' | 'Charlie' | 'Delta'>('ALL');
   const [searchTermUsers, setSearchTermUsers] = useState('');
-  const [showPwd, setShowPwd] = useState<Record<string, boolean>>({});
 
   const isSelf = (uid: string) => uid === currentUser?.uid;
+  const canDeleteUser = (target: UserData) => {
+    if (isSelf(target.uid)) return false;
+    if (isSuperAdmin()) return true;
+    if (isAdmin()) return target.role !== 'superadmin';
+    return false;
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -112,15 +112,6 @@ const UserManagement: React.FC = () => {
     const q = query(ref, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     setPending(snapshot.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as PendingCadet[]);
-  };
-
-  const openEdit = (u: UserData) => {
-    setEditUser(u);
-    setEditForm({ email: u.email || '', tempPassword: u.tempPassword || '' });
-  };
-
-  const togglePwdVisibility = (uid: string) => {
-    setShowPwd(prev => ({ ...prev, [uid]: !prev[uid] }));
   };
 
   const handleApprove = async (candidate: PendingCadet) => {
@@ -206,31 +197,6 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleUpdateCredentials = async () => {
-    if (!editUser) return;
-    if (isSelf(editUser.uid)) {
-      toast.error('You cannot modify your own credentials here');
-      return;
-    }
-    setSaving(true);
-    try {
-      await updateDoc(doc(db, 'users', editUser.uid), {
-        email: editForm.email,
-        tempPassword: editForm.tempPassword,
-        lastUpdated: new Date().toISOString(),
-      });
-      toast.success('Credentials updated');
-      await fetchUsers();
-      setEditUser(null);
-    } catch (e) {
-      console.error(e);
-      toast.error('Update failed');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-
   // Filter and sort pending cadets
   const filteredPending = useMemo(() => {
     // First, filter out cadets whose emails are already in users collection (already approved)
@@ -278,7 +244,7 @@ const UserManagement: React.FC = () => {
     return pending.filter(c => !existingEmails.has(c.email.toLowerCase())).length;
   }, [pending, users]);
 
-  // Filter and sort users for credentials tab
+  // Filter and sort users
   const filteredUsers = useMemo(() => {
     let list = [...users];
 
@@ -314,6 +280,10 @@ const UserManagement: React.FC = () => {
       toast.error('You cannot delete your own account here');
       return;
     }
+    if (!canDeleteUser(u)) {
+      toast.error('You do not have permission to delete this user');
+      return;
+    }
     setSaving(true);
     try {
       await deleteDoc(doc(db, 'users', u.uid));
@@ -329,7 +299,7 @@ const UserManagement: React.FC = () => {
         await deleteDoc(doc(db, 'pendingCadets', matchingPending.id));
       }
       
-      toast.success('User deleted');
+      toast.success('User deleted from Firestore');
       await Promise.all([fetchUsers(), fetchPending()]);
     } catch (e) {
       console.error(e);
@@ -435,7 +405,7 @@ const UserManagement: React.FC = () => {
               </td>
               <td>{c.regimentalNumber || 'N/A'}</td>
               <td>{c.email}</td>
-              <td>{formatISTDateTime(c.createdAt)}</td>
+              <td>{new Date(c.createdAt).toLocaleString()}</td>
               <td className="d-flex gap-2">
                 <Button variant="success" size="sm" onClick={() => setConfirm({ action: 'approve', payload: c })}>
                   Accept
@@ -456,7 +426,7 @@ const UserManagement: React.FC = () => {
 
   const UsersTable = useMemo(() => (
     <>
-      {/* Filter controls (Credentials) */}
+      {/* Filter controls (Users) */}
       <Row className="mb-3 g-3">
         <Col xs={12} md={3}>
           <Form.Label className="small fw-semibold">Division</Form.Label>
@@ -532,7 +502,6 @@ const UserManagement: React.FC = () => {
             <th style={{ width: '100px' }}>Platoon</th>
             <th>Regimental Number</th>
             <th>Email</th>
-            <th>Password</th>
             <th style={{ width: '180px' }}>Actions</th>
           </tr>
         </thead>
@@ -557,23 +526,14 @@ const UserManagement: React.FC = () => {
               </td>
               <td>{u.regimentalNumber || '-'}</td>
               <td>{u.email}</td>
-              <td className="text-nowrap">
-                {u.tempPassword ? (
-                  <>
-                    <span className="me-2">{showPwd[u.uid] ? u.tempPassword : '••••••'}</span>
-                    <Button size="sm" variant="outline-secondary" onClick={() => togglePwdVisibility(u.uid)} aria-label="Toggle password visibility">
-                      <i className={`bi ${showPwd[u.uid] ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                    </Button>
-                  </>
-                ) : (
-                  <span className="text-muted">-</span>
-                )}
-              </td>
               <td className="d-flex gap-2">
                 {!isSelf(u.uid) ? (
                   <>
-                    <Button size="sm" variant="outline-primary" onClick={() => openEdit(u)}>Update</Button>
-                    <Button size="sm" variant="outline-danger" onClick={() => setConfirm({ action: 'delete', payload: u })}>Delete</Button>
+                    {canDeleteUser(u) ? (
+                      <Button size="sm" variant="outline-danger" onClick={() => setConfirm({ action: 'delete', payload: u })}>Delete</Button>
+                    ) : (
+                      <Button size="sm" variant="outline-secondary" disabled>Delete</Button>
+                    )}
                   </>
                 ) : (
                   <small className="text-muted">Self-managed</small>
@@ -582,12 +542,12 @@ const UserManagement: React.FC = () => {
             </tr>
           ))}
           {filteredUsers.length === 0 && (
-            <tr><td colSpan={8} className="text-center text-muted">No users match filters</td></tr>
+            <tr><td colSpan={7} className="text-center text-muted">No users match filters</td></tr>
           )}
         </tbody>
       </Table>
     </>
-  ), [filteredUsers, divisionFilterUsers, platoonFilterUsers, searchTermUsers, showPwd]);
+  ), [filteredUsers, divisionFilterUsers, platoonFilterUsers, searchTermUsers, userProfile?.role]);
 
 
   if (loading) {
@@ -609,10 +569,13 @@ const UserManagement: React.FC = () => {
           </h3>
         </Card.Header>
         <Card.Body>
-          <Tabs defaultActiveKey="credentials" id="user-mgmt-tabs" className="mb-3">
-            <Tab eventKey="credentials" title="Credentials">
+          <Tabs defaultActiveKey="users" id="user-mgmt-tabs" className="mb-3">
+            <Tab eventKey="users" title="Users">
               <Alert variant="info">
-                Edit stored credentials (email and temporary password) for existing users. Changes require confirmation.
+                View or delete users. On Firebase Spark plan, deletion removes user data from Firestore only.
+              </Alert>
+              <Alert variant="warning">
+                Firebase Authentication account deletion requires a privileged backend (Cloud Functions/Admin SDK), which is not available on Spark plan.
               </Alert>
               {UsersTable}
             </Tab>
@@ -636,7 +599,7 @@ const UserManagement: React.FC = () => {
         </Card.Body>
       </Card>
 
-      {/* Confirm modal for approve/reject/update */}
+      {/* Confirm modal for approve/reject/delete */}
       <Modal show={!!confirm} onHide={() => setConfirm(null)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Confirm {confirm?.action}</Modal.Title>
@@ -647,9 +610,6 @@ const UserManagement: React.FC = () => {
           )}
           {confirm?.action === 'reject' && (
             <p>Reject registration for <strong>{confirm?.payload?.name}</strong> ({confirm?.payload?.email})?</p>
-          )}
-          {confirm?.action === 'update' && (
-            <p>Apply credential changes for <strong>{editUser?.name}</strong>?</p>
           )}
           {confirm?.action === 'delete' && (
             <p>Delete user <strong>{confirm?.payload?.name}</strong> ({confirm?.payload?.email})? This cannot be undone.</p>
@@ -663,47 +623,9 @@ const UserManagement: React.FC = () => {
           {confirm?.action === 'reject' && (
             <Button variant="danger" onClick={() => handleReject(confirm.payload)} disabled={saving}>Reject</Button>
           )}
-          {confirm?.action === 'update' && (
-            <Button variant="primary" onClick={handleUpdateCredentials} disabled={saving}>Update</Button>
-          )}
           {confirm?.action === 'delete' && (
             <Button variant="danger" onClick={() => handleDeleteUser(confirm.payload)} disabled={saving}>Delete</Button>
           )}
-        </Modal.Footer>
-      </Modal>
-
-      {/* Edit credentials modal */}
-      <Modal show={!!editUser} onHide={() => setEditUser(null)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Credentials</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Row className="g-3">
-              <Col xs={12}>
-                <Form.Label>Email</Form.Label>
-                <Form.Control
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({ ...editForm, email: e.target.value })}
-                />
-              </Col>
-              <Col xs={12}>
-                <Form.Label>Temporary Password</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={editForm.tempPassword}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({ ...editForm, tempPassword: e.target.value })}
-                  placeholder="Set or update temp password"
-                />
-                <Form.Text className="text-muted">This value is stored in Firestore and is not the Firebase Auth password.</Form.Text>
-              </Col>
-            </Row>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setEditUser(null)} disabled={saving}>Cancel</Button>
-          <Button variant="primary" onClick={() => setConfirm({ action: 'update', payload: editUser })} disabled={saving}>Save Changes</Button>
         </Modal.Footer>
       </Modal>
     </Container>

@@ -41,7 +41,7 @@ service cloud.firestore {
       // Narrow role-only updates path (kept for clarity)
       allow update: if (isAdmin() || isSuperAdmin()) && 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isAdmin() && resource.data.role != 'superadmin');
     }
 
     // Pending cadet registrations awaiting approval
