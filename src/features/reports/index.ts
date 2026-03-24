@@ -1,5 +1,6 @@
-export { default as OnDutyLetterReport } from './pages/OnDutyLetterReport';
-export { default as ReportsTemplateManager } from './pages/ReportsTemplateManager';
-export { default as ReportsWorkspace } from './pages/ReportsWorkspace';
 export * from './service';
+export * from './templateService';
+export * from './hooks/useReports';
+// Types from model only to avoid duplication with templateService
+export type { Report, ReportType, TemplateField, OnDutyLetterData } from './model/report.types';
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 const AppNavbar: React.FC = () => {
   const { currentUser, userProfile, signOut } = useAuth();

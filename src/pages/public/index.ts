@@ -1,0 +1,13 @@
+export { default as About } from './About';
+export { default as Alumni } from './Alumni';
+export { default as Contact } from './Contact';
+export { default as Home } from './Home';
+export { default as NotFound } from './NotFound';
+export { default as Notifications } from './Notifications';
+export { default as Photos } from './Gallery/Photos';
+export { default as Videos } from './Gallery/Videos';
+export { default as Resources } from './Resources';
+export * from './Activities';
+export * from './Cadets';
+export * from './Events';
+export * from './Gallery';

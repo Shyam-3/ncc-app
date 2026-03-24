@@ -1,4 +1,4 @@
-export { default as CmsEditor } from './pages/CmsEditor';
-export { default as About } from './pages/About';
 export * from './service';
+// Types are exported from model only to avoid duplication
+export type * from './model/cms.types';
 

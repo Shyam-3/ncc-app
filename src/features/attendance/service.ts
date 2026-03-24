@@ -1,5 +1,5 @@
-import { db } from '@/config/firebase';
-import { AttendanceMark, AttendanceSession, Cadet } from '@/types';
+import { db } from '@/shared/config/firebase';
+import { AttendanceMark, AttendanceSession, Cadet } from '@/shared/types';
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
 
 const sessionsCol = collection(db, 'attendanceSessions');
@@ -140,4 +140,5 @@ export async function lockSession(sessionId: string) {
 export async function deleteSession(sessionId: string) {
 	await deleteDoc(doc(db, 'attendanceSessions', sessionId));
 }
+
 

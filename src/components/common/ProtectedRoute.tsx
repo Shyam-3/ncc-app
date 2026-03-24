@@ -1,8 +1,8 @@
 import React, { ReactNode } from 'react';
 import { Spinner } from 'react-bootstrap';
 import { Navigate } from 'react-router-dom';
-import { UserRole } from '../../config/constants';
-import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../shared/config/constants';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -35,3 +35,4 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
 };
 
 export default ProtectedRoute;
+

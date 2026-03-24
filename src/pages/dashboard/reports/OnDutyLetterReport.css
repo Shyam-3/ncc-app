@@ -1,0 +1,127 @@
+.od-cadet-table-wrap {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.od-cadet-table-head {
+  position: sticky;
+  top: 0;
+}
+
+.od-select-col {
+  width: 48px;
+}
+
+.od-preview-body {
+  background: #efefef;
+  overflow-x: hidden;
+}
+
+.od-print-content {
+  overflow-x: hidden;
+}
+
+.od-page-letter {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 12px auto;
+  background: #fff;
+  padding: 16mm 14mm;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.od-markdown-header {
+  font-family: "Times New Roman", serif;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.od-markdown-letter {
+  margin-top: 14px;
+  font-family: "Times New Roman", serif;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.od-signature-block {
+  margin-top: 56px;
+  text-align: right;
+  font-size: 13px;
+}
+
+.od-page-list {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 12px auto;
+  background: #fff;
+  padding: 14mm 12mm;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.od-list-title {
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.od-list-page-count {
+  text-align: center;
+  font-size: 11px;
+  margin-bottom: 10px;
+}
+
+.od-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.od-th {
+  border: 1px solid #111;
+  padding: 6px;
+}
+
+.od-th-sno {
+  width: 8%;
+}
+
+.od-th-year {
+  width: 10%;
+}
+
+.od-th-reg {
+  width: 30%;
+}
+
+.od-th-name {
+  width: 32%;
+}
+
+.od-th-residential {
+  width: 20%;
+}
+
+.od-department-row {
+  border: 1px solid #333;
+  padding: 6px 8px;
+  font-weight: 700;
+  text-align: center;
+  background: #fff;
+}
+
+.od-td-center {
+  border: 1px solid #333;
+  padding: 6px;
+  text-align: center;
+}
+
+.od-td-left {
+  border: 1px solid #333;
+  padding: 6px;
+}

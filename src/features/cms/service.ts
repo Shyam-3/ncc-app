@@ -1,4 +1,4 @@
-import { db } from '@/config/firebase';
+import { db } from '@/shared/config/firebase';
 import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 
 export interface CmsSection {
@@ -42,3 +42,4 @@ export async function saveCms(
   };
   await setDoc(cmsDocRef(key), payload, { merge: true });
 }
+

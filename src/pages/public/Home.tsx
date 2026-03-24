@@ -2,7 +2,8 @@ import React from 'react';
 import { Button, Card, Carousel, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { AnimatedSection } from '../../components';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import './Home.css';
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
@@ -13,10 +14,9 @@ const Home: React.FC = () => {
       <Carousel fade interval={3000} indicators>
         <Carousel.Item>
           <img
-            className="d-block w-100"
+            className="d-block w-100 home-hero-image"
             src="https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=1600&auto=format&fit=crop"
             alt="Parade training"
-            style={{ maxHeight: 520, objectFit: 'cover' }}
           />
           <Carousel.Caption className="text-start">
             <h1 className="fw-bold d-none d-md-block">NCC Army Wing</h1>
@@ -32,10 +32,9 @@ const Home: React.FC = () => {
         </Carousel.Item>
         <Carousel.Item>
           <img
-            className="d-block w-100"
+            className="d-block w-100 home-hero-image"
             src="https://images.unsplash.com/photo-1507120410856-1f35574c3b45?q=80&w=1600&auto=format&fit=crop"
             alt="Social service activity"
-            style={{ maxHeight: 520, objectFit: 'cover' }}
           />
           <Carousel.Caption className="text-start">
             <h2 className="fw-semibold d-none d-md-block">Community & Social Service</h2>
@@ -46,10 +45,9 @@ const Home: React.FC = () => {
         </Carousel.Item>
         <Carousel.Item>
           <img
-            className="d-block w-100"
+            className="d-block w-100 home-hero-image"
             src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=1600&auto=format&fit=crop"
             alt="Camps and adventures"
-            style={{ maxHeight: 520, objectFit: 'cover' }}
           />
           <Carousel.Caption className="text-start">
             <h2 className="fw-semibold d-none d-md-block">Camps & Adventures</h2>
@@ -69,7 +67,7 @@ const Home: React.FC = () => {
           <Col xs={12} sm={6} md={4} lg={4} xl={4}>
             <Card className="h-100 text-center border-0 shadow-sm hover-lift">
               <Card.Body>
-                <i className="bi bi-calendar-event text-primary" style={{ fontSize: '48px' }}></i>
+                <i className="bi bi-calendar-event text-primary home-feature-icon"></i>
                 <Card.Title className="mt-3">Events & Camps</Card.Title>
                 <Card.Text>
                   Participate in training camps, national celebrations, and community service activities.
@@ -80,7 +78,7 @@ const Home: React.FC = () => {
           <Col xs={12} sm={6} md={4} lg={4} xl={4}>
             <Card className="h-100 text-center border-0 shadow-sm hover-lift">
               <Card.Body>
-                <i className="bi bi-clipboard-check text-success" style={{ fontSize: '48px' }}></i>
+                <i className="bi bi-clipboard-check text-success home-feature-icon"></i>
                 <Card.Title className="mt-3">Attendance Tracking</Card.Title>
                 <Card.Text>
                   Modern digital attendance system with real-time monitoring and reports.
@@ -91,7 +89,7 @@ const Home: React.FC = () => {
           <Col xs={12} sm={6} md={4} lg={4} xl={4}>
             <Card className="h-100 text-center border-0 shadow-sm hover-lift">
               <Card.Body>
-                <i className="bi bi-trophy text-warning" style={{ fontSize: '48px' }}></i>
+                <i className="bi bi-trophy text-warning home-feature-icon"></i>
                 <Card.Title className="mt-3">Achievements</Card.Title>
                 <Card.Text>
                   Track your progress, earn certificates, and showcase your NCC achievements.
@@ -102,7 +100,7 @@ const Home: React.FC = () => {
           <Col xs={12} sm={6} md={4} lg={4} xl={4}>
             <Card className="h-100 text-center border-0 shadow-sm hover-lift">
               <Card.Body>
-                <i className="bi bi-book text-info" style={{ fontSize: '48px' }}></i>
+                <i className="bi bi-book text-info home-feature-icon"></i>
                 <Card.Title className="mt-3">Exam Preparation</Card.Title>
                 <Card.Text>
                   Access study materials, practice tests, and resources for B & C certificate exams.
@@ -113,7 +111,7 @@ const Home: React.FC = () => {
           <Col xs={12} sm={6} md={4} lg={4} xl={4}>
             <Card className="h-100 text-center border-0 shadow-sm hover-lift">
               <Card.Body>
-                <i className="bi bi-people text-danger" style={{ fontSize: '48px' }}></i>
+                <i className="bi bi-people text-danger home-feature-icon"></i>
                 <Card.Title className="mt-3">Alumni Network</Card.Title>
                 <Card.Text>
                   Connect with alumni, get mentorship, and explore career opportunities.
@@ -124,7 +122,7 @@ const Home: React.FC = () => {
           <Col xs={12} sm={6} md={4} lg={4} xl={4}>
             <Card className="h-100 text-center border-0 shadow-sm hover-lift">
               <Card.Body>
-                <i className="bi bi-images text-purple" style={{ fontSize: '48px' }}></i>
+                <i className="bi bi-images text-purple home-feature-icon"></i>
                 <Card.Title className="mt-3">Gallery</Card.Title>
                 <Card.Text>
                   Browse photos and videos from camps, parades, and special events.

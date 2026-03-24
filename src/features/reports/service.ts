@@ -1,5 +1,5 @@
-import { db } from '@/config/firebase';
-import { Cadet } from '@/types';
+import { db } from '@/shared/config/firebase';
+import { Cadet } from '@/shared/types';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 
 export interface OnDutyReport {
@@ -27,3 +27,4 @@ export async function getCadetById(id: string): Promise<(Cadet & { id: string })
   const d: any = snap.docs[0];
   return d ? { id: d.id, ...(d.data() as Cadet) } : null;
 }
+

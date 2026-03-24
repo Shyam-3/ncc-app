@@ -3,8 +3,9 @@ import React, { ChangeEvent, FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
-import { DEPARTMENT_DEFS, PLATOONS } from '../../config/constants';
-import { db } from '../../config/firebase';
+import { DEPARTMENT_DEFS, PLATOONS } from '../../shared/config/constants';
+import { db } from '../../shared/config/firebase';
+import './Register.css';
 
 interface FormData {
   // Personal Details
@@ -273,7 +274,7 @@ const Register: React.FC = () => {
           <Card className="shadow">
             <Card.Body className="p-4 p-md-5">
               <div className="text-center mb-4">
-                <i className="bi bi-person-plus-fill text-primary" style={{ fontSize: '64px' }}></i>
+                <i className="bi bi-person-plus-fill text-primary register-hero-icon"></i>
                 <h2 className="mt-3">Cadet Registration</h2>
                 <p className="text-muted">Join the NCC Army Wing</p>
               </div>
@@ -683,3 +684,4 @@ const Register: React.FC = () => {
 };
 
 export default Register;
+

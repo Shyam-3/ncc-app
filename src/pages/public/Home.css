@@ -1,0 +1,8 @@
+.home-hero-image {
+  max-height: 520px;
+  object-fit: cover;
+}
+
+.home-feature-icon {
+  font-size: 48px;
+}

@@ -1,5 +1,5 @@
 export * from './service';
-export { default as AttendanceManagement } from './pages/AttendanceManagement';
-export { default as AttendanceView } from './pages/AttendanceView';
+export * from './hooks/useAttendance';
+export type * from './model/attendance.types';
 
 

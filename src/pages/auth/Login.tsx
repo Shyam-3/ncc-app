@@ -1,7 +1,8 @@
 import React, { ChangeEvent, FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import './Login.css';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -39,7 +40,7 @@ const Login: React.FC = () => {
           <Card className="shadow">
             <Card.Body className="p-4 p-md-5">
               <div className="text-center mb-4">
-                <i className="bi bi-shield-fill text-primary" style={{ fontSize: '64px' }}></i>
+                <i className="bi bi-shield-fill text-primary login-hero-icon"></i>
                 <h2 className="mt-3">Login</h2>
                 <p className="text-muted">Access your NCC account</p>
               </div>

@@ -1,4 +1,4 @@
-import { db } from '@/config/firebase';
+import { db } from '@/shared/config/firebase';
 import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 
 export interface OnDutyTemplate {
@@ -169,3 +169,4 @@ export async function deleteReportTemplate(templateId: string) {
   const templateRef = doc(db, 'reportTemplates', templateId);
   await deleteDoc(templateRef);
 }
+

@@ -1,8 +1,9 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { mapFirebaseAuthError } from '@/utils/firebaseErrors';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { mapFirebaseAuthError } from '@/shared/utils/firebaseErrors';
 import React, { FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import './ForgotPassword.css';
 
 const ForgotPassword: React.FC = () => {
   const { resetPassword } = useAuth();
@@ -33,7 +34,7 @@ const ForgotPassword: React.FC = () => {
           <Card className="shadow">
             <Card.Body className="p-5">
               <div className="text-center mb-4">
-                <i className="bi bi-envelope-paper text-primary" style={{ fontSize: '64px' }}></i>
+                <i className="bi bi-envelope-paper text-primary forgot-hero-icon"></i>
                 <h2 className="mt-3">Forgot Password</h2>
                 <p className="text-muted">We'll email you a reset link</p>
               </div>
@@ -71,3 +72,4 @@ const ForgotPassword: React.FC = () => {
 };
 
 export default ForgotPassword;
+
