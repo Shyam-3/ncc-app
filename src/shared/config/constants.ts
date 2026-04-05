@@ -59,10 +59,6 @@ export const NCC_RANKS: Rank[] = [
   { code: 'SUO', name: 'Senior Under Officer', order: 8 }
 ];
 
-// Platoon/Company structure
-export const PLATOONS = ['Alpha', 'Bravo', 'Charlie', 'Delta'] as const;
-export type Platoon = typeof PLATOONS[number];
-
 // Academic departments
 export interface DepartmentDef {
   code: string;

@@ -8,7 +8,6 @@ import {
   DEPARTMENT_DEFS,
   NCC_RANKS,
   NCC_YEARS,
-  PLATOONS,
   ROMAN_YEAR_MAP,
 } from '../../shared/config/constants';
 import { db } from '../../shared/config/firebase';
@@ -22,7 +21,6 @@ interface UserProfile {
   dateOfBirth?: string;
   division?: 'SD' | 'SW';
   regimentalNumber?: string;
-  platoon?: 'Alpha' | 'Bravo' | 'Charlie' | 'Delta';
   dateOfEnrollment?: string;
   nccYear?: string;
   rank?: string;
@@ -47,7 +45,6 @@ const Profile: React.FC = () => {
   const [editForm, setEditForm] = useState({
     name: '',
     regimentalNumber: '',
-    platoon: '',
     dateOfEnrollment: '',
     nccYear: '',
     rank: 'CDT',
@@ -79,7 +76,6 @@ const Profile: React.FC = () => {
           setEditForm({
             name: data.name || '',
             regimentalNumber: data.regimentalNumber || '',
-            platoon: data.platoon || '',
             dateOfEnrollment: data.dateOfEnrollment || '',
             nccYear: data.nccYear || '1st Year',
             rank: data.rank || 'CDT',
@@ -109,7 +105,6 @@ const Profile: React.FC = () => {
       setEditForm({
         name: profile.name || '',
         regimentalNumber: profile.regimentalNumber || '',
-        platoon: profile.platoon || '',
         dateOfEnrollment: profile.dateOfEnrollment || '',
         nccYear: profile.nccYear || '1st Year',
         rank: profile.rank || 'CDT',
@@ -166,7 +161,6 @@ const Profile: React.FC = () => {
 
     if (isAdminEditor) {
       if (!editForm.regimentalNumber.trim()) nextErrors.regimentalNumber = 'Regimental number is required';
-      if (!editForm.platoon) nextErrors.platoon = 'Platoon is required';
       if (!editForm.dateOfEnrollment) nextErrors.dateOfEnrollment = 'Date of enrollment is required';
       if (!editForm.nccYear) nextErrors.nccYear = 'Year is required';
       if (!editForm.rank) nextErrors.rank = 'Rank is required';
@@ -194,7 +188,6 @@ const Profile: React.FC = () => {
         await updateDoc(doc(db, 'users', currentUser.uid), {
           name: editForm.name,
           regimentalNumber: editForm.regimentalNumber,
-          platoon: editForm.platoon,
           dateOfEnrollment: editForm.dateOfEnrollment,
           nccYear: editForm.nccYear,
           rank: editForm.rank,
@@ -212,7 +205,6 @@ const Profile: React.FC = () => {
           ...profile,
           name: editForm.name,
           regimentalNumber: editForm.regimentalNumber,
-          platoon: editForm.platoon as any,
           dateOfEnrollment: editForm.dateOfEnrollment,
           nccYear: editForm.nccYear,
           rank: editForm.rank,
@@ -381,16 +373,6 @@ const Profile: React.FC = () => {
                   <p className="mb-0">{getNccYear(profile.nccYear)}</p>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Platoon</Form.Label>
-                  <div>
-                    {profile.platoon ? (
-                      <Badge bg="secondary">{profile.platoon}</Badge>
-                    ) : (
-                      <span className="text-muted">-</span>
-                    )}
-                  </div>
-                </Col>
-                <Col xs={12} md={4}>
                   <Form.Label className="fw-bold text-muted small">Date of Enrollment</Form.Label>
                   <p className="mb-0">{formatDate(profile.dateOfEnrollment)}</p>
                 </Col>
@@ -485,22 +467,6 @@ const Profile: React.FC = () => {
                         isInvalid={Boolean(editErrors.regimentalNumber)}
                       />
                       {editErrors.regimentalNumber && <Form.Text className="text-danger d-block mt-1">{editErrors.regimentalNumber}</Form.Text>}
-                    </Form.Group>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <Form.Group className="mb-3" controlId="editPlatoon">
-                      <Form.Label>Platoon *</Form.Label>
-                      <Form.Select
-                        value={editForm.platoon}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('platoon', e.target.value)}
-                        isInvalid={Boolean(editErrors.platoon)}
-                      >
-                        <option value="" disabled>Select Platoon</option>
-                        {PLATOONS.map(p => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
-                      </Form.Select>
-                      {editErrors.platoon && <Form.Text className="text-danger d-block mt-1">{editErrors.platoon}</Form.Text>}
                     </Form.Group>
                   </Col>
                 </Row>

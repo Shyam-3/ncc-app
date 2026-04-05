@@ -10,7 +10,6 @@ const CadetList: React.FC = () => (
           <th>#</th>
           <th>Name</th>
           <th>Reg No</th>
-          <th>Platoon</th>
           <th>Year</th>
         </tr>
       </thead>
@@ -20,7 +19,6 @@ const CadetList: React.FC = () => (
             <td>{i}</td>
             <td>Cadet {i}</td>
             <td>2024{i.toString().padStart(3,'0')}</td>
-            <td>{['Alpha','Bravo','Charlie'][i%3]}</td>
             <td>{["1st","2nd","3rd"][i%3]} Year</td>
           </tr>
         ))}

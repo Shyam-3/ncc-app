@@ -1,4 +1,4 @@
-import { ACADEMIC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, PLATOONS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
+import { ACADEMIC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
 import { db } from '@/shared/config/firebase';
 import { formatISTDate } from '@/shared/utils/dateTime';
 import { collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
@@ -18,7 +18,6 @@ interface CadetUser {
   status: string;
   regimentalNumber?: string;
   division?: 'SD' | 'SW';
-  platoon?: 'Alpha' | 'Bravo' | 'Charlie' | 'Delta';
   dateOfBirth?: string;
   dateOfEnrollment?: string;
   nccYear?: string;
@@ -48,7 +47,6 @@ const CadetManagement: React.FC = () => {
   const [cadetEditForm, setCadetEditForm] = useState({
     division: '',
     regimentalNumber: '',
-    platoon: '',
     dateOfEnrollment: '',
     nccYear: '',
     rank: 'CDT',
@@ -138,7 +136,6 @@ const CadetManagement: React.FC = () => {
     setCadetEditForm({
       division: u.division || '',
       regimentalNumber: u.regimentalNumber || '',
-      platoon: u.platoon || '',
       dateOfEnrollment: u.dateOfEnrollment || '',
       nccYear: u.nccYear || '1st Year',
       rank: u.rank || 'CDT',
@@ -174,7 +171,6 @@ const CadetManagement: React.FC = () => {
 
     if (!cadetEditForm.division) nextErrors.division = 'Division is required';
     if (!cadetEditForm.regimentalNumber.trim()) nextErrors.regimentalNumber = 'Regimental number is required';
-    if (!cadetEditForm.platoon) nextErrors.platoon = 'Platoon is required';
     if (!cadetEditForm.dateOfEnrollment) nextErrors.dateOfEnrollment = 'Date of enrollment is required';
     if (!cadetEditForm.nccYear) nextErrors.nccYear = 'Year is required';
     if (!cadetEditForm.rank) nextErrors.rank = 'Rank is required';
@@ -205,7 +201,6 @@ const CadetManagement: React.FC = () => {
       await updateDoc(doc(db, 'users', cadetView.uid), {
         division: cadetEditForm.division,
         regimentalNumber: cadetEditForm.regimentalNumber,
-        platoon: cadetEditForm.platoon,
         dateOfEnrollment: cadetEditForm.dateOfEnrollment,
         nccYear: cadetEditForm.nccYear,
         rank: cadetEditForm.rank,
@@ -221,7 +216,6 @@ const CadetManagement: React.FC = () => {
         ...u,
         division: cadetEditForm.division as any,
         regimentalNumber: cadetEditForm.regimentalNumber,
-        platoon: cadetEditForm.platoon as any,
         dateOfEnrollment: cadetEditForm.dateOfEnrollment,
         nccYear: cadetEditForm.nccYear,
         rank: cadetEditForm.rank,
@@ -236,7 +230,6 @@ const CadetManagement: React.FC = () => {
         ...prev,
         division: cadetEditForm.division as any,
         regimentalNumber: cadetEditForm.regimentalNumber,
-        platoon: cadetEditForm.platoon as any,
         dateOfEnrollment: cadetEditForm.dateOfEnrollment,
         nccYear: cadetEditForm.nccYear,
         rank: cadetEditForm.rank,
@@ -447,10 +440,6 @@ const CadetManagement: React.FC = () => {
                   <p className="mb-0">{formatYear(cadetView.nccYear || '1st Year')}</p>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Platoon</Form.Label>
-                  <p className="mb-0">{cadetView.platoon || '-'}</p>
-                </Col>
-                <Col xs={12} md={4}>
                   <Form.Label className="fw-bold text-muted small">Date of Enrollment</Form.Label>
                   <p className="mb-0">{formatDate(cadetView.dateOfEnrollment)}</p>
                 </Col>
@@ -564,22 +553,6 @@ const CadetManagement: React.FC = () => {
                       ))}
                     </Form.Select>
                     {cadetEditErrors.nccYear && <Form.Text className="text-danger">{cadetEditErrors.nccYear}</Form.Text>}
-                  </Form.Group>
-                </Col>
-                <Col xs={12} md={4}>
-                  <Form.Group controlId="editCadetPlatoon">
-                    <Form.Label>Platoon *</Form.Label>
-                    <Form.Select
-                      value={cadetEditForm.platoon}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('platoon', e.target.value)}
-                      isInvalid={Boolean(cadetEditErrors.platoon)}
-                    >
-                      <option value="" disabled>Select Platoon</option>
-                      {PLATOONS.map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </Form.Select>
-                    {cadetEditErrors.platoon && <Form.Text className="text-danger">{cadetEditErrors.platoon}</Form.Text>}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={4}>

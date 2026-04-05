@@ -311,7 +311,6 @@ const AttendanceManagement: React.FC = () => {
             '#': idx + 1,
             Name: c.name,
             'Reg No': c.registerNumber || '',
-            Platoon: c.platoon || '',
             Status: m?.status || 'A',
             Timestamp: m?.markedAt ? formatISTDateTime(m.markedAt) : '-',
           };
@@ -322,7 +321,6 @@ const AttendanceManagement: React.FC = () => {
           { wch: 5 },
           { wch: 20 },
           { wch: 15 },
-          { wch: 10 },
           { wch: 8 },
           { wch: 20 },
         ];
@@ -703,7 +701,6 @@ const AttendanceManagement: React.FC = () => {
                       <th>#</th>
                       <th>Name</th>
                       <th>Reg No</th>
-                      <th>Platoon</th>
                       <th>Status</th>
                       <th>Time</th>
                     </tr>
@@ -722,7 +719,6 @@ const AttendanceManagement: React.FC = () => {
                             <td>{idx + 1}</td>
                             <td>{c.name}</td>
                             <td>{c.registerNumber}</td>
-                            <td>{c.platoon}</td>
                             <td>
                               <Badge
                                 bg={mark?.status === 'P' ? 'success' : 'danger'}

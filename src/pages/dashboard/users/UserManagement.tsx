@@ -27,7 +27,6 @@ interface UserData {
   status: string;
   regimentalNumber?: string;
   division?: 'SD' | 'SW';
-  platoon?: 'Alpha' | 'Bravo' | 'Charlie' | 'Delta';
   dateOfBirth?: string;
   dateOfEnrollment?: string;
   year?: string;
@@ -49,7 +48,6 @@ interface PendingCadet {
   tempPassword?: string;
   regimentalNumber: string;
   division: 'SD' | 'SW';
-  platoon: 'Alpha' | 'Bravo' | 'Charlie' | 'Delta';
   dateOfBirth: string;
   dateOfEnrollment: string;
   nccYear?: string;
@@ -75,12 +73,10 @@ const UserManagement: React.FC = () => {
 
   // Filter states for pending approvals
   const [divisionFilter, setDivisionFilter] = useState<'ALL' | 'SD' | 'SW'>('ALL');
-  const [platoonFilter, setPlatoonFilter] = useState<'ALL' | 'Alpha' | 'Bravo' | 'Charlie' | 'Delta'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filter states for users tab
   const [divisionFilterUsers, setDivisionFilterUsers] = useState<'ALL' | 'SD' | 'SW'>('ALL');
-  const [platoonFilterUsers, setPlatoonFilterUsers] = useState<'ALL' | 'Alpha' | 'Bravo' | 'Charlie' | 'Delta'>('ALL');
   const [searchTermUsers, setSearchTermUsers] = useState('');
 
   const isSelf = (uid: string) => uid === currentUser?.uid;
@@ -157,7 +153,6 @@ const UserManagement: React.FC = () => {
         dateOfBirth: candidate.dateOfBirth,
         regimentalNumber: candidate.regimentalNumber,
         division: candidate.division,
-        platoon: candidate.platoon,
         dateOfEnrollment: candidate.dateOfEnrollment,
         rank: candidate.rank || 'CDT',
         nccYear: candidate.nccYear || '1st Year',
@@ -211,11 +206,6 @@ const UserManagement: React.FC = () => {
       filtered = filtered.filter(c => c.division === divisionFilter);
     }
 
-    // Filter by platoon
-    if (platoonFilter !== 'ALL') {
-      filtered = filtered.filter(c => c.platoon === platoonFilter);
-    }
-
     // Filter by search term (regimental number or name)
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -233,11 +223,10 @@ const UserManagement: React.FC = () => {
     });
 
     return filtered;
-  }, [pending, users, divisionFilter, platoonFilter, searchTerm]);
+  }, [pending, users, divisionFilter, searchTerm]);
 
   const clearFilters = () => {
     setDivisionFilter('ALL');
-    setPlatoonFilter('ALL');
     setSearchTerm('');
   };
 
@@ -255,10 +244,6 @@ const UserManagement: React.FC = () => {
       list = list.filter(u => (u.division || 'ALL') === divisionFilterUsers);
     }
 
-    if (platoonFilterUsers !== 'ALL') {
-      list = list.filter(u => (u.platoon || 'ALL') === platoonFilterUsers);
-    }
-
     if (searchTermUsers.trim()) {
       const term = searchTermUsers.toLowerCase();
       list = list.filter(u =>
@@ -270,11 +255,10 @@ const UserManagement: React.FC = () => {
     list.sort((a, b) => (a.regimentalNumber || '').localeCompare(b.regimentalNumber || '', undefined, { numeric: true }));
 
     return list;
-  }, [users, divisionFilterUsers, platoonFilterUsers, searchTermUsers]);
+  }, [users, divisionFilterUsers, searchTermUsers]);
 
   const clearUsersFilters = () => {
     setDivisionFilterUsers('ALL');
-    setPlatoonFilterUsers('ALL');
     setSearchTermUsers('');
   };
 
@@ -329,7 +313,7 @@ const UserManagement: React.FC = () => {
               onChange={() => setDivisionFilter('ALL')}
             />
             <label className="btn btn-outline-primary" htmlFor="division-all">Both</label>
-            
+
             <input
               type="radio"
               className="btn-check"
@@ -339,7 +323,7 @@ const UserManagement: React.FC = () => {
               onChange={() => setDivisionFilter('SD')}
             />
             <label className="btn btn-outline-primary" htmlFor="division-sd">SD</label>
-            
+
             <input
               type="radio"
               className="btn-check"
@@ -350,20 +334,6 @@ const UserManagement: React.FC = () => {
             />
             <label className="btn btn-outline-primary" htmlFor="division-sw">SW</label>
           </div>
-        </Col>
-        <Col xs={12} md={3}>
-          <Form.Label className="small fw-semibold">Platoon</Form.Label>
-          <Form.Select
-            value={platoonFilter}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPlatoonFilter(e.target.value as any)}
-          >
-            <option value="" disabled>Select Platoon</option>
-            <option value="ALL">All Platoons</option>
-            <option value="Alpha">Alpha</option>
-            <option value="Bravo">Bravo</option>
-            <option value="Charlie">Charlie</option>
-            <option value="Delta">Delta</option>
-          </Form.Select>
         </Col>
         <Col xs={12} md={4}>
           <Form.Label className="small fw-semibold">Search</Form.Label>
@@ -388,7 +358,6 @@ const UserManagement: React.FC = () => {
             <th className="user-col-sno">S.No</th>
             <th>Name</th>
             <th className="user-col-division">SD/SW</th>
-            <th className="user-col-platoon">Platoon</th>
             <th>Regimental Number</th>
             <th>Email</th>
             <th>Registered On</th>
@@ -402,9 +371,6 @@ const UserManagement: React.FC = () => {
               <td>{c.name}</td>
               <td className="text-center">
                 <Badge bg={c.division === 'SD' ? 'info' : 'warning'}>{c.division}</Badge>
-              </td>
-              <td className="text-center">
-                <Badge bg="secondary">{c.platoon || 'N/A'}</Badge>
               </td>
               <td>{c.regimentalNumber || 'N/A'}</td>
               <td>{c.email}</td>
@@ -420,12 +386,12 @@ const UserManagement: React.FC = () => {
             </tr>
           ))}
           {filteredPending.length === 0 && (
-            <tr><td colSpan={8} className="text-center text-muted">No pending registrations match filters</td></tr>
+            <tr><td colSpan={7} className="text-center text-muted">No pending registrations match filters</td></tr>
           )}
         </tbody>
       </Table>
     </>
-  ), [filteredPending, divisionFilter, platoonFilter, searchTerm]);
+  ), [filteredPending, divisionFilter, searchTerm]);
 
   const UsersTable = useMemo(() => (
     <>
@@ -465,20 +431,6 @@ const UserManagement: React.FC = () => {
             <label className="btn btn-outline-primary" htmlFor="division-users-sw">SW</label>
           </div>
         </Col>
-        <Col xs={12} md={3}>
-          <Form.Label className="small fw-semibold">Platoon</Form.Label>
-          <Form.Select
-            value={platoonFilterUsers}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPlatoonFilterUsers(e.target.value as any)}
-          >
-            <option value="" disabled>Select Platoon</option>
-            <option value="ALL">All Platoons</option>
-            <option value="Alpha">Alpha</option>
-            <option value="Bravo">Bravo</option>
-            <option value="Charlie">Charlie</option>
-            <option value="Delta">Delta</option>
-          </Form.Select>
-        </Col>
         <Col xs={12} md={4}>
           <Form.Label className="small fw-semibold">Search</Form.Label>
           <Form.Control
@@ -502,7 +454,6 @@ const UserManagement: React.FC = () => {
             <th className="user-col-sno">S.No</th>
             <th>Name</th>
             <th className="user-col-division">SD/SW</th>
-            <th className="user-col-platoon">Platoon</th>
             <th>Regimental Number</th>
             <th>Email</th>
             <th className="user-col-actions">Actions</th>
@@ -516,13 +467,6 @@ const UserManagement: React.FC = () => {
               <td className="text-center">
                 {u.division ? (
                   <Badge bg={u.division === 'SD' ? 'info' : 'warning'}>{u.division}</Badge>
-                ) : (
-                  <span className="text-muted">-</span>
-                )}
-              </td>
-              <td className="text-center">
-                {u.platoon ? (
-                  <Badge bg="secondary">{u.platoon}</Badge>
                 ) : (
                   <span className="text-muted">-</span>
                 )}
@@ -545,12 +489,12 @@ const UserManagement: React.FC = () => {
             </tr>
           ))}
           {filteredUsers.length === 0 && (
-            <tr><td colSpan={7} className="text-center text-muted">No users match filters</td></tr>
+            <tr><td colSpan={6} className="text-center text-muted">No users match filters</td></tr>
           )}
         </tbody>
       </Table>
     </>
-  ), [filteredUsers, divisionFilterUsers, platoonFilterUsers, searchTermUsers, userProfile?.role]);
+  ), [filteredUsers, divisionFilterUsers, searchTermUsers, userProfile?.role]);
 
 
   if (loading) {

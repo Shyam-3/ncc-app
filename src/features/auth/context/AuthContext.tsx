@@ -23,7 +23,6 @@ interface SignUpData {
   registerNumber?: string;
   division?: string;
   regimentalNumber?: string;
-  platoon?: string;
   dateOfEnrollment?: string;
   rank?: string;
   year?: string;
@@ -122,7 +121,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           userDoc.registerNumber = userData.registerNumber || '';
           userDoc.division = userData.division || '';
           userDoc.regimentalNumber = userData.regimentalNumber || '';
-          userDoc.platoon = userData.platoon || '';
           userDoc.dateOfEnrollment = userData.dateOfEnrollment || '';
           userDoc.rank = userData.rank || 'CDT';
           userDoc.nccYear = '1st Year';

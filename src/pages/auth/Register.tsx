@@ -3,7 +3,7 @@ import React, { ChangeEvent, FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
-import { DEPARTMENT_DEFS, PLATOONS } from '../../shared/config/constants';
+import { DEPARTMENT_DEFS } from '../../shared/config/constants';
 import { db } from '../../shared/config/firebase';
 import './Register.css';
 
@@ -18,7 +18,6 @@ interface FormData {
   // NCC Details
   division: 'SD' | 'SW' | '';
   regimentalNumber: string;
-  platoon: string;
   dateOfEnrollment: string;
   
   // Academic Details
@@ -47,7 +46,6 @@ const Register: React.FC = () => {
     confirmPassword: '',
     division: '',
     regimentalNumber: '',
-    platoon: '',
     dateOfEnrollment: '',
     year: '',
     residentialStatus: '',
@@ -101,11 +99,7 @@ const Register: React.FC = () => {
     if (!formData.regimentalNumber.trim()) {
       newErrors.regimentalNumber = 'Regimental number is required';
     }
-    
-    if (!formData.platoon) {
-      newErrors.platoon = 'Platoon is required';
-    }
-    
+
     if (!formData.dateOfEnrollment) {
       newErrors.dateOfEnrollment = 'Date of enrollment is required';
     }
@@ -233,7 +227,6 @@ const Register: React.FC = () => {
         // NCC Details
         division: formData.division,
         regimentalNumber: formData.regimentalNumber,
-        platoon: formData.platoon,
         dateOfEnrollment: formData.dateOfEnrollment,
         rank: 'CDT', // Default rank
         nccYear: '1st Year',
@@ -438,23 +431,6 @@ const Register: React.FC = () => {
                         placeholder="e.g., TN-09-123"
                       />
                       {errors.regimentalNumber && <Form.Text className="text-danger d-block mt-1">{errors.regimentalNumber}</Form.Text>}
-                    </Form.Group>
-                  </Col>
-                  <Col xs={12} sm={6} md={4}>
-                    <Form.Group className="mb-3" controlId="platoon">
-                      <Form.Label>Platoon <span className="text-danger">*</span></Form.Label>
-                      <Form.Select
-                        name="platoon"
-                        value={formData.platoon}
-                        onChange={handleChange}
-                        className={getFieldClass('platoon')}
-                      >
-                        <option value="" disabled>Select Platoon</option>
-                        {PLATOONS.map(platoon => (
-                          <option key={platoon} value={platoon}>{platoon}</option>
-                        ))}
-                      </Form.Select>
-                      {errors.platoon && <Form.Text className="text-danger d-block mt-1">{errors.platoon}</Form.Text>}
                     </Form.Group>
                   </Col>
                   <Col xs={12} sm={6} md={4}>
