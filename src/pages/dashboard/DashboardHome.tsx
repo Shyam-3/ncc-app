@@ -10,10 +10,13 @@ import './DashboardHome.css';
 const Dashboard: React.FC = () => {
   const { userProfile } = useAuth();
   const [pendingCount, setPendingCount] = useState(0);
+  const isAdmin = userProfile?.role === 'admin';
+  const isSuperAdmin = userProfile?.role === 'superadmin';
+  const isSubAdmin = userProfile?.role === 'subadmin';
 
   useEffect(() => {
     const fetchPendingCount = async () => {
-      if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+      if (isAdmin || isSuperAdmin) {
         try {
           const [pendingSnap, usersSnap] = await Promise.all([
             getDocs(query(collection(db, 'pendingCadets'))),
@@ -35,7 +38,7 @@ const Dashboard: React.FC = () => {
     };
 
     fetchPendingCount();
-  }, [userProfile]);
+  }, [isAdmin, isSuperAdmin]);
 
   return (
     <Container className="py-5">
@@ -46,7 +49,7 @@ const Dashboard: React.FC = () => {
       </AnimatedSection>
 
       <AnimatedSection as={Row} className="g-4" effect="slide">
-        {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
+        {(isAdmin || isSuperAdmin) && (
           <Col xs={12} sm={6} md={4} lg={3} xl={3}>
             <Card className="text-center h-100 shadow-sm hover-lift">
               <Card.Body className="d-flex flex-column justify-content-between">
@@ -62,7 +65,7 @@ const Dashboard: React.FC = () => {
             </Card>
           </Col>
         )}
-        {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
+        {(isAdmin || isSuperAdmin) && (
           <Col xs={12} sm={6} md={4} lg={3} xl={3}>
             <Card className="text-center h-100 shadow-sm hover-lift">
               <Card.Body className="d-flex flex-column justify-content-between">
@@ -86,7 +89,7 @@ const Dashboard: React.FC = () => {
           </Col>
         )}
 
-        {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin' || userProfile?.role === 'subadmin') && (
+        {(isAdmin || isSuperAdmin) && (
           <>
             <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
@@ -150,7 +153,7 @@ const Dashboard: React.FC = () => {
           </>
         )}
 
-        {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
+        {(isAdmin || isSuperAdmin) && (
           <>
             <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
@@ -184,7 +187,7 @@ const Dashboard: React.FC = () => {
           </>
         )}
 
-        {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin' || userProfile?.role === 'subadmin') && (
+        {(isAdmin || isSuperAdmin) && (
           <Col xs={12} sm={6} md={4} lg={3} xl={3}>
             <Card className="text-center h-100 shadow-sm hover-lift">
               <Card.Body className="d-flex flex-column justify-content-between">
@@ -201,14 +204,14 @@ const Dashboard: React.FC = () => {
           </Col>
         )}
 
-        {(!userProfile?.role || (userProfile?.role !== 'admin' && userProfile?.role !== 'superadmin' && userProfile?.role !== 'subadmin')) && (
+        {(!isAdmin && !isSuperAdmin) && (
           <>
-            <Col xs={12} sm={6} md={4} lg={4} xl={4}>
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-person-circle text-primary dashboard-home-icon"></i>
-                    <h4 className="mt-3">My Profile</h4>
+                    <h3 className="mt-3">My Profile</h3>
                     <p className="text-muted small">View & edit</p>
                   </div>
                   <Button as={Link} to="/profile" variant="primary" className="mt-2">
@@ -218,12 +221,12 @@ const Dashboard: React.FC = () => {
               </Card>
             </Col>
 
-            <Col xs={12} sm={6} md={4} lg={4} xl={4}>
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-clipboard-check text-success dashboard-home-icon"></i>
-                    <h4 className="mt-3">Attendance</h4>
+                    <h3 className="mt-3">Attendance</h3>
                     <p className="text-muted small">Your records</p>
                   </div>
                   <Button as={Link} to="/attendance" variant="success" className="mt-2">
@@ -233,12 +236,29 @@ const Dashboard: React.FC = () => {
               </Card>
             </Col>
 
-            <Col xs={12} sm={6} md={4} lg={4} xl={4}>
+            {isSubAdmin && (
+              <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+                <Card className="text-center h-100 shadow-sm hover-lift">
+                  <Card.Body className="d-flex flex-column justify-content-between">
+                    <div>
+                      <i className="bi bi-file-earmark-text text-secondary dashboard-home-icon"></i>
+                      <h3 className="mt-3">Reports</h3>
+                      <p className="text-muted small">Open reports workspace</p>
+                    </div>
+                    <Button as={Link} to="/admin/reports" variant="secondary" className="mt-2">
+                      Open
+                    </Button>
+                  </Card.Body>
+                </Card>
+              </Col>
+            )}
+
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-calendar-event text-warning dashboard-home-icon"></i>
-                    <h4 className="mt-3">Events</h4>
+                    <h3 className="mt-3">Events</h3>
                     <p className="text-muted small">Upcoming</p>
                   </div>
                   <Button as={Link} to="/events" variant="warning" className="mt-2">
@@ -248,12 +268,12 @@ const Dashboard: React.FC = () => {
               </Card>
             </Col>
 
-            <Col xs={12} sm={6} md={4} lg={4} xl={4}>
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-book text-info dashboard-home-icon"></i>
-                    <h4 className="mt-3">Exam Prep</h4>
+                    <h3 className="mt-3">Exam Prep</h3>
                     <p className="text-muted small">Study materials</p>
                   </div>
                   <Button as={Link} to="/exam-prep" variant="info" className="mt-2">
@@ -263,12 +283,12 @@ const Dashboard: React.FC = () => {
               </Card>
             </Col>
 
-            <Col xs={12} sm={6} md={4} lg={4} xl={4}>
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-trophy text-danger dashboard-home-icon"></i>
-                    <h4 className="mt-3">Achievements</h4>
+                    <h3 className="mt-3">Achievements</h3>
                     <p className="text-muted small">Certificates</p>
                   </div>
                   <Button as={Link} to="/achievements" variant="danger" className="mt-2">
@@ -278,12 +298,12 @@ const Dashboard: React.FC = () => {
               </Card>
             </Col>
 
-            <Col xs={12} sm={6} md={4} lg={4} xl={4}>
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-bell text-dark dashboard-home-icon"></i>
-                    <h4 className="mt-3">Notifications</h4>
+                    <h3 className="mt-3">Notifications</h3>
                     <p className="text-muted small">Announcements</p>
                   </div>
                   <Button as={Link} to="/notifications" variant="dark" className="mt-2">

@@ -69,11 +69,25 @@ service cloud.firestore {
     match /attendanceSessions/{sessionId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin() || isSuperAdmin();
-      
+
       match /marks/{markId} {
         allow read: if isAuthenticated();
         allow write: if isAdmin() || isSuperAdmin();
       }
+    }
+
+    // Cadet attendance statistics (computed per-user stats)
+    match /cadetAttendanceStats/{cadetId} {
+      // Users can read their own stats, admins can read all
+      allow read: if isOwner(cadetId) || isAdmin() || isSuperAdmin() || isSubAdmin();
+      // Only admins can write (computed/updated by service)
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+
+    // Division definitions (optional, for future use)
+    match /divisions/{divisionId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
     }
     
     // Duties
@@ -132,9 +146,9 @@ service cloud.firestore {
       allow write: if isAdmin() || isSuperAdmin() || (isSubAdmin() && request.resource.data.type == 'on_duty');
     }
 
-    // Report templates (admin managed)
+    // Report templates (admin and subadmin managed)
     match /reportTemplates/{templateId} {
-      allow read, write: if isAdmin() || isSuperAdmin();
+      allow read, write: if isAdmin() || isSuperAdmin() || isSubAdmin();
     }
     
     // CMS pages (About, Contact, Unit Structure, etc.)

@@ -17,7 +17,7 @@ interface EnvConfig {
 export const envConfig: EnvConfig = {
   isDevelopment: import.meta.env.DEV,
   isProduction: import.meta.env.PROD,
-  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000' || 'http://192.168.222.48:3000',
   firebaseConfig: {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',

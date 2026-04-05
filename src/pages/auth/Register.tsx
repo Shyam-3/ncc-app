@@ -236,6 +236,7 @@ const Register: React.FC = () => {
         platoon: formData.platoon,
         dateOfEnrollment: formData.dateOfEnrollment,
         rank: 'CDT', // Default rank
+        nccYear: '1st Year',
         
         // Academic Details
         year: formData.year,

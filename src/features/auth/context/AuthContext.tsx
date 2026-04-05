@@ -75,9 +75,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
-        const data = userDoc.data() as User;
-        setUserProfile(data);
-        return data;
+        const data = userDoc.data() as Partial<User>;
+        const normalized = {
+          uid: data.uid || uid,
+          ...data,
+        } as User;
+        setUserProfile(normalized);
+        return normalized;
       }
       return null;
     } catch (error) {
@@ -121,7 +125,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           userDoc.platoon = userData.platoon || '';
           userDoc.dateOfEnrollment = userData.dateOfEnrollment || '';
           userDoc.rank = userData.rank || 'CDT';
-          userDoc.year = userData.year || 1;
+          userDoc.nccYear = '1st Year';
+          userDoc.year = userData.year || '1st Year';
           userDoc.department = userData.department || '';
           userDoc.rollNo = userData.rollNo || '';
           userDoc.phone = userData.phone || '';

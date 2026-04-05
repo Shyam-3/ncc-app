@@ -25,6 +25,14 @@ export const protectedRoutes = (
       }
     />
     <Route
+      path="/admin/dashboard"
+      element={
+        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+          <DashboardHome />
+        </ProtectedRoute>
+      }
+    />
+    <Route
       path="/profile"
       element={
         <ProtectedRoute>
@@ -43,7 +51,7 @@ export const protectedRoutes = (
     <Route
       path="/attendance"
       element={
-        <ProtectedRoute requiredRoles={['member', 'subadmin', 'admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['member', 'subadmin']}>
           <AttendanceView />
         </ProtectedRoute>
       }
@@ -99,7 +107,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['subadmin', 'admin', 'superadmin']}>
           <ReportsWorkspace />
         </ProtectedRoute>
       }
@@ -107,7 +115,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/generators/on-duty-letter"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['subadmin', 'admin', 'superadmin']}>
           <OnDutyLetterReport />
         </ProtectedRoute>
       }
@@ -115,7 +123,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/templates"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['subadmin', 'admin', 'superadmin']}>
           <ReportsTemplateManager />
         </ProtectedRoute>
       }

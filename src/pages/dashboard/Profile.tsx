@@ -3,7 +3,14 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { formatISTDate } from '@/shared/utils/dateTime';
-import { ACADEMIC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, PLATOONS, ROMAN_YEAR_MAP } from '../../shared/config/constants';
+import {
+  ACADEMIC_YEARS,
+  DEPARTMENT_DEFS,
+  NCC_RANKS,
+  NCC_YEARS,
+  PLATOONS,
+  ROMAN_YEAR_MAP,
+} from '../../shared/config/constants';
 import { db } from '../../shared/config/firebase';
 import { useAuth } from '@/features/auth/context/AuthContext';
 
@@ -56,7 +63,10 @@ const Profile: React.FC = () => {
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   const isAdminEditor = profile?.role === 'admin' || profile?.role === 'superadmin';
-  const YEAR_OPTIONS = ACADEMIC_YEARS.filter(y => y !== '4th Year');
+  const fiveYearDepartments = new Set(['AMCS', 'ARCH']);
+  const academicYearOptions = fiveYearDepartments.has(editForm.department)
+    ? ACADEMIC_YEARS
+    : ACADEMIC_YEARS.filter(y => y !== '5th Year');
   useEffect(() => {
     const fetchProfile = async () => {
       if (!currentUser) return;
@@ -158,7 +168,7 @@ const Profile: React.FC = () => {
       if (!editForm.regimentalNumber.trim()) nextErrors.regimentalNumber = 'Regimental number is required';
       if (!editForm.platoon) nextErrors.platoon = 'Platoon is required';
       if (!editForm.dateOfEnrollment) nextErrors.dateOfEnrollment = 'Date of enrollment is required';
-      if (!editForm.nccYear) nextErrors.nccYear = 'NCC year is required';
+      if (!editForm.nccYear) nextErrors.nccYear = 'Year is required';
       if (!editForm.rank) nextErrors.rank = 'Rank is required';
       if (!editForm.year) nextErrors.year = 'Academic year is required';
       if (!editForm.department) nextErrors.department = 'Department is required';
@@ -517,7 +527,7 @@ const Profile: React.FC = () => {
                         isInvalid={Boolean(editErrors.nccYear)}
                       >
                         <option value="" disabled>Select Year</option>
-                        {YEAR_OPTIONS.map(y => (
+                        {NCC_YEARS.map(y => (
                           <option key={y} value={y}>{y}</option>
                         ))}
                       </Form.Select>
@@ -552,7 +562,7 @@ const Profile: React.FC = () => {
                         isInvalid={Boolean(editErrors.year)}
                       >
                         <option value="" disabled>Select Year</option>
-                        {YEAR_OPTIONS.map(y => (
+                        {academicYearOptions.map(y => (
                           <option key={y} value={y}>{y}</option>
                         ))}
                       </Form.Select>

@@ -1,4 +1,23 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "attendanceSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "divisionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nccYear",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

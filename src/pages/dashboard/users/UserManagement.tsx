@@ -52,7 +52,8 @@ interface PendingCadet {
   platoon: 'Alpha' | 'Bravo' | 'Charlie' | 'Delta';
   dateOfBirth: string;
   dateOfEnrollment: string;
-  year: '1st Year' | '2nd Year';
+  nccYear?: string;
+  year: '1st Year' | '2nd Year' | '3rd Year' | '4th Year' | '5th Year';
   residentialStatus: 'Day Scholar' | 'Hosteller';
   department: string;
   rollNo: string;
@@ -159,6 +160,7 @@ const UserManagement: React.FC = () => {
         platoon: candidate.platoon,
         dateOfEnrollment: candidate.dateOfEnrollment,
         rank: candidate.rank || 'CDT',
+        nccYear: candidate.nccYear || '1st Year',
         year: candidate.year,
         residentialStatus: candidate.residentialStatus,
         department: candidate.department,

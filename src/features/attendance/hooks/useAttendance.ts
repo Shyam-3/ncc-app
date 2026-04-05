@@ -1,7 +1,7 @@
 // Custom hook for attendance management
 import { useCallback, useState } from 'react';
 import * as attendanceService from '../service';
-import type { AttendanceSession, AttendanceMark } from '../model/attendance.types';
+import type { AttendanceMark, SessionFormData } from '../model/attendance.types';
 
 export function useAttendance() {
   const [loading, setLoading] = useState(false);
@@ -21,11 +21,11 @@ export function useAttendance() {
     }
   }, []);
 
-  const createSession = useCallback(async (session: Omit<AttendanceSession, 'createdAt' | 'locked' | 'totalCadets'>) => {
+  const createSession = useCallback(async (session: SessionFormData, createdBy: string, totalCadets: number) => {
     setLoading(true);
     setError(null);
     try {
-      return await attendanceService.createSession(session);
+      return await attendanceService.createSession(session, createdBy, totalCadets);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create session';
       setError(message);

@@ -1,44 +1,84 @@
-import { ACADEMIC_YEARS, EVENT_TYPES } from '@/shared/config/constants';
-import { createSession, deleteSession, listCadets, listMarks, listenMarks, listenSessions, lockSession, setMark } from '@/features/attendance/service';
-import { AttendanceMark, AttendanceSession, Cadet } from '@/shared/types';
-import { formatISTDateTime, toISTDateInputValue } from '@/shared/utils/dateTime';
-import jsPDF from 'jspdf';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Col, Form, Row, Spinner, Tab, Table, Tabs } from 'react-bootstrap';
+import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
+import { Button, Col, Form, Row, Spinner, Tab, Table, Tabs, Badge, Card, Modal } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
-
-const BASE_YEAR_OPTIONS = ACADEMIC_YEARS.filter(y => y !== '4th Year');
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { AdminDashboard, BatchSelector, BulkMarker } from './admin';
+import AttendanceView from './AttendanceView';
+import {
+  cleanupLegacySessionFields,
+  createSession,
+  deleteSession,
+  listCadets,
+  listMarks,
+  listenSessions,
+} from '@/features/attendance/service';
+import type { AttendanceSession, SessionFormData } from '@/features/attendance/model/attendance.types';
+import type { Cadet } from '@/shared/types';
+import type { Division, NccYear } from '@/shared/config/constants';
+import {
+  NCC_YEARS,
+  DIVISIONS,
+  DIVISION_LABELS,
+  normalizeNccYear,
+} from '@/shared/config/constants';
+import { formatISTDate, formatISTDateTime, toISTDateInputValue } from '@/shared/utils/dateTime';
 
 const AttendanceManagement: React.FC = () => {
+  const { currentUser, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [cadets, setCadets] = useState<(Cadet & { id: string })[]>([]);
   const [sessions, setSessions] = useState<(AttendanceSession & { id: string })[]>([]);
-  const [activeTab, setActiveTab] = useState<string>('generator');
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // Generator form state
+  const [gDivision, setGDivision] = useState<Division | ''>('SD');
+  const [gYear, setGYear] = useState<NccYear | ''>('1st Year');
   const [gTitle, setGTitle] = useState('Parade');
   const [gDate, setGDate] = useState(() => toISTDateInputValue());
-  const [gType, setGType] = useState<string>('parade');
-  const [gYear, setGYear] = useState<string>(BASE_YEAR_OPTIONS[0] || '');
-  const [gDivision, setGDivision] = useState<string>('SD');
-  const [gLocation, setGLocation] = useState<string>('');
   const [creating, setCreating] = useState(false);
 
   // Marker state
-  const [selectedSessionId, setSelectedSessionId] = useState<string>('');
-  const [marks, setMarks] = useState<Record<string, AttendanceMark>>({});
-  const [locking, setLocking] = useState(false);
-  const [applyLate, setApplyLate] = useState(false);
-  const [reportYearFilter, setReportYearFilter] = useState<string>(BASE_YEAR_OPTIONS[0] || '');
-  const [reportDivisionFilter, setReportDivisionFilter] = useState<string>('SD');
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [sessionDivisionFilter, setSessionDivisionFilter] = useState<Division>('SD');
+  const [sessionYearFilter, setSessionYearFilter] = useState<NccYear | ''>('');
+  const [sessionStatusFilter, setSessionStatusFilter] = useState<'open' | 'locked'>('open');
+  const [deleteConfirmSessionId, setDeleteConfirmSessionId] = useState<string | null>(null);
+
+  // Reporter state
+  const [reportDivision, setReportDivision] = useState<Division | ''>('SD');
+  const [reportYear, setReportYear] = useState<NccYear | ''>('1st Year');
+  const [reportSessionId, setReportSessionId] = useState<string>('');
+  const [reportMarks, setReportMarks] = useState<Record<string, { status: string; timestamp: string }>>({});
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
 
+  const role = userProfile?.role;
+  const isAdmin = role === 'admin';
+  const isSuperAdmin = role === 'superadmin';
+  const canViewOwnAttendanceTab = isAdmin;
+  const canManageAttendance = isAdmin || isSuperAdmin;
+
+  useEffect(() => {
+    if (!canManageAttendance) return;
+
+    const allowed = canViewOwnAttendanceTab
+      ? new Set(['dashboard', 'my-attendance', 'sessions', 'marker', 'reporter'])
+      : new Set(['dashboard', 'sessions', 'marker', 'reporter']);
+
+    if (!allowed.has(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, canManageAttendance, canViewOwnAttendanceTab]);
+
+  // Load initial data
   useEffect(() => {
     let unsubSessions: (() => void) | null = null;
+
     async function init() {
       try {
+        await cleanupLegacySessionFields();
         const cadetsList = await listCadets();
         setCadets(cadetsList);
         unsubSessions = listenSessions((items) => setSessions(items));
@@ -49,85 +89,99 @@ const AttendanceManagement: React.FC = () => {
         setLoading(false);
       }
     }
+
     init();
     return () => {
       if (unsubSessions) unsubSessions();
     };
   }, []);
 
-  // Subscribe to marks for selected session and initialize absent marks
+  // Load marks for selected report session
   useEffect(() => {
-    if (!selectedSessionId) return;
-    const unsub = listenMarks(selectedSessionId, (items) => {
-      const dict: Record<string, AttendanceMark> = {};
-      items.forEach(m => { dict[m.cadetId] = m; });
-      setMarks(dict);
-    });
-    return () => unsub();
-  }, [selectedSessionId]);
-
-  const selectedSession = useMemo(() => sessions.find(s => s.id === selectedSessionId), [sessions, selectedSessionId]);
-  const yearOptions = useMemo(() => {
-    const sessionYears = sessions
-      .map(s => s.year)
-      .filter((y): y is string => Boolean(y))
-      .filter(y => y !== '4th Year');
-    return Array.from(new Set<string>([...BASE_YEAR_OPTIONS, ...sessionYears]));
-  }, [sessions]);
-
-  useEffect(() => {
-    if (yearOptions.length && !yearOptions.includes(reportYearFilter)) {
-      setReportYearFilter(yearOptions[0]);
-    }
-  }, [yearOptions, reportYearFilter]);
-
-  // Initialize all eligible cadets as absent when session is created/selected
-  useEffect(() => {
-    if (!selectedSessionId || !selectedSession) return;
-    const eligibleCadets = cadets.filter(c => {
-      const matchesYear = !selectedSession.year || (c.year || '') === selectedSession.year;
-      const matchesDivision = !selectedSession.division || (c.division || '') === selectedSession.division;
-      return matchesYear && matchesDivision;
-    });
-    // Initialize absent marks for cadets who don't have a mark yet
-    eligibleCadets.forEach(async (c) => {
-      if (!marks[c.id]) {
-        try {
-          await setMark(selectedSessionId, c.id, 'A');
-        } catch (e) {
-          console.error('Failed to initialize mark:', e);
-        }
-      }
-    });
-  }, [selectedSessionId, selectedSession, cadets, marks]);
-
-  async function onCreateSession(e: React.FormEvent) {
-    e.preventDefault();
-    if (!gTitle || !gDate || !gYear) {
-      toast.error('Please enter title, date, and year');
+    if (!reportSessionId) {
+      setReportMarks({});
       return;
     }
+
+    async function loadMarks() {
+      const marks = await listMarks(reportSessionId);
+      const marksMap: Record<string, { status: string; timestamp: string }> = {};
+      marks.forEach((m) => {
+        marksMap[m.cadetId] = { status: m.status, timestamp: m.markedAt };
+      });
+      setReportMarks(marksMap);
+    }
+
+    loadMarks();
+  }, [reportSessionId]);
+
+  // Eligible cadets for session creation
+  const eligibleCadets = useMemo(() => {
+    if (!gDivision || !gYear) return [];
+    return cadets.filter(
+      (c) => c.division === gDivision && normalizeNccYear(c.nccYear) === gYear
+    );
+  }, [cadets, gDivision, gYear]);
+
+  const filteredRecentSessions = useMemo(() => {
+    const yearIndex = new Map(NCC_YEARS.map((y, idx) => [y, idx]));
+
+    return sessions
+      .filter((s) => {
+        const matchesDivision = s.divisionId === sessionDivisionFilter;
+        const matchesYear = !sessionYearFilter || s.nccYear === sessionYearFilter;
+        const matchesStatus = s.status === sessionStatusFilter;
+        return matchesDivision && matchesYear && matchesStatus;
+      })
+      .sort((a, b) => {
+        const byDateDesc = b.date.localeCompare(a.date);
+        if (byDateDesc !== 0) return byDateDesc;
+
+        const byYearAsc =
+          (yearIndex.get(a.nccYear as NccYear) ?? Number.MAX_SAFE_INTEGER) -
+          (yearIndex.get(b.nccYear as NccYear) ?? Number.MAX_SAFE_INTEGER);
+        if (byYearAsc !== 0) return byYearAsc;
+
+        return a.title.localeCompare(b.title);
+      });
+  }, [sessions, sessionDivisionFilter, sessionYearFilter, sessionStatusFilter]);
+
+  // Filtered sessions for reporter
+  const filteredSessions = useMemo(() => {
+    return sessions.filter((s) => {
+      const matchesDivision = !reportDivision || s.divisionId === reportDivision;
+      const matchesYear = !reportYear || s.nccYear === reportYear;
+      return matchesDivision && matchesYear;
+    });
+  }, [sessions, reportDivision, reportYear]);
+
+  const reportSession = useMemo(
+    () => sessions.find((s) => s.id === reportSessionId),
+    [sessions, reportSessionId]
+  );
+
+  // Create session handler
+  async function onCreateSession(e: React.FormEvent) {
+    e.preventDefault();
+    const creatorUid = currentUser?.uid || userProfile?.uid;
+    if (!gDivision || !gYear || !gTitle || !gDate || !creatorUid) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+
     try {
       setCreating(true);
-      const eligibleCadets = cadets.filter(c => {
-        const matchesYear = (c.year || '') === gYear;
-        const matchesDivision = (c.division || '') === gDivision;
-        return matchesYear && matchesDivision;
-      });
-      const id = await createSession({
+      const formData: SessionFormData = {
+        divisionId: gDivision,
+        nccYear: gYear,
         title: gTitle,
         date: gDate,
-        type: gType,
-        year: gYear,
-        division: gDivision,
-        location: gLocation || undefined,
-        totalCadets: eligibleCadets.length,
-        createdAt: '', // will be set in service
-        locked: false,
-      } as any);
+      };
+
+      const id = await createSession(formData, creatorUid, eligibleCadets.length);
       toast.success('Session created');
-      setActiveTab('marker');
       setSelectedSessionId(id);
+      setActiveTab('marker');
     } catch (e: any) {
       console.error(e);
       toast.error(e.message || 'Failed to create session');
@@ -136,60 +190,14 @@ const AttendanceManagement: React.FC = () => {
     }
   }
 
-  async function onToggleMark(cadetId: string) {
-    if (!selectedSessionId) return;
-    try {
-      const currentMark = marks[cadetId];
-      const currentStatus = currentMark?.status || 'A';
-      const isPresent = currentStatus === 'P' || currentStatus === 'L';
-      
-      // Toggle: if absent, mark as present (or late if toggle is on), if present/late, mark as absent
-      const newStatus = isPresent ? 'A' : (applyLate ? 'L' : 'P');
-      await setMark(selectedSessionId, cadetId, newStatus);
-    } catch (e: any) {
-      console.error(e);
-      toast.error('Failed to update mark');
-    }
-  }
-
-  async function onMarkAllPresent() {
-    if (!selectedSessionId || !selectedSession) return;
-    const eligibleCadets = cadets.filter(c => {
-      const matchesYear = !selectedSession.year || (c.year || '') === selectedSession.year;
-      const matchesDivision = !selectedSession.division || (c.division || '') === selectedSession.division;
-      return matchesYear && matchesDivision;
-    });
-    try {
-      const status = applyLate ? 'L' : 'P';
-      await Promise.all(eligibleCadets.map(c => setMark(selectedSessionId, c.id, status)));
-      toast.success(`Marked all cadets as ${applyLate ? 'Late' : 'Present'}`);
-    } catch (e: any) {
-      console.error(e);
-      toast.error('Failed to mark all present');
-    }
-  }
-
-  async function onLockSession() {
-    if (!selectedSessionId) return;
-    try {
-      setLocking(true);
-      await lockSession(selectedSessionId);
-      toast.success('Session locked');
-    } catch (e: any) {
-      console.error(e);
-      toast.error('Failed to lock session');
-    } finally {
-      setLocking(false);
-    }
-  }
-
+  // Delete session handler
   async function onDeleteSession(sessionId: string) {
-    if (!confirm('Are you sure you want to delete this session? This action cannot be undone.')) return;
     try {
       await deleteSession(sessionId);
       toast.success('Session deleted');
+      setDeleteConfirmSessionId(null);
       if (selectedSessionId === sessionId) {
-        setSelectedSessionId('');
+        setSelectedSessionId(null);
       }
     } catch (e: any) {
       console.error(e);
@@ -197,189 +205,137 @@ const AttendanceManagement: React.FC = () => {
     }
   }
 
-  const counts = useMemo(() => {
-    const vals = Object.values(marks);
-    const P = vals.filter(v => v.status === 'P').length;
-    const L = vals.filter(v => v.status === 'L').length;
-    const A = vals.filter(v => v.status === 'A').length;
-    return { P, L, A, total: vals.length };
-  }, [marks]);
+  // Export PDF
+  async function exportPdf() {
+    if (!reportDivision || !reportYear) {
+      toast.error('Select division and year');
+      return;
+    }
 
-  async function exportYearPdf() {
-    if (!reportYearFilter || !reportDivisionFilter) {
-      toast.error('Select both year and division to export');
+    const targetSessions = filteredSessions;
+    if (!targetSessions.length) {
+      toast.error('No sessions found');
       return;
     }
-    const yearDivisionSessions = sessions.filter(s => (s.year || '') === reportYearFilter && (s.division || '') === reportDivisionFilter);
-    if (!yearDivisionSessions.length) {
-      toast.error('No sessions found for the selected year and division');
-      return;
-    }
+
     try {
       setExportingPdf(true);
       const pdf = new jsPDF();
-      let yPosition = 20;
+      let yPos = 20;
       const pageHeight = pdf.internal.pageSize.getHeight();
       const marginLeft = 15;
-      const marginRight = 15;
-      const pageWidth = pdf.internal.pageSize.getWidth() - marginLeft - marginRight;
-      
-      // Title
+
       pdf.setFontSize(16);
-      pdf.text(`Attendance Report - ${reportYearFilter} (${reportDivisionFilter})`, marginLeft, yPosition);
-      yPosition += 10;
-      
+      pdf.text(`Attendance Report - ${reportYear} (${reportDivision})`, marginLeft, yPos);
+      yPos += 10;
+
       pdf.setFontSize(10);
-      pdf.text(`Generated on: ${formatISTDateTime(new Date())}`, marginLeft, yPosition);
-      yPosition += 8;
-      
-      for (const session of yearDivisionSessions) {
-        // Check if we need a new page
-        if (yPosition > pageHeight - 40) {
+      pdf.text(`Generated: ${formatISTDateTime(new Date())}`, marginLeft, yPos);
+      yPos += 10;
+
+      for (const session of targetSessions) {
+        if (yPos > pageHeight - 40) {
           pdf.addPage();
-          yPosition = 20;
+          yPos = 20;
         }
-        
-        // Session header
+
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`${session.date} - ${session.title}`, marginLeft, yPosition);
-        yPosition += 6;
-        
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(`Location: ${session.location || 'N/A'}`, marginLeft, yPosition);
-        yPosition += 4;
-        
+        pdf.text(`${session.date} - ${session.title}`, marginLeft, yPos);
+        yPos += 6;
+
         const marksForSession = await listMarks(session.id!);
-        const markMap = new Map(marksForSession.map(m => [m.cadetId, m]));
-        const cadetsForSession = cadets
-          .filter(c => {
-            const matchesYear = !session.year || (c.year || '') === session.year;
-            const matchesDivision = !session.division || (c.division || '') === session.division;
-            return matchesYear && matchesDivision;
-          })
-          .sort((a, b) => (a.registerNumber || '').localeCompare(b.registerNumber || ''));
-        
-        const tableData: string[][] = [['#', 'Name', 'Reg No', 'Platoon', 'Status']];
-        cadetsForSession.forEach((c, idx) => {
+        const markMap = new Map(marksForSession.map((m) => [m.cadetId, m]));
+        const sessionCadets = cadets.filter(
+          (c) =>
+            c.division === session.divisionId &&
+            normalizeNccYear(c.nccYear) === session.nccYear
+        );
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+
+        sessionCadets.forEach((c, idx) => {
+          if (yPos > pageHeight - 15) {
+            pdf.addPage();
+            yPos = 20;
+          }
           const m = markMap.get(c.id);
           const status = m?.status || 'A';
-          const statusLabel = status === 'P' ? 'Present' : status === 'L' ? 'Late' : 'Absent';
-          tableData.push([
-            (idx + 1).toString(),
-            c.name || '',
-            c.registerNumber || '',
-            c.platoon || '',
-            statusLabel,
-          ]);
+          pdf.text(`${idx + 1}. ${c.name} - ${status}`, marginLeft, yPos);
+          yPos += 5;
         });
-        
-        // Create table
-        const cellPadding = 2;
-        const rowHeight = 6;
-        const cellWidth = pageWidth / tableData[0].length;
-        
-        // Header row
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(255, 255, 255);
-        pdf.setFillColor(40, 40, 40);
-        tableData[0].forEach((cell, colIdx) => {
-          pdf.rect(marginLeft + colIdx * cellWidth, yPosition, cellWidth, rowHeight, 'F');
-          pdf.text(cell, marginLeft + colIdx * cellWidth + cellPadding, yPosition + rowHeight - 1, { maxWidth: cellWidth - 2 * cellPadding });
-        });
-        yPosition += rowHeight;
-        
-        // Data rows
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(0, 0, 0);
-        tableData.slice(1).forEach((row) => {
-          if (yPosition > pageHeight - 15) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          row.forEach((cell, colIdx) => {
-            pdf.text(cell, marginLeft + colIdx * cellWidth + cellPadding, yPosition + rowHeight - 1, { maxWidth: cellWidth - 2 * cellPadding });
-          });
-          pdf.setDrawColor(200, 200, 200);
-          pdf.line(marginLeft, yPosition + rowHeight, marginLeft + pageWidth, yPosition + rowHeight);
-          yPosition += rowHeight;
-        });
-        
-        yPosition += 4;
+
+        yPos += 5;
       }
-      
-      pdf.save(`${reportYearFilter}_${reportDivisionFilter}_attendance.pdf`);
-      toast.success('PDF report exported');
+
+      pdf.save(`${reportYear}_${reportDivision}_attendance.pdf`);
+      toast.success('PDF exported');
     } catch (e: any) {
       console.error(e);
-      toast.error('Failed to export PDF report');
+      toast.error('Export failed');
     } finally {
       setExportingPdf(false);
     }
   }
 
-  async function exportYearExcel() {
-    if (!reportYearFilter || !reportDivisionFilter) {
-      toast.error('Select both year and division to export');
+  // Export Excel
+  async function exportExcel() {
+    if (!reportDivision || !reportYear) {
+      toast.error('Select division and year');
       return;
     }
-    const yearDivisionSessions = sessions.filter(s => (s.year || '') === reportYearFilter && (s.division || '') === reportDivisionFilter);
-    if (!yearDivisionSessions.length) {
-      toast.error('No sessions found for the selected year and division');
+
+    const targetSessions = filteredSessions;
+    if (!targetSessions.length) {
+      toast.error('No sessions found');
       return;
     }
+
     try {
       setExportingExcel(true);
       const workbook = XLSX.utils.book_new();
-      
-      for (const session of yearDivisionSessions) {
+
+      for (const session of targetSessions) {
         const marksForSession = await listMarks(session.id!);
-        const markMap = new Map(marksForSession.map(m => [m.cadetId, m]));
-        const cadetsForSession = cadets
-          .filter(c => {
-            const matchesYear = !session.year || (c.year || '') === session.year;
-            const matchesDivision = !session.division || (c.division || '') === session.division;
-            return matchesYear && matchesDivision;
-          })
-          .sort((a, b) => (a.registerNumber || '').localeCompare(b.registerNumber || ''));
-        
-        const tableData: any[] = [];
-        
-        cadetsForSession.forEach((c, idx) => {
+        const markMap = new Map(marksForSession.map((m) => [m.cadetId, m]));
+        const sessionCadets = cadets.filter(
+          (c) =>
+            c.division === session.divisionId &&
+            normalizeNccYear(c.nccYear) === session.nccYear
+        );
+
+        const tableData = sessionCadets.map((c, idx) => {
           const m = markMap.get(c.id);
-          const status = m?.status || 'A';
-          const statusLabel = status === 'P' ? 'Present' : status === 'L' ? 'Late' : 'Absent';
-          const timestamp = m?.timestamp ? formatISTDateTime(m.timestamp) : '-';
-          tableData.push({
+          return {
             '#': idx + 1,
-            'Name': c.name || '',
+            Name: c.name,
             'Reg No': c.registerNumber || '',
-            'Platoon': c.platoon || '',
-            'Status': statusLabel,
-            'Timestamp': timestamp,
-          });
+            Platoon: c.platoon || '',
+            Status: m?.status || 'A',
+            Timestamp: m?.markedAt ? formatISTDateTime(m.markedAt) : '-',
+          };
         });
-        
+
         const worksheet = XLSX.utils.json_to_sheet(tableData);
         worksheet['!cols'] = [
           { wch: 5 },
           { wch: 20 },
-          { wch: 12 },
-          { wch: 12 },
-          { wch: 12 },
+          { wch: 15 },
+          { wch: 10 },
+          { wch: 8 },
           { wch: 20 },
         ];
-        
-        const sheetName = session.date.replace(/[/:*?"<>|]/g, '-');
+
+        const sheetName = session.date.replace(/[/:*?"<>|]/g, '-').substring(0, 31);
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
       }
-      
-      XLSX.writeFile(workbook, `${reportYearFilter}_${reportDivisionFilter}_attendance.xlsx`);
-      toast.success('Excel report exported');
+
+      XLSX.writeFile(workbook, `${reportYear}_${reportDivision}_attendance.xlsx`);
+      toast.success('Excel exported');
     } catch (e: any) {
       console.error(e);
-      toast.error('Failed to export Excel report');
+      toast.error('Export failed');
     } finally {
       setExportingExcel(false);
     }
@@ -397,194 +353,370 @@ const AttendanceManagement: React.FC = () => {
     <div className="container py-4">
       <h2 className="mb-3">Attendance Management</h2>
 
-      <Tabs id="attendance-tabs" activeKey={activeTab} onSelect={(k: string | null) => setActiveTab(k || 'generator')} className="mb-3">
-        <Tab eventKey="generator" title="Generator">
-          <Form onSubmit={onCreateSession} className="mt-3">
-            <div className="mb-4 p-3 border rounded bg-light">
-              <h6 className="mb-3">Step 1: Select Cadets</h6>
-              <Row className="g-3">
-                <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-                  <Form.Group controlId="year">
-                    <Form.Label>Year</Form.Label>
-                    <Form.Select value={gYear} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGYear(e.target.value)} required>
-                      <option value="" disabled>Select Year</option>
-                      {BASE_YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-                  <Form.Group controlId="division">
-                    <Form.Label>Division</Form.Label>
-                    <Form.Select value={gDivision} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGDivision(e.target.value)} required>
-                      <option value="" disabled>Select Division</option>
-                      <option value="SD">SD</option>
-                      <option value="SW">SW</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={12} md={4} lg={6} xl={6} className="d-flex align-items-end">
-                  <div className="text-muted">
-                    <strong>Eligible Cadets: {
-                      cadets.filter(c => {
-                        const matchesYear = (c.year || '') === gYear;
-                        const matchesDivision = (c.division || '') === gDivision;
-                        return matchesYear && matchesDivision;
-                      }).length
-                    }</strong>
-                  </div>
-                </Col>
-              </Row>
-            </div>
+      <Tabs
+        id="attendance-tabs"
+        activeKey={activeTab}
+        onSelect={(k: string | null) => setActiveTab(k || 'dashboard')}
+        className="mb-3"
+      >
+        {canManageAttendance && (
+          <Tab eventKey="dashboard" title="Dashboard">
+            <AdminDashboard sessions={sessions} cadets={cadets} loading={loading} />
+          </Tab>
+        )}
 
-            <div className="mb-4 p-3 border rounded bg-light">
-              <h6 className="mb-3">Step 2: Session Details</h6>
-              <Row className="g-3">
-                <Col xs={12} sm={12} md={6} lg={4} xl={4}>
-                  <Form.Group controlId="title">
-                    <Form.Label>Title</Form.Label>
-                    <Form.Control value={gTitle} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGTitle(e.target.value)} placeholder="e.g., Parade" required />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6} md={6} lg={3} xl={3}>
-                  <Form.Group controlId="date">
-                    <Form.Label>Date</Form.Label>
-                    <Form.Control type="date" value={gDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGDate(e.target.value)} required />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6} md={6} lg={3} xl={3}>
-                  <Form.Group controlId="type">
-                    <Form.Label>Type</Form.Label>
-                    <Form.Select value={gType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGType(e.target.value)}>
-                      <option value="" disabled>Select Type</option>
-                      {Object.entries(EVENT_TYPES).map(([k, v]) => (
-                        <option key={k} value={v}>{k.toLowerCase()}</option>
+        {canViewOwnAttendanceTab && (
+          <Tab eventKey="my-attendance" title="My Attendance">
+            <AttendanceView />
+          </Tab>
+        )}
+
+        {canManageAttendance && (
+          <Tab eventKey="sessions" title="Sessions">
+            <Row className="g-4 align-items-start mb-4">
+              <Col lg={6}>
+                <Card className="h-100">
+                  <Card.Header className="d-flex justify-content-between align-items-center">
+                    <h5 className="mb-0">Create New Session</h5>
+                    <div className="d-flex align-items-center gap-3">
+                      <small className="text-muted">
+                        Eligible Cadets: <strong>{eligibleCadets.length}</strong>
+                      </small>
+                      <Button
+                        type="submit"
+                        form="create-session-form"
+                        disabled={creating || !eligibleCadets.length}
+                        size="sm"
+                      >
+                        {creating ? 'Creating...' : 'Create Session'}
+                      </Button>
+                    </div>
+                  </Card.Header>
+                  <Card.Body>
+                    <Form id="create-session-form" onSubmit={onCreateSession}>
+                      <div className="mb-3">
+                        <BatchSelector
+                          divisionId={gDivision}
+                          nccYear={gYear}
+                          onDivisionChange={setGDivision}
+                          onYearChange={setGYear}
+                          required
+                        />
+                      </div>
+
+                      <Row className="g-3">
+                        <Col md={7}>
+                          <Form.Group>
+                            <Form.Label>Title</Form.Label>
+                            <Form.Control
+                              value={gTitle}
+                              onChange={(e: ChangeEvent<HTMLInputElement>) => setGTitle(e.target.value)}
+                              placeholder="e.g., Parade"
+                              required
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={5}>
+                          <Form.Group>
+                            <Form.Label>Date</Form.Label>
+                            <Form.Control
+                              type="date"
+                              value={gDate}
+                              onChange={(e: ChangeEvent<HTMLInputElement>) => setGDate(e.target.value)}
+                              required
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                    </Form>
+                  </Card.Body>
+                </Card>
+              </Col>
+
+              <Col lg={6}>
+                <Card className="h-100">
+                  <Card.Header>
+                    <h5 className="mb-0">Recent Sessions</h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row className="g-3">
+                      <Col md={6}>
+                        <Form.Label className="mb-1">Division</Form.Label>
+                        <div className="d-flex flex-wrap gap-3">
+                          {DIVISIONS.map((d) => (
+                            <Form.Check
+                              inline
+                              key={d}
+                              type="radio"
+                              id={`session-division-${d}`}
+                              name="sessionDivisionFilter"
+                              value={d}
+                              label={d}
+                              checked={sessionDivisionFilter === d}
+                              onChange={() => setSessionDivisionFilter(d)}
+                            />
+                          ))}
+                        </div>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Label className="mb-1">Year</Form.Label>
+                        <Form.Select
+                          value={sessionYearFilter}
+                          onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                            setSessionYearFilter(e.target.value as NccYear | '')
+                          }
+                          size="sm"
+                        >
+                          <option value="">All</option>
+                          {NCC_YEARS.map((y) => (
+                            <option key={y} value={y}>
+                              {y.replace(' Year', '')}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Label className="mb-1">Status</Form.Label>
+                        <div className="d-flex flex-wrap gap-3">
+                          <Form.Check
+                            inline
+                            type="radio"
+                            id="session-status-open"
+                            name="sessionStatusFilter"
+                            value="open"
+                            label="Open"
+                            checked={sessionStatusFilter === 'open'}
+                            onChange={() => setSessionStatusFilter('open')}
+                          />
+                          <Form.Check
+                            inline
+                            type="radio"
+                            id="session-status-locked"
+                            name="sessionStatusFilter"
+                            value="locked"
+                            label="Locked"
+                            checked={sessionStatusFilter === 'locked'}
+                            onChange={() => setSessionStatusFilter('locked')}
+                          />
+                        </div>
+                      </Col>
+                      <Col md={6} className="d-flex align-items-end">
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          onClick={() => {
+                            setSessionDivisionFilter('SD');
+                            setSessionYearFilter('');
+                            setSessionStatusFilter('open');
+                          }}
+                          className="w-100"
+                        >
+                          Reset Filters
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+
+            <Card>
+              <Card.Body className="p-0">
+                <Table hover responsive className="mb-0">
+                  <thead className="bg-light" style={{ borderBottom: '2px solid #dee2e6' }}>
+                    <tr style={{ textAlign: 'center' }}>
+                      <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Date</th>
+                      <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Title</th>
+                      <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Year</th>
+                      <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRecentSessions.slice(0, 20).map((s) => (
+                      <tr key={s.id} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        <td style={{ textAlign: 'center' }}>{formatISTDate(s.date, { day: '2-digit', month: '2-digit', year: '2-digit' })}</td>
+                        <td style={{ wordBreak: 'break-word', whiteSpace: 'normal', textAlign: 'center' }}>{s.title}</td>
+                        <td style={{ textAlign: 'center' }}>{s.nccYear.replace(' Year', '')}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div className="d-flex gap-1 justify-content-center">
+                            <Button
+                              size="sm"
+                              variant="outline-primary"
+                              onClick={() => {
+                                setSelectedSessionId(s.id!);
+                                setActiveTab('marker');
+                              }}
+                              title="Mark attendance"
+                              aria-label="Mark attendance"
+                            >
+                              <i className="bi bi-clipboard-check"></i>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline-danger"
+                              onClick={() => setDeleteConfirmSessionId(s.id!)}
+                              title="Delete session"
+                              aria-label="Delete session"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredRecentSessions.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="text-center text-muted py-4">
+                          No sessions found for the selected filters.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
+              </Card.Body>
+            </Card>
+          </Tab>
+        )}
+
+        {canManageAttendance && (
+          <Tab eventKey="marker" title="Mark Attendance">
+          {selectedSessionId ? (
+            <BulkMarker
+              sessionId={selectedSessionId}
+              onClose={() => {
+                setSelectedSessionId(null);
+                setActiveTab('sessions');
+              }}
+            />
+          ) : (
+            <Card>
+              <Card.Body className="text-center py-5 text-muted">
+                <i className="bi bi-clipboard-check fs-1 d-block mb-3"></i>
+                <p>Select a session from the Sessions tab to start marking attendance.</p>
+                <Button
+                  variant="outline-primary"
+                  onClick={() => setActiveTab('sessions')}
+                >
+                  Go to Sessions
+                </Button>
+              </Card.Body>
+            </Card>
+          )}
+          </Tab>
+        )}
+
+        {canManageAttendance && (
+          <Tab eventKey="reporter" title="Reports">
+          <Card className="mb-4">
+            <Card.Body>
+              <Row className="g-3 align-items-end">
+                <Col md={3}>
+                  <Form.Group>
+                    <Form.Label>Division</Form.Label>
+                    <Form.Select
+                      value={reportDivision}
+                      onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                        setReportDivision(e.target.value as Division | '')
+                      }
+                    >
+                      <option value="">All Divisions</option>
+                      {DIVISIONS.map((d) => (
+                        <option key={d} value={d}>
+                          {DIVISION_LABELS[d]}
+                        </option>
                       ))}
                     </Form.Select>
                   </Form.Group>
                 </Col>
-                <Col xs={12} sm={6} md={6} lg={2} xl={2}>
-                  <Form.Group controlId="location">
-                    <Form.Label>Location</Form.Label>
-                    <Form.Control value={gLocation} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGLocation(e.target.value)} placeholder="Ground" />
+                <Col md={3}>
+                  <Form.Group>
+                    <Form.Label>Year</Form.Label>
+                    <Form.Select
+                      value={reportYear}
+                      onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                        setReportYear(e.target.value as NccYear | '')
+                      }
+                    >
+                      <option value="">All Years</option>
+                      {NCC_YEARS.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </Form.Select>
                   </Form.Group>
                 </Col>
+                <Col md={3}>
+                  <Form.Group>
+                    <Form.Label>Session</Form.Label>
+                    <Form.Select
+                      value={reportSessionId}
+                      onChange={(e: ChangeEvent<HTMLSelectElement>) => setReportSessionId(e.target.value)}
+                    >
+                      <option value="" disabled>
+                        Select Session
+                      </option>
+                      {filteredSessions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.date} - {s.title}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={3} className="d-flex gap-2">
+                  <Button
+                    variant="success"
+                    disabled={!reportDivision || !reportYear || exportingPdf}
+                    onClick={exportPdf}
+                    className="flex-grow-1"
+                  >
+                    {exportingPdf ? <Spinner size="sm" /> : 'PDF'}
+                  </Button>
+                  <Button
+                    variant="primary"
+                    disabled={!reportDivision || !reportYear || exportingExcel}
+                    onClick={exportExcel}
+                    className="flex-grow-1"
+                  >
+                    {exportingExcel ? <Spinner size="sm" /> : 'Excel'}
+                  </Button>
+                </Col>
               </Row>
-            </div>
+            </Card.Body>
+          </Card>
 
-            <div className="d-flex gap-2">
-              <Button type="submit" disabled={creating} size="lg">
-                {creating ? 'Creating…' : 'Create Session & Open Marker'}
-              </Button>
-            </div>
-          </Form>
-
-          <h5 className="mt-4">Recent Sessions</h5>
-          <Table striped bordered hover size="sm" className="mt-2">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Year</th>
-                <th>Division</th>
-                <th>Total Cadets</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map(s => (
-                <tr key={s.id}>
-                  <td>{s.date}</td>
-                  <td>{s.title}</td>
-                  <td>{s.type}</td>
-                  <td>{s.year || 'N/A'}</td>
-                  <td>{s.division || 'N/A'}</td>
-                  <td>{s.totalCadets}</td>
-                  <td>{s.locked ? <Badge bg="secondary">Locked</Badge> : <Badge bg="success">Open</Badge>}</td>
-                  <td>
-                    <div className="d-flex gap-1">
-                      <Button size="sm" variant="outline-primary" onClick={() => { setSelectedSessionId(s.id!); setActiveTab('marker'); }}>Open</Button>
-                      <Button size="sm" variant="outline-danger" onClick={() => onDeleteSession(s.id!)}>Delete</Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Tab>
-
-        <Tab eventKey="marker" title="Marker">
-          <div className="mt-3">
-            {!selectedSessionId ? (
-              <div className="alert alert-info" role="alert">
-                <strong>No session selected.</strong> Please create a session from the Generator tab to start marking attendance.
-              </div>
-            ) : selectedSession ? (
-              <div>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <div>
-                    <strong>{selectedSession.title}</strong> — {selectedSession.date} {selectedSession.platoon ? `— ${selectedSession.platoon}` : ''} {selectedSession.year ? `— ${selectedSession.year}` : ''}
-                  </div>
-                  <div className="d-flex gap-2">
-                    <Badge bg="success">P: {counts.P}</Badge>
-                    <Badge bg="warning" text="dark">L: {counts.L}</Badge>
-                    <Badge bg="danger">A: {counts.A}</Badge>
-                  </div>
-                </div>
-
-                <div className="mb-3 p-3 border rounded bg-light">
-                  <Row className="g-3 align-items-center">
-                    <Col xs={12} sm={6} md={4}>
-                      <Form.Check 
-                        type="switch"
-                        id="apply-late-switch"
-                        label="Apply Late (Late marking mode)"
-                        checked={applyLate}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApplyLate(e.target.checked)}
-                        disabled={selectedSession.locked}
-                      />
-                    </Col>
-                    <Col xs={12} sm={6} md={4}>
-                      <Button 
-                        variant="success" 
-                        size="sm" 
-                        disabled={selectedSession.locked}
-                        onClick={onMarkAllPresent}
-                      >
-                        Mark All {applyLate ? 'Present (Late)' : 'Present'}
-                      </Button>
-                    </Col>
-                    <Col xs={12} sm={6} md={4} className="d-flex gap-2">
-                      <Button variant="outline-secondary" size="sm" disabled={selectedSession.locked || locking} onClick={onLockSession}>
-                        {locking ? 'Locking…' : 'Lock Session'}
-                      </Button>
-                    </Col>
-                  </Row>
-                </div>
-
-                <Table striped bordered hover responsive size="sm">
-                  <thead>
+          {reportSession && (
+            <Card>
+              <Card.Header>
+                <h5 className="mb-0">
+                  {reportSession.title} - {reportSession.date}
+                </h5>
+                <small className="text-muted">
+                  {reportSession.divisionId} | {reportSession.nccYear}
+                </small>
+              </Card.Header>
+              <Card.Body className="p-0">
+                <Table hover responsive className="mb-0">
+                  <thead className="bg-light">
                     <tr>
                       <th>#</th>
                       <th>Name</th>
-                      <th>Regimental No</th>
+                      <th>Reg No</th>
                       <th>Platoon</th>
-                      <th>Action</th>
+                      <th>Status</th>
+                      <th>Time</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cadets
-                      .filter(c => {
-                        const matchesYear = !selectedSession.year || (c.year || '') === selectedSession.year;
-                        const matchesDivision = !selectedSession.division || (c.division || '') === selectedSession.division;
-                        return matchesYear && matchesDivision;
-                      })
+                      .filter(
+                        (c) =>
+                          c.division === reportSession.divisionId &&
+                          normalizeNccYear(c.nccYear) === reportSession.nccYear
+                      )
                       .map((c, idx) => {
-                        const mark = marks[c.id];
-                        const status = mark?.status || 'A';
-                        const isPresent = status === 'P' || status === 'L';
-                        const isLate = status === 'L';
+                        const mark = reportMarks[c.id];
                         return (
                           <tr key={c.id}>
                             <td>{idx + 1}</td>
@@ -592,123 +724,47 @@ const AttendanceManagement: React.FC = () => {
                             <td>{c.registerNumber}</td>
                             <td>{c.platoon}</td>
                             <td>
-                              <Button 
-                                variant={isPresent ? 'success' : 'danger'} 
-                                size="sm"
-                                disabled={selectedSession.locked}
-                                onClick={() => onToggleMark(c.id)}
+                              <Badge
+                                bg={mark?.status === 'P' ? 'success' : 'danger'}
                               >
-                                {isPresent ? (isLate ? 'Present (Late)' : 'Present') : 'Absent'}
-                              </Button>
+                                {mark?.status || 'A'}
+                              </Badge>
+                            </td>
+                            <td>
+                              {mark?.timestamp
+                                ? formatISTDateTime(mark.timestamp)
+                                : '-'}
                             </td>
                           </tr>
                         );
                       })}
                   </tbody>
                 </Table>
-              </div>
-            ) : null}
-          </div>
-        </Tab>
-
-        <Tab eventKey="reporter" title="Reporter">
-          <div className="mt-3">
-            <Row className="g-3 align-items-end">
-              <Col xs={12} sm={6} md={3} lg={3} xl={3}>
-                <Form.Group controlId="reportYearFilter">
-                  <Form.Label>Year Filter</Form.Label>
-                  <Form.Select value={reportYearFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setReportYearFilter(e.target.value)}>
-                    <option value="" disabled>Select Year</option>
-                    {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col xs={12} sm={6} md={3} lg={3} xl={3}>
-                <Form.Group controlId="reportDivisionFilter">
-                  <Form.Label>Division Filter</Form.Label>
-                  <Form.Select value={reportDivisionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setReportDivisionFilter(e.target.value)}>
-                    <option value="" disabled>Select Division</option>
-                    <option value="SD">SD</option>
-                    <option value="SW">SW</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col xs={12} sm={6} md={3} lg={3} xl={3}>
-                <Form.Group controlId="sessionSelect2">
-                  <Form.Label>Select Session</Form.Label>
-                  <Form.Select value={selectedSessionId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedSessionId(e.target.value)}>
-                    <option value="" disabled>Select Session</option>
-                    {sessions
-                      .filter(s => !reportYearFilter || (s.year || '') === reportYearFilter)
-                      .map(s => <option key={s.id} value={s.id}>{s.date} — {s.title} {s.platoon ? `(${s.platoon})` : ''} {s.year ? `(${s.year})` : ''}</option>)}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col xs={12} sm={12} md={3} lg={3} xl={3} className="d-flex gap-2">
-                <Button variant="success" size="sm" disabled={!reportYearFilter || exportingPdf} onClick={exportYearPdf} className="flex-grow-1">
-                  {exportingPdf ? 'Exporting PDF…' : '📄 PDF'}
-                </Button>
-                <Button variant="primary" size="sm" disabled={!reportYearFilter || exportingExcel} onClick={exportYearExcel} className="flex-grow-1">
-                  {exportingExcel ? 'Exporting Excel…' : '📊 Excel'}
-                </Button>
-              </Col>
-            </Row>
-
-            {selectedSession && (
-              <div className="mt-3">
-                <h5>{selectedSession.title} — {selectedSession.date} {selectedSession.platoon ? `— ${selectedSession.platoon}` : ''} {selectedSession.year ? `— ${selectedSession.year}` : ''}</h5>
-                <p className="mb-1">Total Cadets: {selectedSession.totalCadets}</p>
-                <div className="d-flex gap-2 mb-3">
-                  <Badge bg="success">Present: {counts.P}</Badge>
-                  <Badge bg="warning" text="dark">Late: {counts.L}</Badge>
-                  <Badge bg="danger">Absent: {counts.A}</Badge>
-                </div>
-                <Table striped bordered hover responsive size="sm">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Name</th>
-                      <th>Reg No</th>
-                      <th>Platoon</th>
-                      <th>Status</th>
-                      <th>Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cadets
-                      .filter(c => {
-                        const matchesYear = !selectedSession.year || (c.year || '') === selectedSession.year;
-                        const matchesDivision = !selectedSession.division || (c.division || '') === selectedSession.division;
-                        return matchesYear && matchesDivision;
-                      })
-                      .map((c, idx) => {
-                        const m = marks[c.id];
-                        const status = m?.status || 'A';
-                        let statusLabel: string = status;
-                        if (status === 'P') statusLabel = 'Present';
-                        else if (status === 'L') statusLabel = 'Late';
-                        else if (status === 'A') statusLabel = 'Absent';
-                        return (
-                          <tr key={c.id}>
-                            <td>{idx + 1}</td>
-                            <td>{c.name}</td>
-                            <td>{c.registerNumber}</td>
-                            <td>{c.platoon}</td>
-                            <td>{statusLabel}</td>
-                            <td>{m?.timestamp ? formatISTDateTime(m.timestamp) : '-'}</td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </Table>
-              </div>
-            )}
-          </div>
-        </Tab>
+              </Card.Body>
+            </Card>
+          )}
+          </Tab>
+        )}
       </Tabs>
+
+      <Modal show={!!deleteConfirmSessionId} onHide={() => setDeleteConfirmSessionId(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Session</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this session? This action cannot be undone and all associated attendance records will be removed.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDeleteConfirmSessionId(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={() => deleteConfirmSessionId && onDeleteSession(deleteConfirmSessionId)}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
 
 export default AttendanceManagement;
-

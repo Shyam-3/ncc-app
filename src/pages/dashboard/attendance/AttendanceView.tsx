@@ -1,56 +1,137 @@
+import { useState, useEffect, useMemo } from 'react';
+import { Card, Spinner, Tab, Tabs } from 'react-bootstrap';
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { getCadetByUserId, listenMarks, listenSessions } from '@/features/attendance/service';
-import { AttendanceMark, AttendanceSession, Cadet } from '@/shared/types';
-import { formatISTDateTime } from '@/shared/utils/dateTime';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Badge, Card, Col, Form, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
+import { StatsOverview, AttendanceCalendar, PerformanceGraphs, SessionHistory } from './user';
+import {
+  getCadetByUserId,
+  getUserAttendanceHistory,
+  getSessionsForCalendar,
+} from '@/features/attendance/service';
+import type {
+  AttendanceSession,
+  AttendanceMark,
+  CadetAttendanceStats,
+  AttendanceStatus,
+} from '@/features/attendance/model/attendance.types';
+import type { Cadet } from '@/shared/types';
+import { normalizeNccYear } from '@/shared/config/constants';
+import type { Division } from '@/shared/config/constants';
 
 const AttendanceView: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [sessions, setSessions] = useState<(AttendanceSession & { id: string })[]>([]);
+  const [activeTab, setActiveTab] = useState('overview');
   const [cadet, setCadet] = useState<(Cadet & { id: string }) | null>(null);
-  const [marks, setMarks] = useState<Record<string, AttendanceMark>>({});
-  const [sessionFilter, setSessionFilter] = useState<string>('ALL');
+  const [history, setHistory] = useState<
+    Array<{ session: AttendanceSession & { id: string }; mark: AttendanceMark | null }>
+  >([]);
+  const [calendarEntries, setCalendarEntries] = useState<
+    Array<{ date: string; sessionId: string; title: string; status: AttendanceStatus | null }>
+  >([]);
 
+  // Load cadet data
   useEffect(() => {
-    if (!currentUser) return;
-    let unsub: (() => void) | null = null;
-    (async () => {
-      const c = await getCadetByUserId(currentUser.uid);
-      setCadet(c);
-      unsub = listenSessions(items => setSessions(items));
-      setLoading(false);
-    })();
-    return () => { if (unsub) unsub(); };
+    const activeUser = currentUser;
+    if (!activeUser) return;
+    const uid = activeUser.uid;
+
+    async function loadData() {
+      setLoading(true);
+      try {
+        // Get cadet profile
+        const cadetData = await getCadetByUserId(uid);
+        setCadet(cadetData);
+
+        if (cadetData) {
+          const cadetNccYear = normalizeNccYear(cadetData.nccYear);
+          // Get history
+          const historyData = await getUserAttendanceHistory(
+            cadetData.id,
+            cadetData.division as Division,
+            cadetNccYear || undefined
+          );
+          setHistory(historyData);
+        }
+      } catch (e) {
+        console.error('Error loading attendance data:', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
   }, [currentUser]);
 
-  // Subscribe to marks per session to compute stats
+  // Load calendar entries for current month
   useEffect(() => {
-    const unsubs: (() => void)[] = [];
-    sessions.forEach(s => {
-      const u = listenMarks(s.id!, items => {
-        const myMark = items.find(m => m.cadetId === cadet?.id);
-        setMarks(prev => ({ ...prev, [s.id!]: myMark as AttendanceMark }));
-      });
-      unsubs.push(u);
+    const activeCadet = cadet;
+    if (!activeCadet) return;
+    const cadetId = activeCadet.id;
+    const cadetDivision = activeCadet.division as Division;
+
+    async function loadCalendar() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const entries = await getSessionsForCalendar(
+        cadetId,
+        year,
+        month,
+        cadetDivision
+      );
+      setCalendarEntries(entries);
+    }
+
+    loadCalendar();
+  }, [cadet]);
+
+  // Compute overview stats from all marked sessions provided by admin-side marking.
+  const computedStats = useMemo<CadetAttendanceStats | null>(() => {
+    if (!cadet || !history.length) return null;
+    const cadetNccYear = normalizeNccYear(cadet.nccYear);
+    if (!cadetNccYear) return null;
+
+    let present = 0,
+      absent = 0;
+    const monthly: Record<string, { total: number; present: number; absent: number }> =
+      {};
+
+    history.forEach(({ session, mark }) => {
+      switch (mark.status) {
+        case 'P':
+          present++;
+          break;
+        case 'A':
+          absent++;
+          break;
+      }
+
+      const monthKey = session.date.substring(0, 7); // YYYY-MM
+      if (!monthly[monthKey]) {
+        monthly[monthKey] = { total: 0, present: 0, absent: 0 };
+      }
+      monthly[monthKey].total++;
+      if (mark.status === 'P') monthly[monthKey].present++;
+      if (mark.status === 'A') monthly[monthKey].absent++;
     });
-    return () => unsubs.forEach(f => f());
-  }, [sessions, cadet?.id]);
 
-  const stats = useMemo(() => {
-    const all = Object.values(marks).filter(Boolean);
-    const present = all.filter(m => m?.status === 'P').length;
-    const late = all.filter(m => m?.status === 'L').length;
-    const absent = all.filter(m => m?.status === 'A').length;
-    const total = sessions.length;
-    const attendanceRate = total ? Math.round(((present + late) / total) * 100) : 0;
-    return { present, late, absent, total, attendanceRate };
-  }, [marks, sessions.length]);
+    const totalSessions = present + absent;
+    const attendanceRate =
+      totalSessions > 0 ? Math.round((present / totalSessions) * 1000) / 10 : 0;
 
-  const filteredSessions = useMemo(() => {
-    return sessions.filter(s => sessionFilter === 'ALL' || s.type === sessionFilter);
-  }, [sessions, sessionFilter]);
+    return {
+      cadetId: cadet.id,
+      divisionId: cadet.division as any,
+      nccYear: cadetNccYear,
+      totalSessions,
+      present,
+      absent,
+      attendanceRate,
+      monthly,
+      recentSessionIds: history.slice(0, 10).map((h) => h.session.id!),
+      updatedAt: new Date().toISOString(),
+    };
+  }, [cadet, history]);
 
   if (loading) {
     return (
@@ -60,83 +141,79 @@ const AttendanceView: React.FC = () => {
     );
   }
 
-  return (
-    <div className="container py-4">
-      <h2 className="mb-3">My Attendance</h2>
-      {cadet && (
-        <Card className="mb-4">
-          <Card.Body>
-            <Row className="g-3">
-              <Col xs={12} sm={12} md={8} lg={8} xl={8}>
-                <h5 className="mb-1">{cadet.registerNumber} — {cadet.rollNo}</h5>
-                <div className="text-muted small">Platoon: {cadet.platoon || 'N/A'} | Dept: {cadet.department} | Year: {cadet.year}</div>
-              </Col>
-              <Col xs={12} sm={12} md={4} lg={4} xl={4} className="text-md-end mt-3 mt-md-0">
-                <div className="fw-semibold">Attendance Rate</div>
-                <ProgressBar now={stats.attendanceRate} label={`${stats.attendanceRate}%`} />
-              </Col>
-            </Row>
-            <Row className="mt-3 text-center g-2">
-              <Col xs={4} sm={4} md={4} lg={4} xl={4}>
-                <Badge bg="success" className="px-3 py-2">Present: {stats.present}</Badge>
-              </Col>
-              <Col>
-                <Badge bg="warning" text="dark" className="px-3 py-2">Late: {stats.late}</Badge>
-              </Col>
-              <Col>
-                <Badge bg="danger" className="px-3 py-2">Absent: {stats.absent}</Badge>
-              </Col>
-              <Col>
-                <Badge bg="secondary" className="px-3 py-2">Total: {stats.total}</Badge>
-              </Col>
-            </Row>
+  if (!cadet) {
+    if (userProfile?.role === 'superadmin') {
+      return (
+        <div className="container py-4">
+          <Card>
+            <Card.Body className="text-center py-5 text-muted">
+              <i className="bi bi-shield-check fs-1 d-block mb-3"></i>
+              <p className="mb-2">Attendance is not applicable to Super Admin accounts.</p>
+              <p className="mb-0">You can still manage and mark attendance for all cadets from Admin Attendance.</p>
+            </Card.Body>
+          </Card>
+        </div>
+      );
+    }
+
+    return (
+      <div className="container py-4">
+        <Card>
+          <Card.Body className="text-center py-5 text-muted">
+            <i className="bi bi-person-x fs-1 d-block mb-3"></i>
+            <p>Your profile is not set up as a cadet yet.</p>
+            <p>Please contact an administrator to complete your registration.</p>
           </Card.Body>
         </Card>
-      )}
+      </div>
+    );
+  }
 
-      <Form className="mb-3">
-        <Form.Group controlId="filterType" className="w-auto">
-          <Form.Label className="me-2">Filter by Type</Form.Label>
-          <Form.Select value={sessionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSessionFilter(e.target.value)}>
-            <option value="" disabled>Select Type</option>
-            <option value="ALL">All Types</option>
-            {[...new Set(sessions.map(s => s.type))].map(t => <option key={t} value={t}>{t}</option>)}
-          </Form.Select>
-        </Form.Group>
-      </Form>
+  return (
+    <div className="container py-4">
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="mb-1">My Attendance</h2>
+          <p className="text-muted mb-0">
+            {cadet.name} | {cadet.division} | {normalizeNccYear(cadet.nccYear) || '-'}
+          </p>
+        </div>
+      </div>
 
-      <Table striped bordered hover responsive size="sm">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Date</th>
-            <th>Title</th>
-            <th>Type</th>
-            <th>Platoon</th>
-            <th>Status</th>
-            <th>Marked At</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredSessions.map((s, idx) => {
-            const mark = marks[s.id!];
-            return (
-              <tr key={s.id}>
-                <td>{idx + 1}</td>
-                <td>{s.date}</td>
-                <td>{s.title}</td>
-                <td>{s.type}</td>
-                <td>{s.platoon || 'All'}</td>
-                <td>{mark?.status || '-'}</td>
-                <td>{mark?.timestamp ? formatISTDateTime(mark.timestamp) : '-'}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
+      <Tabs
+        id="attendance-view-tabs"
+        activeKey={activeTab}
+        onSelect={(k: string | null) => setActiveTab(k || 'overview')}
+        className="mb-4"
+      >
+        {/* Overview Tab */}
+        <Tab eventKey="overview" title="Overview">
+          <div className="mb-4">
+            <StatsOverview stats={computedStats} />
+          </div>
+          <PerformanceGraphs stats={computedStats} />
+        </Tab>
+
+        {/* Calendar Tab */}
+        <Tab eventKey="calendar" title="Calendar">
+          <AttendanceCalendar
+            entries={calendarEntries}
+            onDateClick={(_, entry) => {
+              if (entry) {
+                console.log('Selected session:', entry.sessionId);
+              }
+            }}
+          />
+        </Tab>
+
+        {/* History Tab */}
+        <Tab eventKey="history" title="History">
+          <SessionHistory history={history} />
+        </Tab>
+      </Tabs>
     </div>
   );
 };
 
 export default AttendanceView;
-

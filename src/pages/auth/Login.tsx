@@ -10,7 +10,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const { signIn } = useAuth();
+  const { signIn, fetchUserProfile } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -24,8 +24,12 @@ const Login: React.FC = () => {
     try {
       setError('');
       setLoading(true);
-      await signIn(email, password);
-      navigate('/dashboard');
+      const credential = await signIn(email, password);
+      const profile = await fetchUserProfile(credential.user.uid);
+      const landingPage = profile?.role === 'admin' || profile?.role === 'superadmin'
+        ? '/admin/dashboard'
+        : '/dashboard';
+      navigate(landingPage, { replace: true });
     } catch (err) {
       setError('Failed to sign in. Please check your credentials.');
     } finally {

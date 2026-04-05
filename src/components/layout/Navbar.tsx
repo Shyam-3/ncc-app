@@ -19,6 +19,11 @@ const AppNavbar: React.FC = () => {
     setExpanded(false);
   };
 
+  const dashboardPath =
+    userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+      ? '/admin/dashboard'
+      : '/dashboard';
+
   // Close menu on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -77,7 +82,7 @@ const AppNavbar: React.FC = () => {
             
             {currentUser ? (
               <>
-                <Nav.Link as={NavLink} to="/dashboard" onClick={closeMenu}>Dashboard</Nav.Link>
+                <Nav.Link as={NavLink} to={dashboardPath} onClick={closeMenu}>Dashboard</Nav.Link>
                 <NavDropdown
                   title={
                     <span className="d-inline-flex align-items-center">

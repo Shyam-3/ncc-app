@@ -57,8 +57,8 @@ setPersistence(auth, browserLocalPersistence).catch(() => {
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Analytics (guarded - only runs in supported browser contexts and when measurementId exists)
-if (firebaseConfig.measurementId) {
+// Analytics (guarded - only runs in production browser contexts and when measurementId exists)
+if (import.meta.env.PROD && firebaseConfig.measurementId) {
   isSupported().then((supported) => {
     if (supported) {
       try {

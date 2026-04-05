@@ -1,6 +1,6 @@
 // Type definitions for the application
 
-import { AcademicYear, AttendanceStatus, Department, EventType, Platoon, UserRole } from '../config/constants';
+import { AcademicYear, AttendanceStatus, Department, EventType, NccYear, Platoon, UserRole } from '../config/constants';
 
 export interface User {
   uid: string;
@@ -30,6 +30,7 @@ export interface Cadet {
 
   // Academic Details
   year: AcademicYear | string;
+  nccYear?: NccYear | string;
   residentialStatus?: string;
   department: Department | string;
   rollNo: string;
@@ -49,11 +50,9 @@ export interface AttendanceSession {
   id?: string;
   title: string;
   date: string;
-  type: string;
   year?: string;
   division?: string;
   platoon?: string;
-  location?: string;
   createdAt: string;
   locked: boolean;
   totalCadets: number;
