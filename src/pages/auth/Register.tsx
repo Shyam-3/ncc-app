@@ -484,34 +484,6 @@ const Register: React.FC = () => {
                       {errors.year && <Form.Text className="text-danger d-block mt-1">{errors.year}</Form.Text>}
                     </Form.Group>
                   </Col>
-                  <Col xs={12} md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Residential Status <span className="text-danger">*</span></Form.Label>
-                      <div>
-                        <Form.Check
-                          inline
-                          type="radio"
-                          label="Day Scholar"
-                          name="residentialStatus"
-                          value="Day Scholar"
-                          checked={formData.residentialStatus === 'Day Scholar'}
-                          onChange={handleResidentialStatusChange}
-                          id="residential_day"
-                        />
-                        <Form.Check
-                          inline
-                          type="radio"
-                          label="Hosteller"
-                          name="residentialStatus"
-                          value="Hosteller"
-                          checked={formData.residentialStatus === 'Hosteller'}
-                          onChange={handleResidentialStatusChange}
-                          id="residential_hosteller"
-                        />
-                      </div>
-                      {errors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{errors.residentialStatus}</Form.Text>}
-                    </Form.Group>
-                  </Col>
                 </Row>
 
                 <Row className="g-3">
@@ -608,6 +580,37 @@ const Register: React.FC = () => {
                         <option value="O-">O-</option>
                       </Form.Select>
                       {errors.bloodGroup && <Form.Text className="text-danger d-block mt-1">{errors.bloodGroup}</Form.Text>}
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row className="g-3">
+                  <Col xs={12} md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Residential Status <span className="text-danger">*</span></Form.Label>
+                      <div>
+                        <Form.Check
+                          inline
+                          type="radio"
+                          label="Day Scholar"
+                          name="residentialStatus"
+                          value="Day Scholar"
+                          checked={formData.residentialStatus === 'Day Scholar'}
+                          onChange={handleResidentialStatusChange}
+                          id="residential_day"
+                        />
+                        <Form.Check
+                          inline
+                          type="radio"
+                          label="Hosteller"
+                          name="residentialStatus"
+                          value="Hosteller"
+                          checked={formData.residentialStatus === 'Hosteller'}
+                          onChange={handleResidentialStatusChange}
+                          id="residential_hosteller"
+                        />
+                      </div>
+                      {errors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{errors.residentialStatus}</Form.Text>}
                     </Form.Group>
                   </Col>
                 </Row>

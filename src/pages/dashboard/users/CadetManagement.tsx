@@ -454,10 +454,6 @@ const CadetManagement: React.FC = () => {
                   <p className="mb-0">{formatYear(cadetView.year || '1st Year')}</p>
                 </Col>
                 <Col xs={12} md={3}>
-                  <Form.Label className="fw-bold text-muted small">Residential Status</Form.Label>
-                  <p className="mb-0">{cadetView.residentialStatus || '-'}</p>
-                </Col>
-                <Col xs={12} md={3}>
                   <Form.Label className="fw-bold text-muted small">Department</Form.Label>
                   <p className="mb-0">{cadetView.department || '-'}</p>
                 </Col>
@@ -581,21 +577,6 @@ const CadetManagement: React.FC = () => {
                       ))}
                     </Form.Select>
                     {cadetEditErrors.year && <Form.Text className="text-danger">{cadetEditErrors.year}</Form.Text>}
-                  </Form.Group>
-                </Col>
-                <Col xs={12} md={3}>
-                  <Form.Group controlId="editCadetResidentialStatus">
-                    <Form.Label>Residential Status *</Form.Label>
-                    <Form.Select
-                      value={cadetEditForm.residentialStatus}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('residentialStatus', e.target.value)}
-                      isInvalid={Boolean(cadetEditErrors.residentialStatus)}
-                    >
-                      <option value="" disabled>Select Status</option>
-                      <option value="Day Scholar">Day Scholar</option>
-                      <option value="Hosteller">Hosteller</option>
-                    </Form.Select>
-                    {cadetEditErrors.residentialStatus && <Form.Text className="text-danger">{cadetEditErrors.residentialStatus}</Form.Text>}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={3}>

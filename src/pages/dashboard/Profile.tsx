@@ -390,10 +390,6 @@ const Profile: React.FC = () => {
                   <p className="mb-0">{formatYear(profile.year || '1st Year')}</p>
                 </Col>
                 <Col xs={12} md={3}>
-                  <Form.Label className="fw-bold text-muted small">Residential Status</Form.Label>
-                  <p className="mb-0">{profile.residentialStatus || '-'}</p>
-                </Col>
-                <Col xs={12} md={3}>
                   <Form.Label className="fw-bold text-muted small">Department</Form.Label>
                   <p className="mb-0">{profile.department || '-'}</p>
                 </Col>
@@ -538,21 +534,6 @@ const Profile: React.FC = () => {
                 </Row>
 
                 <Row className="g-3">
-                  <Col xs={12} md={6}>
-                    <Form.Group className="mb-3" controlId="editResidentialStatus">
-                      <Form.Label>Residential Status *</Form.Label>
-                      <Form.Select
-                        value={editForm.residentialStatus}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('residentialStatus', e.target.value)}
-                        isInvalid={Boolean(editErrors.residentialStatus)}
-                      >
-                        <option value="" disabled>Select Status</option>
-                        <option value="Day Scholar">Day Scholar</option>
-                        <option value="Hosteller">Hosteller</option>
-                      </Form.Select>
-                      {editErrors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{editErrors.residentialStatus}</Form.Text>}
-                    </Form.Group>
-                  </Col>
                   <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="editDepartment">
                       <Form.Label>Department *</Form.Label>
