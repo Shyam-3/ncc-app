@@ -53,8 +53,8 @@ export const NCC_RANKS: Rank[] = [
   { code: 'LCPL', name: 'Lance Corporal', order: 2 },
   { code: 'CPL', name: 'Corporal', order: 3 },
   { code: 'SGT', name: 'Sergeant', order: 4 },
-  { code: 'CSM', name: 'Company Sergeant Major', order: 5 },
-  { code: 'CQMS', name: 'Company Quarter Master Sergeant', order: 6 },
+  { code: 'CQMS', name: 'Company Quarter Master Sergeant', order: 5 },
+  { code: 'CSM', name: 'Company Sergeant Major', order: 6 },
   { code: 'CUO', name: 'Cadet Under Officer', order: 7 },
   { code: 'SUO', name: 'Senior Under Officer', order: 8 }
 ];

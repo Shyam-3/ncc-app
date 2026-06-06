@@ -1,0 +1,24 @@
+.annual-report-container {
+  max-width: 800px;
+}
+
+.annual-report-container .preview-card {
+  border-left: 4px solid #0d6efd;
+}
+
+.annual-report-container .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #212529;
+}
+
+.annual-report-container .stat-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.annual-report-container .date-range-badge {
+  font-size: 0.85rem;
+}

@@ -37,6 +37,7 @@ const AttendanceManagement: React.FC = () => {
   const [gYear, setGYear] = useState<NccYear | ''>('1st Year');
   const [gTitle, setGTitle] = useState('Parade');
   const [gDate, setGDate] = useState(() => toISTDateInputValue());
+  const [gDoubleParade, setGDoubleParade] = useState(false);
   const [creating, setCreating] = useState(false);
 
   // Marker state
@@ -176,10 +177,12 @@ const AttendanceManagement: React.FC = () => {
         nccYear: gYear,
         title: gTitle,
         date: gDate,
+        ...(gDoubleParade ? { paradeCount: 2 } : {}),
       };
 
       const id = await createSession(formData, creatorUid, eligibleCadets.length);
       toast.success('Session created');
+      setGDoubleParade(false);
       setSelectedSessionId(id);
       setActiveTab('marker');
     } catch (e: any) {
@@ -426,6 +429,15 @@ const AttendanceManagement: React.FC = () => {
                           </Form.Group>
                         </Col>
                       </Row>
+
+                      <Form.Check
+                        type="checkbox"
+                        id="double-parade-check"
+                        label="Saturday Parade (Double)"
+                        checked={gDoubleParade}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setGDoubleParade(e.target.checked)}
+                        className="mt-3"
+                      />
                     </Form>
                   </Card.Body>
                 </Card>
