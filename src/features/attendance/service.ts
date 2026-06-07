@@ -312,7 +312,6 @@ export async function listCadets(): Promise<(Cadet & { id: string })[]> {
 
   const allowedCadetRoles = new Set<string>([
     normalizeRole(ROLES.MEMBER),
-    normalizeRole(ROLES.SUBADMIN),
     normalizeRole(ROLES.ADMIN),
   ]);
 
@@ -321,11 +320,6 @@ export async function listCadets(): Promise<(Cadet & { id: string })[]> {
       const data = d.data();
       const role = normalizeRole(data.role);
       const status = normalizeStatus(data.status);
-
-      // Support common legacy role spellings while enforcing canonical role intent.
-      if (role === 'subadmin' || role === 'subadm') {
-        return status === 'active';
-      }
 
       return allowedCadetRoles.has(role) && status === 'active';
     })

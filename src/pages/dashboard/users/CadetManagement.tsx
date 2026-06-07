@@ -7,7 +7,7 @@ import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, 
 import toast from 'react-hot-toast';
 import './CadetManagement.css';
 
-type UserRole = 'member' | 'subadmin' | 'admin' | 'superadmin';
+type UserRole = 'member' | 'admin' | 'superadmin';
 
 interface CadetUser {
   uid: string;
@@ -79,7 +79,7 @@ const CadetManagement: React.FC = () => {
   };
 
   const cadetUsers = useMemo(() => {
-    let list = users.filter(u => u.role === 'member' || u.role === 'subadmin');
+    let list = users.filter(u => u.role === 'member');
 
     if (divisionFilter !== 'ALL') {
       list = list.filter(u => (u.division || '') === divisionFilter);
@@ -271,7 +271,7 @@ const CadetManagement: React.FC = () => {
         </Card.Header>
         <Card.Body>
           <Alert variant="info">
-            View member and sub-admin profiles. Admins can edit NCC and academic details from the profile view.
+            View member profiles. Admins can edit NCC and academic details from the profile view.
           </Alert>
           <Row className="mb-3 g-3">
             <Col xs={12} md={3}>

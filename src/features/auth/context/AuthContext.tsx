@@ -44,7 +44,7 @@ interface AuthContextType {
   hasRole: (role: UserRole | UserRole[]) => boolean;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
-  isSubAdmin: () => boolean;
+
   isMember: () => boolean;
   isCadet: () => boolean; // back-compat helper
   fetchUserProfile: (uid: string) => Promise<User | null>;
@@ -202,7 +202,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check if user is admin or superadmin
   const isAdmin = (): boolean => hasRole(['admin', 'superadmin']);
   const isSuperAdmin = (): boolean => hasRole('superadmin');
-  const isSubAdmin = (): boolean => hasRole('subadmin');
+
   const isMember = (): boolean => hasRole('member');
   // Removed legacy 'cadet' role; retain helper returning false for compatibility
   const isCadet = (): boolean => false;
@@ -232,7 +232,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     hasRole,
     isAdmin,
     isSuperAdmin,
-    isSubAdmin,
+
     isMember,
     isCadet,
     fetchUserProfile,

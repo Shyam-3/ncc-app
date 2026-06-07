@@ -16,7 +16,7 @@ import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, 
 import toast from 'react-hot-toast';
 import './UserManagement.css';
 
-type UserRole = 'member' | 'subadmin' | 'admin' | 'superadmin';
+type UserRole = 'member' | 'admin' | 'superadmin';
 
 interface UserData {
   uid: string;

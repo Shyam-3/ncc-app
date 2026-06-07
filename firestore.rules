@@ -17,11 +17,8 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
     
-    function isSubAdmin() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'subadmin';
-    }
     
+
     function isMember() {
       return isAuthenticated() && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'member';
@@ -79,7 +76,7 @@ service cloud.firestore {
     // Cadet attendance statistics (computed per-user stats)
     match /cadetAttendanceStats/{cadetId} {
       // Users can read their own stats, admins can read all
-      allow read: if isOwner(cadetId) || isAdmin() || isSuperAdmin() || isSubAdmin();
+      allow read: if isOwner(cadetId) || isAdmin() || isSuperAdmin();
       // Only admins can write (computed/updated by service)
       allow write: if isAdmin() || isSuperAdmin();
     }
@@ -141,14 +138,13 @@ service cloud.firestore {
     
     // Reports
     match /reports/{reportId} {
-      allow read: if isAdmin() || isSuperAdmin() || isSubAdmin();
-      // subadmins can write only for on-duty reports; admins/superadmins can write any
-      allow write: if isAdmin() || isSuperAdmin() || (isSubAdmin() && request.resource.data.type == 'on_duty');
+      allow read: if isAdmin() || isSuperAdmin();
+      allow write: if isAdmin() || isSuperAdmin();
     }
 
-    // Report templates (admin and subadmin managed)
+    // Report templates (admin managed)
     match /reportTemplates/{templateId} {
-      allow read, write: if isAdmin() || isSuperAdmin() || isSubAdmin();
+      allow read, write: if isAdmin() || isSuperAdmin();
     }
     
     // CMS pages (About, Contact, Unit Structure, etc.)

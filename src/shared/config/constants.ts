@@ -2,7 +2,6 @@
 export const ROLES = {
   VISITOR: 'visitor',
   MEMBER: 'member',         // basic role (trainee)
-  SUBADMIN: 'subadmin',     // helper to admins
   ADMIN: 'admin',
   SUPERADMIN: 'superadmin',
   ALUMNI: 'alumni'

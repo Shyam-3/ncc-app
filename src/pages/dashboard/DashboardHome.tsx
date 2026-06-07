@@ -12,7 +12,7 @@ const Dashboard: React.FC = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const isAdmin = userProfile?.role === 'admin';
   const isSuperAdmin = userProfile?.role === 'superadmin';
-  const isSubAdmin = userProfile?.role === 'subadmin';
+
 
   useEffect(() => {
     const fetchPendingCount = async () => {
@@ -236,22 +236,7 @@ const Dashboard: React.FC = () => {
               </Card>
             </Col>
 
-            {isSubAdmin && (
-              <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-                <Card className="text-center h-100 shadow-sm hover-lift">
-                  <Card.Body className="d-flex flex-column justify-content-between">
-                    <div>
-                      <i className="bi bi-file-earmark-text text-secondary dashboard-home-icon"></i>
-                      <h3 className="mt-3">Reports</h3>
-                      <p className="text-muted small">Open reports workspace</p>
-                    </div>
-                    <Button as={Link} to="/admin/reports" variant="secondary" className="mt-2">
-                      Open
-                    </Button>
-                  </Card.Body>
-                </Card>
-              </Col>
-            )}
+
 
             <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">

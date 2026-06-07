@@ -330,8 +330,7 @@ const Profile: React.FC = () => {
                     <Badge
                       bg={
                         profile.role === 'superadmin' ? 'danger' :
-                        profile.role === 'admin' ? 'primary' :
-                        profile.role === 'subadmin' ? 'info' : 'secondary'
+                        profile.role === 'admin' ? 'primary' : 'secondary'
                       }
                       className="ms-2"
                     >
