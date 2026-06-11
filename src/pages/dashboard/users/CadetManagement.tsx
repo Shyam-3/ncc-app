@@ -29,6 +29,7 @@ interface CadetUser {
   registerNumber?: string;
   phone?: string;
   bloodGroup?: string;
+  fatherName?: string;
   address?: string;
   lastUpdated?: string;
 }
@@ -480,6 +481,10 @@ const CadetManagement: React.FC = () => {
                 <Col xs={12} md={4}>
                   <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
                   <p className="mb-0">{cadetView.bloodGroup || '-'}</p>
+                </Col>
+                <Col xs={12} md={4}>
+                  <Form.Label className="fw-bold text-muted small">Father's / Guardian's Name</Form.Label>
+                  <p className="mb-0">{cadetView.fatherName || '-'}</p>
                 </Col>
                 <Col xs={12} md={12}>
                   <Form.Label className="fw-bold text-muted small">Address</Form.Label>

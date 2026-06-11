@@ -38,6 +38,7 @@ const AttendanceManagement: React.FC = () => {
   const [gTitle, setGTitle] = useState('Parade');
   const [gDate, setGDate] = useState(() => toISTDateInputValue());
   const [gDoubleParade, setGDoubleParade] = useState(false);
+  const [gOfficialParade, setGOfficialParade] = useState(false);
   const [creating, setCreating] = useState(false);
 
   // Marker state
@@ -45,6 +46,8 @@ const AttendanceManagement: React.FC = () => {
   const [sessionDivisionFilter, setSessionDivisionFilter] = useState<Division>('SD');
   const [sessionYearFilter, setSessionYearFilter] = useState<NccYear | ''>('');
   const [sessionStatusFilter, setSessionStatusFilter] = useState<'open' | 'locked'>('open');
+  const [sessionOfficialFilter, setSessionOfficialFilter] = useState(false);
+  const [sessionDoubleFilter, setSessionDoubleFilter] = useState(false);
   const [deleteConfirmSessionId, setDeleteConfirmSessionId] = useState<string | null>(null);
 
   // Reporter state
@@ -132,7 +135,9 @@ const AttendanceManagement: React.FC = () => {
         const matchesDivision = s.divisionId === sessionDivisionFilter;
         const matchesYear = !sessionYearFilter || s.nccYear === sessionYearFilter;
         const matchesStatus = s.status === sessionStatusFilter;
-        return matchesDivision && matchesYear && matchesStatus;
+        const matchesOfficial = !sessionOfficialFilter || s.isOfficialParade === true;
+        const matchesDouble = !sessionDoubleFilter || (s.paradeCount || 1) >= 2;
+        return matchesDivision && matchesYear && matchesStatus && matchesOfficial && matchesDouble;
       })
       .sort((a, b) => {
         const byDateDesc = b.date.localeCompare(a.date);
@@ -145,7 +150,7 @@ const AttendanceManagement: React.FC = () => {
 
         return a.title.localeCompare(b.title);
       });
-  }, [sessions, sessionDivisionFilter, sessionYearFilter, sessionStatusFilter]);
+  }, [sessions, sessionDivisionFilter, sessionYearFilter, sessionStatusFilter, sessionOfficialFilter, sessionDoubleFilter]);
 
   // Filtered sessions for reporter
   const filteredSessions = useMemo(() => {
@@ -178,11 +183,13 @@ const AttendanceManagement: React.FC = () => {
         title: gTitle,
         date: gDate,
         ...(gDoubleParade ? { paradeCount: 2 } : {}),
+        ...(gOfficialParade ? { isOfficialParade: true } : {}),
       };
 
       const id = await createSession(formData, creatorUid, eligibleCadets.length);
       toast.success('Session created');
       setGDoubleParade(false);
+      setGOfficialParade(false);
       setSelectedSessionId(id);
       setActiveTab('marker');
     } catch (e: any) {
@@ -430,14 +437,22 @@ const AttendanceManagement: React.FC = () => {
                         </Col>
                       </Row>
 
-                      <Form.Check
-                        type="checkbox"
-                        id="double-parade-check"
-                        label="Saturday Parade (Double)"
-                        checked={gDoubleParade}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setGDoubleParade(e.target.checked)}
-                        className="mt-3"
-                      />
+                      <div className="d-flex gap-4 mt-3">
+                        <Form.Check
+                          type="checkbox"
+                          id="double-parade-check"
+                          label="Saturday Parade (Double)"
+                          checked={gDoubleParade}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => setGDoubleParade(e.target.checked)}
+                        />
+                        <Form.Check
+                          type="checkbox"
+                          id="official-parade-check"
+                          label="Official Parade"
+                          checked={gOfficialParade}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => setGOfficialParade(e.target.checked)}
+                        />
+                      </div>
                     </Form>
                   </Card.Body>
                 </Card>
@@ -510,6 +525,27 @@ const AttendanceManagement: React.FC = () => {
                           />
                         </div>
                       </Col>
+                      <Col md={6}>
+                        <Form.Label className="mb-1">Tags</Form.Label>
+                        <div className="d-flex flex-wrap gap-3">
+                          <Form.Check
+                            inline
+                            type="checkbox"
+                            id="session-filter-official"
+                            label="Official"
+                            checked={sessionOfficialFilter}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setSessionOfficialFilter(e.target.checked)}
+                          />
+                          <Form.Check
+                            inline
+                            type="checkbox"
+                            id="session-filter-double"
+                            label="Double"
+                            checked={sessionDoubleFilter}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setSessionDoubleFilter(e.target.checked)}
+                          />
+                        </div>
+                      </Col>
                       <Col md={6} className="d-flex align-items-end">
                         <Button
                           variant="outline-secondary"
@@ -518,6 +554,8 @@ const AttendanceManagement: React.FC = () => {
                             setSessionDivisionFilter('SD');
                             setSessionYearFilter('');
                             setSessionStatusFilter('open');
+                            setSessionOfficialFilter(false);
+                            setSessionDoubleFilter(false);
                           }}
                           className="w-100"
                         >
@@ -538,6 +576,7 @@ const AttendanceManagement: React.FC = () => {
                       <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Date</th>
                       <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Title</th>
                       <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Year</th>
+                      <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Tags</th>
                       <th style={{ fontWeight: 'bold', padding: '0.75rem', backgroundColor: '#f8f9fa' }}>Actions</th>
                     </tr>
                   </thead>
@@ -547,6 +586,13 @@ const AttendanceManagement: React.FC = () => {
                         <td style={{ textAlign: 'center' }}>{formatISTDate(s.date, { day: '2-digit', month: '2-digit', year: '2-digit' })}</td>
                         <td style={{ wordBreak: 'break-word', whiteSpace: 'normal', textAlign: 'center' }}>{s.title}</td>
                         <td style={{ textAlign: 'center' }}>{s.nccYear.replace(' Year', '')}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div className="d-flex gap-1 justify-content-center flex-wrap">
+                            {(s.paradeCount || 1) >= 2 && <Badge bg="warning" text="dark" className="fw-normal">Double</Badge>}
+                            {s.isOfficialParade && <Badge bg="info" className="fw-normal">Official</Badge>}
+                            {!(s.paradeCount && s.paradeCount >= 2) && !s.isOfficialParade && <span className="text-muted">—</span>}
+                          </div>
+                        </td>
                         <td style={{ textAlign: 'center' }}>
                           <div className="d-flex gap-1 justify-content-center">
                             <Button
@@ -576,7 +622,7 @@ const AttendanceManagement: React.FC = () => {
                     ))}
                     {filteredRecentSessions.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="text-center text-muted py-4">
+                        <td colSpan={5} className="text-center text-muted py-4">
                           No sessions found for the selected filters.
                         </td>
                       </tr>

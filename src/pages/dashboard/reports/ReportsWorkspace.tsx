@@ -54,6 +54,21 @@ const ReportsWorkspace: React.FC = () => {
             </Card.Body>
           </Card>
         </Col>
+
+        <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+          <Card className="text-center h-100 shadow-sm hover-lift">
+            <Card.Body className="d-flex flex-column justify-content-between">
+              <div>
+                <i className="bi bi-person-lines-fill text-primary reports-workspace-icon"></i>
+                <h3 className="mt-3">Nominal Roll</h3>
+                <p className="text-muted small">Generate nominal roll sheet</p>
+              </div>
+              <Button as={Link} to="/admin/reports/generators/nominal-roll" variant="primary" className="mt-2">
+                Open
+              </Button>
+            </Card.Body>
+          </Card>
+        </Col>
       </Row>
     </Container>
   );

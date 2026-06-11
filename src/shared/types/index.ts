@@ -38,6 +38,7 @@ export interface Cadet {
   // Additional Details
   phone: string;
   bloodGroup: string;
+  fatherName?: string;
   address?: string;
 
   // System fields

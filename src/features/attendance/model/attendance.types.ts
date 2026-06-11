@@ -25,6 +25,7 @@ export interface AttendanceSession {
   title: string;
   date: string; // YYYY-MM-DD
   paradeCount?: number; // Number of parades this session counts as (default 1, 2 for Saturday/double parades)
+  isOfficialParade?: boolean; // Whether this is an official parade (used for official-only attendance reports)
   // Status
   status: SessionStatus;
   // Cached statistics (updated on mark changes)
@@ -88,6 +89,7 @@ export interface SessionFormData {
   title: string;
   date: string;
   paradeCount?: number; // 1 = normal, 2 = Saturday/double parade
+  isOfficialParade?: boolean; // Whether this is an official parade
 }
 
 // Bulk marking payload

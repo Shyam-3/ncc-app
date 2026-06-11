@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, Button, Alert, Spinner } from 'react-bootstrap';
+import { Card, Button, Alert, Spinner, Badge, Form } from 'react-bootstrap';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { QuickSelectGrid } from './QuickSelectGrid';
 import {
@@ -9,6 +9,7 @@ import {
   bulkSetMarks,
   lockSession,
   updateSessionStatus,
+  updateSessionParadeFlags,
 } from '@/features/attendance/service';
 import type { Division, NccYear } from '@/shared/config/constants';
 import type { AttendanceSession, AttendanceStatus } from '@/features/attendance/model/attendance.types';
@@ -158,6 +159,8 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
             <span className="ms-2 fs-6 fw-normal text-muted">
               {formatISTDate(session.date, { day: '2-digit', month: '2-digit', year: '2-digit' })} | {session.divisionId} | {session.nccYear}
             </span>
+            {(session.paradeCount || 1) >= 2 && <Badge bg="warning" text="dark" className="ms-2 fw-normal">Double</Badge>}
+            {session.isOfficialParade && <Badge bg="info" className="ms-2 fw-normal">Official</Badge>}
           </h5>
         </div>
         <div className="d-flex gap-2">
@@ -174,6 +177,39 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
             <i className="bi bi-lock-fill me-2"></i>
             This session is locked and cannot be edited.
           </Alert>
+        )}
+
+        {!isLocked && (
+          <div className="d-flex gap-4 mb-3">
+            <Form.Check
+              type="checkbox"
+              id={`marker-double-parade-${sessionId}`}
+              label="Saturday Parade (Double)"
+              checked={(session.paradeCount || 1) >= 2}
+              onChange={async (e) => {
+                const newCount = e.target.checked ? 2 : 1;
+                try {
+                  await updateSessionParadeFlags(sessionId, { paradeCount: newCount });
+                  setSession((prev) => prev ? { ...prev, paradeCount: newCount } : prev);
+                  toast.success(e.target.checked ? 'Marked as double parade' : 'Unmarked double parade');
+                } catch { toast.error('Failed to update'); }
+              }}
+            />
+            <Form.Check
+              type="checkbox"
+              id={`marker-official-parade-${sessionId}`}
+              label="Official Parade"
+              checked={session.isOfficialParade === true}
+              onChange={async (e) => {
+                const newVal = e.target.checked;
+                try {
+                  await updateSessionParadeFlags(sessionId, { isOfficialParade: newVal });
+                  setSession((prev) => prev ? { ...prev, isOfficialParade: newVal } : prev);
+                  toast.success(newVal ? 'Marked as official' : 'Unmarked official');
+                } catch { toast.error('Failed to update'); }
+              }}
+            />
+          </div>
         )}
 
         <QuickSelectGrid

@@ -58,6 +58,7 @@ interface PendingCadet {
   registerNumber: string;
   phone: string;
   bloodGroup: string;
+  fatherName?: string;
   address?: string;
   rank: string;
   createdAt: string;
@@ -163,6 +164,7 @@ const UserManagement: React.FC = () => {
         registerNumber: candidate.registerNumber,
         phone: candidate.phone,
         bloodGroup: candidate.bloodGroup,
+        fatherName: candidate.fatherName || '',
         address: candidate.address || '',
       });
 

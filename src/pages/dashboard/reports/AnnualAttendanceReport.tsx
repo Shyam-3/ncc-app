@@ -14,6 +14,7 @@ import './AnnualAttendanceReport.css';
 
 const AnnualAttendanceReport: React.FC = () => {
   const [nccYear, setNccYear] = useState<NccYear>('1st Year');
+  const [officialOnly, setOfficialOnly] = useState(false);
   const [preview, setPreview] = useState<AnnualReportPreview | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -25,7 +26,7 @@ const AnnualAttendanceReport: React.FC = () => {
     async function loadPreview() {
       setLoadingPreview(true);
       try {
-        const data = await getAnnualReportPreview(nccYear);
+        const data = await getAnnualReportPreview(nccYear, officialOnly);
         if (!cancelled) setPreview(data);
       } catch (e: any) {
         console.error(e);
@@ -39,14 +40,14 @@ const AnnualAttendanceReport: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [nccYear]);
+  }, [nccYear, officialOnly]);
 
   async function handleGenerate() {
     if (!nccYear) return;
 
     try {
       setGenerating(true);
-      await generateAnnualAttendanceExcel(nccYear);
+      await generateAnnualAttendanceExcel(nccYear, officialOnly);
       toast.success('Excel report downloaded!');
     } catch (e: any) {
       console.error(e);
@@ -87,6 +88,15 @@ const AnnualAttendanceReport: React.FC = () => {
               ))}
             </Form.Select>
           </Form.Group>
+
+          <Form.Check
+            type="checkbox"
+            id="official-parade-only-check"
+            label="Official Parade Only"
+            checked={officialOnly}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setOfficialOnly(e.target.checked)}
+            className="mb-3"
+          />
 
           {loadingPreview && (
             <div className="text-center py-4">

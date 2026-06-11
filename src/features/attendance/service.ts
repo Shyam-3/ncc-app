@@ -128,6 +128,18 @@ export async function lockSession(sessionId: string, userId?: string) {
   await updateSessionStatus(sessionId, 'locked', userId);
 }
 
+export async function updateSessionParadeFlags(
+  sessionId: string,
+  flags: { paradeCount?: number; isOfficialParade?: boolean }
+) {
+  const updates: Record<string, unknown> = {};
+  if (flags.paradeCount !== undefined) updates.paradeCount = flags.paradeCount;
+  if (flags.isOfficialParade !== undefined) updates.isOfficialParade = flags.isOfficialParade;
+  if (Object.keys(updates).length > 0) {
+    await updateDoc(doc(db, 'attendanceSessions', sessionId), updates);
+  }
+}
+
 export async function deleteSession(sessionId: string) {
   // Delete marks subcollection first
   const marksCol = collection(db, 'attendanceSessions', sessionId, 'marks');
@@ -342,7 +354,9 @@ export async function listCadets(): Promise<(Cadet & { id: string })[]> {
         registerNumber: data.registerNumber || '',
         phone: data.phone || '',
         bloodGroup: data.bloodGroup || '',
+        fatherName: data.fatherName || '',
         address: data.address || '',
+        residentialStatus: data.residentialStatus || '',
         joinDate: data.createdAt || '',
       } as Cadet & { id: string };
     });

@@ -9,6 +9,7 @@ import AttendanceView from '@/pages/dashboard/attendance/AttendanceView';
 import CadetManagement from '@/pages/dashboard/users/CadetManagement';
 import CmsEditor from '@/pages/dashboard/cms/CmsEditor';
 import AnnualAttendanceReport from '@/pages/dashboard/reports/AnnualAttendanceReport';
+import NominalRollReport from '@/pages/dashboard/reports/NominalRollReport';
 import OnDutyLetterReport from '@/pages/dashboard/reports/OnDutyLetterReport';
 import ReportsTemplateManager from '@/pages/dashboard/reports/ReportsTemplateManager';
 import ReportsWorkspace from '@/pages/dashboard/reports/ReportsWorkspace';
@@ -134,6 +135,14 @@ export const protectedRoutes = (
       element={
         <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
           <ReportsTemplateManager />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/reports/generators/nominal-roll"
+      element={
+        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+          <NominalRollReport />
         </ProtectedRoute>
       }
     />

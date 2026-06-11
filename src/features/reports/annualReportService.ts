@@ -69,9 +69,15 @@ function sortByRegimentalNumber(cadets: (Cadet & { id: string })[]): (Cadet & { 
 
 async function fetchSessionsWithMarks(
   nccYear: NccYear,
-  division: Division
+  division: Division,
+  officialOnly = false
 ): Promise<SessionWithMarks[]> {
-  const sessions = await getSessionsByDivision(division, nccYear);
+  let sessions = await getSessionsByDivision(division, nccYear);
+
+  // Filter to official parades only if requested
+  if (officialOnly) {
+    sessions = sessions.filter((s) => s.isOfficialParade === true);
+  }
 
   // Sort by date ascending
   const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
@@ -89,11 +95,17 @@ async function fetchSessionsWithMarks(
 
 // ============ PREVIEW ============
 
-export async function getAnnualReportPreview(nccYear: NccYear): Promise<AnnualReportPreview> {
-  const [sdSessions, swSessions] = await Promise.all([
+export async function getAnnualReportPreview(nccYear: NccYear, officialOnly = false): Promise<AnnualReportPreview> {
+  let [sdSessions, swSessions] = await Promise.all([
     getSessionsByDivision('SD', nccYear),
     getSessionsByDivision('SW', nccYear),
   ]);
+
+  // Filter to official parades only if requested
+  if (officialOnly) {
+    sdSessions = sdSessions.filter((s) => s.isOfficialParade === true);
+    swSessions = swSessions.filter((s) => s.isOfficialParade === true);
+  }
 
   // Use unique sessions (by id) across both divisions
   const allSessionMap = new Map<string, AttendanceSession & { id: string }>();
@@ -124,11 +136,11 @@ export async function getAnnualReportPreview(nccYear: NccYear): Promise<AnnualRe
 
 // ============ EXCEL GENERATION ============
 
-export async function generateAnnualAttendanceExcel(nccYear: NccYear): Promise<void> {
+export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOnly = false): Promise<void> {
   // Fetch data for both divisions
   const [sdSessionsWithMarks, swSessionsWithMarks] = await Promise.all([
-    fetchSessionsWithMarks(nccYear, 'SD'),
-    fetchSessionsWithMarks(nccYear, 'SW'),
+    fetchSessionsWithMarks(nccYear, 'SD', officialOnly),
+    fetchSessionsWithMarks(nccYear, 'SW', officialOnly),
   ]);
 
   const [sdCadets, swCadets] = await Promise.all([
@@ -158,7 +170,6 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear): Promise<v
 
   // Sort dates ascending
   const sortedDates = Array.from(sessionDateMap.keys()).sort();
-  const sessionEntries = sortedDates.map((d) => sessionDateMap.get(d)!);
 
   // Compute parade numbers
   // Each session date gets parade numbers based on its paradeCount
@@ -351,7 +362,7 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear): Promise<v
 
   // Grand total row: TOTAL(SD+SW)
   const grandTotalRow: (string | number | null)[] = [' TOTAL(SD+SW)', ' ', null, null];
-  sortedDates.forEach((date, i) => {
+  sortedDates.forEach((_date, i) => {
     const sdVal = typeof sdTotalRow[4 + i] === 'number' ? (sdTotalRow[4 + i] as number) : 0;
     const swVal = typeof swTotalRow[4 + i] === 'number' ? (swTotalRow[4 + i] as number) : 0;
     grandTotalRow.push(sdVal + swVal);

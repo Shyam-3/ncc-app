@@ -31,6 +31,7 @@ interface UserProfile {
   registerNumber?: string;
   phone?: string;
   bloodGroup?: string;
+  fatherName?: string;
   address?: string;
 }
 
@@ -55,6 +56,7 @@ const Profile: React.FC = () => {
     registerNumber: '',
     phone: '',
     bloodGroup: '',
+    fatherName: '',
     address: '',
   });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
@@ -86,6 +88,7 @@ const Profile: React.FC = () => {
             registerNumber: data.registerNumber || '',
             phone: data.phone || '',
             bloodGroup: data.bloodGroup || '',
+            fatherName: data.fatherName || '',
             address: data.address || '',
           });
         }
@@ -115,6 +118,7 @@ const Profile: React.FC = () => {
         registerNumber: profile.registerNumber || '',
         phone: profile.phone || '',
         bloodGroup: profile.bloodGroup || '',
+        fatherName: profile.fatherName || '',
         address: profile.address || '',
       });
       setEditErrors({});
@@ -198,6 +202,7 @@ const Profile: React.FC = () => {
           registerNumber: editForm.registerNumber,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
+          fatherName: editForm.fatherName || '',
           address: editForm.address || '',
         });
 
@@ -215,6 +220,7 @@ const Profile: React.FC = () => {
           registerNumber: editForm.registerNumber,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
+          fatherName: editForm.fatherName || '',
           address: editForm.address || '',
         });
       } else {
@@ -222,6 +228,7 @@ const Profile: React.FC = () => {
           name: editForm.name,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
+          fatherName: editForm.fatherName || '',
           residentialStatus: editForm.residentialStatus,
           address: editForm.address || '',
         });
@@ -231,6 +238,7 @@ const Profile: React.FC = () => {
           name: editForm.name,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
+          fatherName: editForm.fatherName || '',
           residentialStatus: editForm.residentialStatus,
           address: editForm.address || '',
         });
@@ -418,6 +426,10 @@ const Profile: React.FC = () => {
                 <Col xs={12} md={4}>
                   <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
                   <p className="mb-0">{profile.bloodGroup || '-'}</p>
+                </Col>
+                <Col xs={12} md={4}>
+                  <Form.Label className="fw-bold text-muted small">Father's / Guardian's Name</Form.Label>
+                  <p className="mb-0">{profile.fatherName || '-'}</p>
                 </Col>
                 <Col xs={12} md={12}>
                   <Form.Label className="fw-bold text-muted small">Address</Form.Label>
@@ -628,6 +640,16 @@ const Profile: React.FC = () => {
                 <option value="Hosteller">Hosteller</option>
               </Form.Select>
               {editErrors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{editErrors.residentialStatus}</Form.Text>}
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="editFatherName">
+              <Form.Label>Father's / Guardian's Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={editForm.fatherName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('fatherName', e.target.value)}
+                placeholder="Enter father's or guardian's name"
+              />
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="editAddress">

@@ -30,6 +30,7 @@ interface FormData {
   // Additional Details
   phone: string;
   bloodGroup: string;
+  fatherName: string;
   address: string;
 }
 
@@ -54,6 +55,7 @@ const Register: React.FC = () => {
     registerNumber: '',
     phone: '',
     bloodGroup: '',
+    fatherName: '',
     address: ''
   });
   
@@ -241,6 +243,7 @@ const Register: React.FC = () => {
         // Additional Details
         phone: formData.phone,
         bloodGroup: formData.bloodGroup,
+        fatherName: formData.fatherName,
         address: formData.address,
         
         // System fields
@@ -611,6 +614,21 @@ const Register: React.FC = () => {
                         />
                       </div>
                       {errors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{errors.residentialStatus}</Form.Text>}
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row className="g-3">
+                  <Col xs={12} md={6}>
+                    <Form.Group className="mb-3" controlId="fatherName">
+                      <Form.Label>Father's / Guardian's Name <span className="text-muted">(Optional)</span></Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="fatherName"
+                        value={formData.fatherName}
+                        onChange={handleChange}
+                        placeholder="Enter father's or guardian's name"
+                      />
                     </Form.Group>
                   </Col>
                 </Row>
