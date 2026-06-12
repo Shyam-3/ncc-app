@@ -6,7 +6,7 @@ import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import toast from 'react-hot-toast';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   DEFAULT_ON_DUTY_HEADER_TEMPLATE,
   DEFAULT_ON_DUTY_TEMPLATE,
@@ -87,6 +87,7 @@ const applySingleDayGrammar = (text: string, fromDate: string, toDate: string) =
 };
 
 const OnDutyLetterReport: React.FC = () => {
+  const navigate = useNavigate();
   const initialized = useRef(false);
   const [users, setUsers] = useState<CadetUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -392,7 +393,12 @@ const OnDutyLetterReport: React.FC = () => {
       <Row className="g-3">
         <Col lg={12}>
           <Card className="shadow-sm">
-            <Card.Header className="bg-primary text-white">Letter Meta Data</Card.Header>
+            <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+              <span>Letter Meta Data</span>
+              <Button variant="light" size="sm" onClick={() => navigate(-1)}>
+                <i className="bi bi-arrow-left me-1"></i> Back
+              </Button>
+            </Card.Header>
             <Card.Body>
               <Form>
                 <Row className="g-3">

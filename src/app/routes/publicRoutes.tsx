@@ -18,7 +18,7 @@ import {
   SocialService,
   Videos,
 } from '@/pages/public';
-import { ForgotPassword, Login, Register } from '@/pages/auth';
+import { ForgotPassword, Login, Register, VerifyEmail } from '@/pages/auth';
 
 const Unauthorized: React.FC = () => (
   <div className="container py-5 text-center">
@@ -32,6 +32,7 @@ export const publicRoutes = (
     <Route path="/" element={<Home />} />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
+    <Route path="/verify-email" element={<VerifyEmail />} />
     <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route path="/about" element={<About />} />
     <Route path="/activities/camps" element={<Camps />} />

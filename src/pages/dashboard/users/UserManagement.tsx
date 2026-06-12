@@ -1,7 +1,7 @@
 import { db, FIREBASE_CONFIG } from '@/shared/config/firebase';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { deleteApp, initializeApp } from 'firebase/app';
-import { createUserWithEmailAndPassword, getAuth, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import {
   collection,
   deleteDoc,
@@ -12,6 +12,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Tab, Table, Tabs } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import './UserManagement.css';
@@ -43,6 +44,8 @@ interface UserData {
 
 interface PendingCadet {
   id: string;
+  uid?: string;
+  emailVerified?: boolean;
   name: string;
   email: string;
   tempPassword?: string;
@@ -65,6 +68,7 @@ interface PendingCadet {
 }
 
 const UserManagement: React.FC = () => {
+  const navigate = useNavigate();
   const { currentUser, userProfile, isAdmin, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [pending, setPending] = useState<PendingCadet[]>([]);
@@ -116,11 +120,12 @@ const UserManagement: React.FC = () => {
   const handleApprove = async (candidate: PendingCadet) => {
     setSaving(true);
     try {
-      // Create Firebase Auth account using secondary app (won't logout admin)
-      let authUid = candidate.id;
-      if (candidate.tempPassword) {
+      // Use the uid from the pending record (Auth account already created during registration)
+      let authUid = candidate.uid || candidate.id;
+
+      // If no uid stored (legacy pending record), create Auth account via secondary app
+      if (!candidate.uid && candidate.tempPassword) {
         try {
-          // Create a secondary Firebase app instance to avoid logging out the admin
           const secondaryApp = initializeApp(FIREBASE_CONFIG, 'Secondary');
           const secondaryAuth = getAuth(secondaryApp);
           
@@ -131,10 +136,7 @@ const UserManagement: React.FC = () => {
           );
           authUid = userCredential.user.uid;
           
-          // Sign out from secondary auth immediately (doesn't affect main auth)
           await signOut(secondaryAuth);
-          
-          // Delete the secondary app instance
           await deleteApp(secondaryApp);
         } catch (authError: any) {
           console.error('Firebase Auth error:', authError);
@@ -185,8 +187,33 @@ const UserManagement: React.FC = () => {
   const handleReject = async (candidate: PendingCadet) => {
     setSaving(true);
     try {
+      // Delete the Firebase Auth account if uid and tempPassword exist
+      if (candidate.uid && candidate.tempPassword) {
+        try {
+          // Use secondary app to sign in as the user and delete their Auth account
+          const secondaryApp = initializeApp(FIREBASE_CONFIG, 'SecondaryReject');
+          const secondaryAuth = getAuth(secondaryApp);
+          
+          const userCredential = await signInWithEmailAndPassword(
+            secondaryAuth,
+            candidate.email,
+            candidate.tempPassword
+          );
+          
+          // Delete the Firebase Auth account
+          await deleteUser(userCredential.user);
+          
+          // Clean up secondary app
+          await deleteApp(secondaryApp);
+        } catch (authError: any) {
+          console.warn('Could not delete Firebase Auth account (may not exist):', authError.message);
+          // Continue with Firestore cleanup even if Auth deletion fails
+        }
+      }
+
+      // Delete from pending collection
       await deleteDoc(doc(db, 'pendingCadets', candidate.id));
-      toast.success('Registration rejected');
+      toast.success('Registration rejected and account removed');
       await fetchPending();
     } catch (e) {
       console.error(e);
@@ -362,6 +389,7 @@ const UserManagement: React.FC = () => {
             <th className="user-col-division">SD/SW</th>
             <th>Regimental Number</th>
             <th>Email</th>
+            <th>Email Status</th>
             <th>Registered On</th>
             <th className="user-col-actions">Actions</th>
           </tr>
@@ -376,9 +404,26 @@ const UserManagement: React.FC = () => {
               </td>
               <td>{c.regimentalNumber || 'N/A'}</td>
               <td>{c.email}</td>
+              <td className="text-center">
+                {c.emailVerified ? (
+                  <Badge bg="success">
+                    <i className="bi bi-check-circle me-1"></i>Verified
+                  </Badge>
+                ) : (
+                  <Badge bg="secondary">
+                    <i className="bi bi-clock me-1"></i>Pending
+                  </Badge>
+                )}
+              </td>
               <td>{new Date(c.createdAt).toLocaleString()}</td>
               <td className="d-flex gap-2">
-                <Button variant="success" size="sm" onClick={() => setConfirm({ action: 'approve', payload: c })}>
+                <Button 
+                  variant="success" 
+                  size="sm" 
+                  onClick={() => setConfirm({ action: 'approve', payload: c })}
+                  disabled={!c.emailVerified}
+                  title={!c.emailVerified ? 'Email not yet verified' : 'Approve this registration'}
+                >
                   Accept
                 </Button>
                 <Button variant="outline-danger" size="sm" onClick={() => setConfirm({ action: 'reject', payload: c })}>
@@ -388,7 +433,7 @@ const UserManagement: React.FC = () => {
             </tr>
           ))}
           {filteredPending.length === 0 && (
-            <tr><td colSpan={7} className="text-center text-muted">No pending registrations match filters</td></tr>
+            <tr><td colSpan={8} className="text-center text-muted">No pending registrations match filters</td></tr>
           )}
         </tbody>
       </Table>
@@ -511,11 +556,14 @@ const UserManagement: React.FC = () => {
   return (
     <Container className="py-5">
       <Card className="shadow">
-        <Card.Header className="bg-primary text-white">
+        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
           <h3 className="mb-0">
             <i className="bi bi-people-fill me-2"></i>
             User Management
           </h3>
+          <Button variant="light" size="sm" onClick={() => navigate(-1)}>
+            <i className="bi bi-arrow-left me-1"></i> Back
+          </Button>
         </Card.Header>
         <Card.Body>
           <Tabs defaultActiveKey="users" id="user-mgmt-tabs" className="mb-3">
@@ -555,10 +603,24 @@ const UserManagement: React.FC = () => {
         </Modal.Header>
         <Modal.Body>
           {confirm?.action === 'approve' && (
-            <p>Approve registration for <strong>{confirm?.payload?.name}</strong> ({confirm?.payload?.email})?</p>
+            <>
+              <p>Approve registration for <strong>{confirm?.payload?.name}</strong> ({confirm?.payload?.email})?</p>
+              {!confirm?.payload?.emailVerified && (
+                <Alert variant="warning" className="mb-0">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  This user has <strong>not verified their email</strong> yet. Approval is only available after email verification.
+                </Alert>
+              )}
+            </>
           )}
           {confirm?.action === 'reject' && (
-            <p>Reject registration for <strong>{confirm?.payload?.name}</strong> ({confirm?.payload?.email})?</p>
+            <>
+              <p>Reject registration for <strong>{confirm?.payload?.name}</strong> ({confirm?.payload?.email})?</p>
+              <Alert variant="info" className="mb-0">
+                <i className="bi bi-info-circle me-2"></i>
+                This will delete the pending registration and remove their Firebase Auth account. No trace will remain.
+              </Alert>
+            </>
           )}
           {confirm?.action === 'delete' && (
             <p>Delete user <strong>{confirm?.payload?.name}</strong> ({confirm?.payload?.email})? This cannot be undone.</p>
@@ -567,7 +629,7 @@ const UserManagement: React.FC = () => {
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setConfirm(null)} disabled={saving}>Cancel</Button>
           {confirm?.action === 'approve' && (
-            <Button variant="success" onClick={() => handleApprove(confirm.payload)} disabled={saving}>Approve</Button>
+            <Button variant="success" onClick={() => handleApprove(confirm.payload)} disabled={saving || !confirm.payload?.emailVerified}>Approve</Button>
           )}
           {confirm?.action === 'reject' && (
             <Button variant="danger" onClick={() => handleReject(confirm.payload)} disabled={saving}>Reject</Button>

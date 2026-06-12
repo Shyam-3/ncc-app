@@ -1,4 +1,6 @@
 import { ACADEMIC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { db } from '@/shared/config/firebase';
 import { formatISTDate } from '@/shared/utils/dateTime';
 import { collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
@@ -35,6 +37,8 @@ interface CadetUser {
 }
 
 const CadetManagement: React.FC = () => {
+  const navigate = useNavigate();
+  const { userProfile, isAdmin, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<CadetUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -264,11 +268,14 @@ const CadetManagement: React.FC = () => {
   return (
     <Container className="py-5">
       <Card className="shadow">
-        <Card.Header className="bg-primary text-white">
+        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
           <h3 className="mb-0">
             <i className="bi bi-people-fill me-2"></i>
             Cadet Management
           </h3>
+          <Button variant="light" size="sm" onClick={() => navigate(-1)}>
+            <i className="bi bi-arrow-left me-1"></i> Back
+          </Button>
         </Card.Header>
         <Card.Body>
           <Alert variant="info">

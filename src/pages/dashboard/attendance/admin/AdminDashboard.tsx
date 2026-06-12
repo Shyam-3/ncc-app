@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Row, Col, Card, Table, Spinner, Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { Row, Col, Card, Table, Spinner, Alert, Button, Badge } from 'react-bootstrap';
 import { AttendanceTrendChart, AttendanceBarChart, AttendancePieChart } from '@/components/charts';
 import { chartColors } from '@/components/charts/ChartConfig';
 import { BatchSelector } from './BatchSelector';
@@ -27,6 +28,7 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ sessions, cadets, loading = false }: AdminDashboardProps) {
+  const navigate = useNavigate();
   const [divisionFilter, setDivisionFilter] = useState<Division | ''>('');
   const [yearFilter, setYearFilter] = useState<NccYear | ''>('');
 
@@ -269,7 +271,7 @@ export function AdminDashboard({ sessions, cadets, loading = false }: AdminDashb
         </Col>
         <Col lg={6}>
           <Card className="h-100">
-            <Card.Header>
+            <Card.Header className="d-flex justify-content-between align-items-center">
               <h6 className="mb-0">
                 <i className="bi bi-exclamation-triangle text-warning me-2"></i>
                 Low Attendance Alerts

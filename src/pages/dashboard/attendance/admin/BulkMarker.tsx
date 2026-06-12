@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { Card, Button, Alert, Spinner, Badge, Form } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { QuickSelectGrid } from './QuickSelectGrid';
 import {
@@ -23,6 +24,7 @@ interface BulkMarkerProps {
 }
 
 export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
+  const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
   const [session, setSession] = useState<(AttendanceSession & { id: string }) | null>(null);
   const [cadets, setCadets] = useState<(Cadet & { id: string })[]>([]);
@@ -186,7 +188,7 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
               id={`marker-double-parade-${sessionId}`}
               label="Saturday Parade (Double)"
               checked={(session.paradeCount || 1) >= 2}
-              onChange={async (e) => {
+              onChange={async (e: ChangeEvent<HTMLInputElement>) => {
                 const newCount = e.target.checked ? 2 : 1;
                 try {
                   await updateSessionParadeFlags(sessionId, { paradeCount: newCount });
@@ -200,7 +202,7 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
               id={`marker-official-parade-${sessionId}`}
               label="Official Parade"
               checked={session.isOfficialParade === true}
-              onChange={async (e) => {
+              onChange={async (e: ChangeEvent<HTMLInputElement>) => {
                 const newVal = e.target.checked;
                 try {
                   await updateSessionParadeFlags(sessionId, { isOfficialParade: newVal });

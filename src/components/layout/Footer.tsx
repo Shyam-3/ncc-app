@@ -1,5 +1,6 @@
 import React from 'react';
 import { Col, Container, Row } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -22,10 +23,10 @@ const Footer: React.FC = () => {
           <Col xs={6} sm={6} md={4}>
             <h6>Quick Links</h6>
             <ul className="list-unstyled">
-              <li><a href="/" className="text-light text-decoration-none">Home</a></li>
-              <li><a href="/about" className="text-light text-decoration-none">About Us</a></li>
-              <li><a href="/events/national-days" className="text-light text-decoration-none">Events</a></li>
-              <li><a href="/gallery/photos" className="text-light text-decoration-none">Gallery</a></li>
+              <li><Link to="/" className="text-light text-decoration-none">Home</Link></li>
+              <li><Link to="/about" className="text-light text-decoration-none">About Us</Link></li>
+              <li><Link to="/events/national-days" className="text-light text-decoration-none">Events</Link></li>
+              <li><Link to="/gallery/photos" className="text-light text-decoration-none">Gallery</Link></li>
             </ul>
           </Col>
           <Col xs={6} sm={6} md={4}>

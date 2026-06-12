@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import {
   DEFAULT_ON_DUTY_HEADER_TEMPLATE,
   DEFAULT_ON_DUTY_TEMPLATE,
@@ -55,6 +56,7 @@ const extractVariables = (content: string) => {
 };
 
 const ReportsTemplateManager: React.FC = () => {
+  const navigate = useNavigate();
   const initialized = useRef(false);
 
   const [loading, setLoading] = useState(true);
@@ -309,7 +311,12 @@ const ReportsTemplateManager: React.FC = () => {
         <Row className="g-3">
           <Col lg={12}>
             <Card className="shadow-sm mb-3">
-              <Card.Header className="bg-primary text-white">Add Template</Card.Header>
+              <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+                <span>Add Template</span>
+                <Button variant="light" size="sm" onClick={() => navigate(-1)}>
+                  <i className="bi bi-arrow-left me-1"></i> Back
+                </Button>
+              </Card.Header>
               <Card.Body>
                 <Row className="g-2 align-items-end">
                   <Col md={5}>

@@ -1,6 +1,7 @@
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { formatISTDate } from '@/shared/utils/dateTime';
 import {
@@ -36,6 +37,7 @@ interface UserProfile {
 }
 
 const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -306,10 +308,15 @@ const Profile: React.FC = () => {
                 <i className="bi bi-person-circle me-2"></i>
                 Profile
               </h3>
-              <Button variant="light" size="sm" onClick={handleOpenEdit}>
-                <i className="bi bi-pencil me-1"></i>
-                Edit
-              </Button>
+              <div>
+                <Button variant="light" size="sm" onClick={handleOpenEdit} className="me-2">
+                  <i className="bi bi-pencil me-1"></i>
+                  Edit
+                </Button>
+                <Button variant="light" size="sm" onClick={() => navigate(-1)}>
+                  <i className="bi bi-arrow-left me-1"></i> Back
+                </Button>
+              </div>
             </Card.Header>
             <Card.Body className="p-4">
               <h5 className="mb-3 text-primary">

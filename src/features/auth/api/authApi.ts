@@ -5,7 +5,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile,
+  type User,
 } from 'firebase/auth';
 import { mapFirebaseAuthError } from '@/shared/utils/firebaseErrors';
 
@@ -41,6 +43,14 @@ export const authApi = {
   async resetPassword(email: string) {
     try {
       return await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      throw mapFirebaseAuthError(error as any);
+    }
+  },
+
+  async sendVerificationEmail(user: User) {
+    try {
+      return await sendEmailVerification(user);
     } catch (error) {
       throw mapFirebaseAuthError(error as any);
     }

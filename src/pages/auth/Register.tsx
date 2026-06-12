@@ -1,10 +1,11 @@
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { addDoc, collection } from 'firebase/firestore';
 import React, { ChangeEvent, FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { DEPARTMENT_DEFS } from '../../shared/config/constants';
-import { db } from '../../shared/config/firebase';
+import { auth, db } from '../../shared/config/firebase';
 import './Register.css';
 
 interface FormData {
@@ -218,8 +219,23 @@ const Register: React.FC = () => {
     try {
       setLoading(true);
       
-      // Submit to pendingCadets collection for admin approval
+      // Step 1: Create Firebase Auth account (needed for email verification)
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const user = userCredential.user;
+
+      // Step 2: Send verification email
+      await sendEmailVerification(user);
+
+      // Step 3: Submit to pendingCadets collection for admin approval
       await addDoc(collection(db, 'pendingCadets'), {
+        // Auth reference
+        uid: user.uid,
+        emailVerified: false,
+
         // Personal Details
         name: formData.name,
         dateOfBirth: formData.dateOfBirth,
@@ -251,9 +267,14 @@ const Register: React.FC = () => {
         status: 'pending'
       });
 
-      toast.success('Registration submitted! Please wait for admin approval.');
-      navigate('/login');
+      // Step 4: Sign out immediately — user cannot access the app until admin approves
+      await signOut(auth);
+
+      toast.success('Registration submitted! Please check your email to verify.');
+      navigate('/verify-email');
     } catch (err: any) {
+      // If auth account was created but subsequent steps failed, 
+      // the account remains for retry. User can re-verify later.
       toast.error('Failed to submit registration. ' + err.message);
     } finally {
       setLoading(false);
@@ -659,7 +680,8 @@ const Register: React.FC = () => {
 
                 <Alert variant="info" className="mt-3 mb-0">
                   <i className="bi bi-info-circle me-2"></i>
-                  Your registration will be reviewed by an admin. You'll be able to login once approved.
+                  After submitting, a verification email will be sent to your email address.
+                  Please verify your email (check Spam/Junk folder too), then wait for admin approval.
                 </Alert>
               </Form>
 

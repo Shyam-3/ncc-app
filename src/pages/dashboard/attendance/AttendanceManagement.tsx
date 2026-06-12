@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { AdminDashboard, BatchSelector, BulkMarker } from './admin';
 import AttendanceView from './AttendanceView';
 import {
@@ -26,6 +27,7 @@ import {
 import { formatISTDate, formatISTDateTime, toISTDateInputValue } from '@/shared/utils/dateTime';
 
 const AttendanceManagement: React.FC = () => {
+  const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [cadets, setCadets] = useState<(Cadet & { id: string })[]>([]);

@@ -1,13 +1,16 @@
 import type { User as FirebaseUser, UserCredential } from 'firebase/auth';
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
+  GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithPopup,
   updateProfile,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { UserRole } from '@/shared/config/constants';
@@ -39,6 +42,7 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, userData: SignUpData) => Promise<FirebaseUser>;
   signIn: (email: string, password: string) => Promise<UserCredential>;
+  signInWithGoogle: () => Promise<FirebaseUser>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   hasRole: (role: UserRole | UserRole[]) => boolean;
@@ -163,6 +167,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Sign in with Google (only for existing approved users)
+  const signInWithGoogle = async (): Promise<FirebaseUser> => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user exists in the 'users' collection (approved users only)
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        // Also check by email in case UID differs (e.g., originally registered with email/password)
+        const usersQuery = query(collection(db, 'users'), where('email', '==', user.email));
+        const usersSnapshot = await getDocs(usersQuery);
+
+        if (usersSnapshot.empty) {
+          // Not a registered user — delete the auto-created Google Auth account and sign out
+          await deleteUser(user);
+          toast.error('No approved account found. Please register first.');
+          throw new Error('NOT_REGISTERED');
+        }
+      }
+
+      toast.success('Logged in with Google successfully!');
+      return user;
+    } catch (error: any) {
+      if (error?.message === 'NOT_REGISTERED') {
+        throw error;
+      }
+      console.error('Google sign in error:', error);
+      // If popup was closed by user, don't show an error toast
+      if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
+        const message = mapFirebaseAuthError(error?.code);
+        toast.error(message);
+      }
+      throw error;
+    }
+  };
+
   // Sign out
   const signOut = async (): Promise<void> => {
     try {
@@ -227,6 +271,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
     hasRole,

@@ -3,6 +3,7 @@ import { formatISTDateTime } from '@/shared/utils/dateTime';
 import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import './AnnouncementsAdmin.css';
 
@@ -15,6 +16,7 @@ interface Announcement {
 }
 
 const AnnouncementsAdmin: React.FC = () => {
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [items, setItems] = useState<Announcement[]>([]);
@@ -68,7 +70,12 @@ const AnnouncementsAdmin: React.FC = () => {
       <Row className="g-4">
         <Col xs={12} sm={12} md={12} lg={5} xl={5}>
           <Card className="shadow-sm">
-            <Card.Header>Create Announcement</Card.Header>
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <span>Create Announcement</span>
+              <Button variant="outline-secondary" size="sm" onClick={() => navigate(-1)}>
+                Back
+              </Button>
+            </Card.Header>
             <Card.Body>
               <Form onSubmit={create}>
                 <Form.Group className="mb-3" controlId="title">

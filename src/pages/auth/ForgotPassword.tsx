@@ -19,7 +19,7 @@ const ForgotPassword: React.FC = () => {
     try {
       setLoading(true);
       await resetPassword(email);
-      setMessage('Password reset link sent. Check your inbox.');
+      setMessage('Password reset link sent! Check your inbox and Spam/Junk folder.');
     } catch (err: any) {
       setError(mapFirebaseAuthError(err?.code));
     } finally {

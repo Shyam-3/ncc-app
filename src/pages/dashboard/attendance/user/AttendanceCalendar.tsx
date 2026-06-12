@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Card, Button, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import {
   format,
   startOfMonth,
@@ -28,6 +29,7 @@ interface AttendanceCalendarProps {
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarProps) {
+  const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Build entries map for quick lookup
@@ -58,6 +60,12 @@ export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarP
   return (
     <Card className="attendance-calendar border-0 shadow-sm">
       <Card.Header className="bg-white border-bottom d-flex justify-content-between align-items-center">
+        <div className="d-flex align-items-center gap-3">
+          <h5 className="mb-0">
+            <i className="bi bi-calendar3 me-2"></i>
+            Attendance Calendar
+          </h5>
+        </div>
         <Button variant="link" className="p-0" onClick={goToPrevMonth}>
           <i className="bi bi-chevron-left"></i>
         </Button>
