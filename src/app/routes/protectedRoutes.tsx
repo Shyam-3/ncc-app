@@ -10,6 +10,7 @@ import CadetManagement from '@/pages/dashboard/users/CadetManagement';
 import CmsEditor from '@/pages/dashboard/cms/CmsEditor';
 import AnnualAttendanceReport from '@/pages/dashboard/reports/AnnualAttendanceReport';
 import NominalRollReport from '@/pages/dashboard/reports/NominalRollReport';
+import CatcCampReport from '@/pages/dashboard/reports/CatcCampReport';
 import OnDutyLetterReport from '@/pages/dashboard/reports/OnDutyLetterReport';
 import ReportsTemplateManager from '@/pages/dashboard/reports/ReportsTemplateManager';
 import ReportsWorkspace from '@/pages/dashboard/reports/ReportsWorkspace';
@@ -143,6 +144,14 @@ export const protectedRoutes = (
       element={
         <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
           <NominalRollReport />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/reports/generators/catc-camp"
+      element={
+        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+          <CatcCampReport />
         </ProtectedRoute>
       }
     />

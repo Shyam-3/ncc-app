@@ -9,17 +9,31 @@ const ForgotPassword: React.FC = () => {
   const { resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState<{email?: string}>({});
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const validateForm = (): boolean => {
+    const errors: {email?: string} = {};
+    if (!email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!email.includes('@') || !email.includes('tce.edu')) {
+      errors.email = 'Email must be from tce.edu domain (e.g., name@tce.edu or name@student.tce.edu)';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setError('');
     setMessage('');
     try {
       setLoading(true);
       await resetPassword(email);
       setMessage('Password reset link sent! Check your inbox and Spam/Junk folder.');
+      setEmail('');
     } catch (err: any) {
       setError(mapFirebaseAuthError(err?.code));
     } finally {
@@ -49,9 +63,15 @@ const ForgotPassword: React.FC = () => {
                     type="email"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                    required
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      setEmail(e.target.value);
+                      if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
+                    }}
+                    isInvalid={!!formErrors.email}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {formErrors.email}
+                  </Form.Control.Feedback>
                 </Form.Group>
 
                 <Button type="submit" variant="primary" className="w-100" disabled={loading}>

@@ -1,7 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Nav, Row, Spinner, Tab } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import {
+  CATC_CAMP_TEMPLATE_DOC_ID,
+  CATC_PAGE_LABELS,
+  CATC_SECTION_LABELS,
+  CATC_TEMPLATE_VARIABLES,
+  DEFAULT_CATC_CAMP_TEMPLATE,
+  parseCatcCampTemplate,
+  serializeCatcCampTemplate,
+  type CatcCampTemplateData,
+} from '@/features/reports/catcTemplateDefaults';
 import {
   DEFAULT_ON_DUTY_HEADER_TEMPLATE,
   DEFAULT_ON_DUTY_TEMPLATE,
@@ -22,6 +32,9 @@ const slugify = (value: string) =>
 
 const ON_DUTY_VARIABLES = ['{{LetterDate}}', '{{Reason}}', '{{Location}}', '{{FromDate}}', '{{ToDate}}', '{{DateClause}}', '{{CadetCount}}', '{{LogoBlock}}'];
 
+const CATC_PAGE_KEYS = ['page1', 'page2', 'page3', 'page4'] as const;
+type CatcPageKey = (typeof CATC_PAGE_KEYS)[number];
+
 const REQUIRED_TEMPLATES: ReportTemplate[] = [
   {
     id: ON_DUTY_TEMPLATE_DOC_ID,
@@ -35,6 +48,13 @@ const REQUIRED_TEMPLATES: ReportTemplate[] = [
     title: 'On-Duty Header Template',
     description: 'Header layout used by On-Duty Letter page.',
     content: DEFAULT_ON_DUTY_HEADER_TEMPLATE,
+    logoUrl: '',
+  },
+  {
+    id: CATC_CAMP_TEMPLATE_DOC_ID,
+    title: 'CATC Camp Document Template',
+    description: 'Page-wise content for CATC camp PDF generation (4 pages).',
+    content: serializeCatcCampTemplate(DEFAULT_CATC_CAMP_TEMPLATE),
     logoUrl: '',
   },
 ];
@@ -75,7 +95,36 @@ const ReportsTemplateManager: React.FC = () => {
   const [view, setView] = useState<'list' | 'editor'>('list');
   const [isDraftTemplate, setIsDraftTemplate] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [activeCatcPage, setActiveCatcPage] = useState<CatcPageKey>('page1');
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const isCatcTemplate = editor.id === CATC_CAMP_TEMPLATE_DOC_ID;
+
+  const catcTemplate = useMemo(
+    () => (isCatcTemplate ? parseCatcCampTemplate(editor.content) : null),
+    [editor.content, isCatcTemplate],
+  );
+
+  const updateCatcTemplate = (updater: (prev: CatcCampTemplateData) => CatcCampTemplateData) => {
+    setEditor((prev) => {
+      const current = parseCatcCampTemplate(prev.content);
+      const next = updater(current);
+      return { ...prev, content: serializeCatcCampTemplate(next) };
+    });
+  };
+
+  const updateCatcSection = (pageKey: CatcPageKey, sectionKey: string, value: string) => {
+    updateCatcTemplate((prev) => ({
+      ...prev,
+      pages: {
+        ...prev.pages,
+        [pageKey]: {
+          ...prev.pages[pageKey],
+          [sectionKey]: value,
+        },
+      },
+    }));
+  };
 
   const sortedTemplates = useMemo(() => {
     return [...templates].sort((a, b) => {
@@ -86,9 +135,10 @@ const ReportsTemplateManager: React.FC = () => {
   }, [templates]);
 
   const availableVariables = useMemo(() => {
+    if (isCatcTemplate) return CATC_TEMPLATE_VARIABLES;
     const dynamic = extractVariables(editor.content || '');
     return Array.from(new Set([...ON_DUTY_VARIABLES, ...dynamic]));
-  }, [editor.content]);
+  }, [editor.content, isCatcTemplate]);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -172,6 +222,11 @@ const ReportsTemplateManager: React.FC = () => {
   };
 
   const handleInsertVariable = (variable: string) => {
+    if (isCatcTemplate) {
+      toast('Select a section field below and paste the variable there.', { icon: 'ℹ️' });
+      return;
+    }
+
     const textarea = contentRef.current;
     if (!textarea) {
       setEditor(prev => ({ ...prev, content: `${prev.content}${prev.content.endsWith('\n') ? '' : '\n'}${variable}` }));
@@ -207,7 +262,7 @@ const ReportsTemplateManager: React.FC = () => {
       }
 
       const normalizedId = isDraftTemplate
-        ? (editor.id === ON_DUTY_TEMPLATE_DOC_ID || editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID
+        ? (editor.id === ON_DUTY_TEMPLATE_DOC_ID || editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID || editor.id === CATC_CAMP_TEMPLATE_DOC_ID
           ? editor.id
           : slugify(editor.id))
         : editingSourceId;
@@ -365,6 +420,7 @@ const ReportsTemplateManager: React.FC = () => {
                     <div className="d-flex align-items-center gap-2">
                       {template.id === ON_DUTY_TEMPLATE_DOC_ID && <Badge bg="secondary">ON-DUTY</Badge>}
                       {template.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID && <Badge bg="dark">ON-DUTY HEADER</Badge>}
+                      {template.id === CATC_CAMP_TEMPLATE_DOC_ID && <Badge bg="info">CATC CAMP</Badge>}
                       <i className="bi bi-chevron-right" />
                     </div>
                   </ListGroup.Item>
@@ -405,9 +461,9 @@ const ReportsTemplateManager: React.FC = () => {
                           type="text"
                           value={editor.id}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditor(prev => ({ ...prev, id: e.target.value }))}
-                          disabled={editor.id === ON_DUTY_TEMPLATE_DOC_ID || editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID || !isDraftTemplate}
+                          disabled={editor.id === ON_DUTY_TEMPLATE_DOC_ID || editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID || editor.id === CATC_CAMP_TEMPLATE_DOC_ID || !isDraftTemplate}
                         />
-                        {!isDraftTemplate && editor.id !== ON_DUTY_TEMPLATE_DOC_ID && editor.id !== ON_DUTY_HEADER_TEMPLATE_DOC_ID && (
+                        {!isDraftTemplate && editor.id !== ON_DUTY_TEMPLATE_DOC_ID && editor.id !== ON_DUTY_HEADER_TEMPLATE_DOC_ID && editor.id !== CATC_CAMP_TEMPLATE_DOC_ID && (
                           <Form.Text className="text-muted">Key is locked after creation.</Form.Text>
                         )}
                       </Form.Group>
@@ -432,6 +488,85 @@ const ReportsTemplateManager: React.FC = () => {
                     />
                   </Form.Group>
 
+                  {isCatcTemplate && catcTemplate && (
+                    <>
+                      <Alert variant="info" className="small py-2">
+                        Edit CATC document text page by page. Use placeholders like <code>{'{{name}}'}</code> for auto-filled cadet/camp values (rendered bold and underlined). Use <code>**text**</code> for bold-only phrases.
+                      </Alert>
+
+                      <Row className="g-2 mb-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label>Institution</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={catcTemplate.institution}
+                              onChange={(e) => updateCatcTemplate((prev) => ({ ...prev, institution: e.target.value }))}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label>Unit</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={catcTemplate.unit}
+                              onChange={(e) => updateCatcTemplate((prev) => ({ ...prev, unit: e.target.value }))}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label>Countersign Station</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={catcTemplate.countersignStation}
+                              onChange={(e) => updateCatcTemplate((prev) => ({ ...prev, countersignStation: e.target.value }))}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label>Default Camp Location</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={catcTemplate.defaultCampLocation}
+                              onChange={(e) => updateCatcTemplate((prev) => ({ ...prev, defaultCampLocation: e.target.value }))}
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+
+                      <Tab.Container activeKey={activeCatcPage} onSelect={(key) => setActiveCatcPage((key as CatcPageKey) || 'page1')}>
+                        <Nav variant="tabs" className="mb-3">
+                          {CATC_PAGE_KEYS.map((pageKey) => (
+                            <Nav.Item key={pageKey}>
+                              <Nav.Link eventKey={pageKey}>{CATC_PAGE_LABELS[pageKey]}</Nav.Link>
+                            </Nav.Item>
+                          ))}
+                        </Nav>
+                        <Tab.Content>
+                          {CATC_PAGE_KEYS.map((pageKey) => (
+                            <Tab.Pane key={pageKey} eventKey={pageKey}>
+                              {Object.entries(catcTemplate.pages[pageKey]).map(([sectionKey, sectionValue]) => (
+                                <Form.Group className="mb-3" key={`${pageKey}-${sectionKey}`}>
+                                  <Form.Label>{CATC_SECTION_LABELS[pageKey]?.[sectionKey] || sectionKey}</Form.Label>
+                                  <Form.Control
+                                    as="textarea"
+                                    rows={sectionKey === 'bondParagraph' ? 10 : 4}
+                                    value={sectionValue}
+                                    onChange={(e) => updateCatcSection(pageKey, sectionKey, e.target.value)}
+                                  />
+                                </Form.Group>
+                              ))}
+                            </Tab.Pane>
+                          ))}
+                        </Tab.Content>
+                      </Tab.Container>
+                    </>
+                  )}
+
+                  {!isCatcTemplate && (
                   <Form.Group className="mb-2">
                     <Form.Label>Template Content</Form.Label>
                     {editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID && (
@@ -452,6 +587,7 @@ const ReportsTemplateManager: React.FC = () => {
                       ref={contentRef}
                     />
                   </Form.Group>
+                  )}
 
                   <div className="small text-muted mb-2">Variables</div>
                   <div className="d-flex flex-wrap gap-2 mb-3">
@@ -471,15 +607,24 @@ const ReportsTemplateManager: React.FC = () => {
                     <Button variant="primary" onClick={handleSave} disabled={saving}>
                       {saving ? 'Saving...' : 'Save changes'}
                     </Button>
-                    <Button variant="outline-danger" onClick={handleDelete} disabled={saving}>
+                    <Button variant="outline-danger" onClick={handleDelete} disabled={saving || editor.id === ON_DUTY_TEMPLATE_DOC_ID || editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID || editor.id === CATC_CAMP_TEMPLATE_DOC_ID}>
                       Delete Template
                     </Button>
                     <Button
                       variant="outline-secondary"
-                      onClick={() => setEditor(prev => ({
-                        ...prev,
-                        content: editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID ? DEFAULT_ON_DUTY_HEADER_TEMPLATE : DEFAULT_ON_DUTY_TEMPLATE,
-                      }))}
+                      onClick={() => {
+                        if (isCatcTemplate) {
+                          setEditor((prev) => ({
+                            ...prev,
+                            content: serializeCatcCampTemplate(DEFAULT_CATC_CAMP_TEMPLATE),
+                          }));
+                          return;
+                        }
+                        setEditor(prev => ({
+                          ...prev,
+                          content: editor.id === ON_DUTY_HEADER_TEMPLATE_DOC_ID ? DEFAULT_ON_DUTY_HEADER_TEMPLATE : DEFAULT_ON_DUTY_TEMPLATE,
+                        }));
+                      }}
                       disabled={saving}
                     >
                       Reset Content

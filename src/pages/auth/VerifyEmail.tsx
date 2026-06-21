@@ -13,9 +13,29 @@ const VerifyEmail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState<boolean | null>(null);
   const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState<{email?: string; password?: string}>({});
+
+  const validateForm = (): boolean => {
+    const errors: {email?: string; password?: string} = {};
+    if (!email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!email.includes('@') || !email.includes('tce.edu')) {
+      errors.email = 'Email must be from tce.edu domain (e.g., name@tce.edu or name@student.tce.edu)';
+    }
+    
+    if (!password) {
+      errors.password = 'Password is required';
+    } else if (password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleCheckVerification = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setError('');
     setVerified(null);
     setLoading(true);
@@ -132,9 +152,15 @@ const VerifyEmail: React.FC = () => {
                       type="email"
                       placeholder="Enter your registered email"
                       value={email}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                      required
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setEmail(e.target.value);
+                        if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
+                      }}
+                      isInvalid={!!formErrors.email}
                     />
+                    <Form.Control.Feedback type="invalid">
+                      {formErrors.email}
+                    </Form.Control.Feedback>
                   </Form.Group>
 
                   <Form.Group className="mb-3" controlId="verifyPassword">
@@ -144,9 +170,12 @@ const VerifyEmail: React.FC = () => {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Enter your password"
                         value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                        required
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setPassword(e.target.value);
+                          if (formErrors.password) setFormErrors({ ...formErrors, password: undefined });
+                        }}
                         className="pe-5"
+                        isInvalid={!!formErrors.password}
                       />
                       <Button
                         variant="link"
@@ -158,6 +187,7 @@ const VerifyEmail: React.FC = () => {
                         <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                       </Button>
                     </div>
+                    {formErrors.password && <div className="invalid-feedback d-block">{formErrors.password}</div>}
                   </Form.Group>
 
                   <Button

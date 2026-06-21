@@ -69,6 +69,21 @@ const ReportsWorkspace: React.FC = () => {
             </Card.Body>
           </Card>
         </Col>
+
+        <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+          <Card className="text-center h-100 shadow-sm hover-lift">
+            <Card.Body className="d-flex flex-column justify-content-between">
+              <div>
+                <i className="bi bi-file-earmark-zip text-info reports-workspace-icon"></i>
+                <h3 className="mt-3">CATC Camp</h3>
+                <p className="text-muted small">Generate camp documents</p>
+              </div>
+              <Button as={Link} to="/admin/reports/generators/catc-camp" variant="info" className="mt-2">
+                Open
+              </Button>
+            </Card.Body>
+          </Card>
+        </Col>
       </Row>
     </Container>
   );

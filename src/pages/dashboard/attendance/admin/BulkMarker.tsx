@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { Card, Button, Alert, Spinner, Badge, Form } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { QuickSelectGrid } from './QuickSelectGrid';
 import {
@@ -24,7 +24,7 @@ interface BulkMarkerProps {
 }
 
 export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
-  const navigate = useNavigate();
+
   const { currentUser, userProfile } = useAuth();
   const [session, setSession] = useState<(AttendanceSession & { id: string }) | null>(null);
   const [cadets, setCadets] = useState<(Cadet & { id: string })[]>([]);

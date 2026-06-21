@@ -157,6 +157,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signIn = async (email: string, password: string): Promise<UserCredential> => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
+      const user = result.user;
+      
+      // Force name sync on login immediately to fix missing name in reset emails
+      if (!user.displayName) {
+        let finalName = '';
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            finalName = userDoc.data().name;
+          } else {
+            const q = query(collection(db, 'pendingCadets'), where('uid', '==', user.uid));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+              finalName = snap.docs[0].data().name;
+            }
+          }
+          if (finalName) {
+            await updateProfile(user, { displayName: finalName });
+            await user.reload();
+          }
+        } catch (e) {
+          console.warn('Silent sync failed:', e);
+        }
+      }
+
       toast.success('Logged in successfully!');
       return result;
     } catch (error: any) {
@@ -255,7 +280,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user: any) => {
       setCurrentUser(user);
       if (user) {
-        await fetchUserProfile(user.uid);
+        const profile = await fetchUserProfile(user.uid);
+        let finalName = profile?.name;
+        
+        // If not in users collection, they might be an existing pending cadet
+        if (!finalName && !user.displayName) {
+          try {
+            const pendingQuery = query(collection(db, 'pendingCadets'), where('uid', '==', user.uid));
+            const pendingSnap = await getDocs(pendingQuery);
+            if (!pendingSnap.empty) {
+              finalName = pendingSnap.docs[0].data().name;
+            }
+          } catch (err) {
+            console.warn('Failed to fetch pending cadet name', err);
+          }
+        }
+
+        // Sync displayName to Firebase Auth if it's missing (fixes %DISPLAY_NAME% in reset emails)
+        if (finalName && !user.displayName) {
+          try {
+            await updateProfile(user, { displayName: finalName });
+          } catch (e) {
+            console.warn('Failed to sync displayName:', e);
+          }
+        }
       } else {
         setUserProfile(null);
       }

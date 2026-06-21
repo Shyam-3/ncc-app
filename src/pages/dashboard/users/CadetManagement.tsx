@@ -1,5 +1,4 @@
 import { ACADEMIC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
-import { useAuth } from '@/features/auth/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '@/shared/config/firebase';
 import { formatISTDate } from '@/shared/utils/dateTime';
@@ -38,7 +37,6 @@ interface CadetUser {
 
 const CadetManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { userProfile, isAdmin, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<CadetUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

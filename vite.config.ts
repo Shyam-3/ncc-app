@@ -14,7 +14,10 @@ export default defineConfig({
     port: 3000,
     open: true,
     hmr : true,
-    host: true
+    host: true,
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+    }
   },
   build: {
     outDir: 'dist',

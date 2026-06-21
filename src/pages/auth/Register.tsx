@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from 'firebase/auth';
 import { addDoc, collection } from 'firebase/firestore';
 import React, { ChangeEvent, FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
@@ -226,6 +226,9 @@ const Register: React.FC = () => {
         formData.password
       );
       const user = userCredential.user;
+
+      // Update Firebase Auth profile with name so the verification email template (%DISPLAY_NAME%) populates correctly
+      await updateProfile(user, { displayName: formData.name });
 
       // Step 2: Send verification email
       await sendEmailVerification(user);

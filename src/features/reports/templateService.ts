@@ -1,5 +1,12 @@
 import { db } from '@/shared/config/firebase';
 import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import {
+  CATC_CAMP_TEMPLATE_DOC_ID,
+  DEFAULT_CATC_CAMP_TEMPLATE,
+  parseCatcCampTemplate,
+  serializeCatcCampTemplate,
+  type CatcCampTemplateData,
+} from './catcTemplateDefaults';
 
 export interface OnDutyTemplate {
   content: string;
@@ -18,6 +25,7 @@ export interface ReportTemplate {
 
 export const ON_DUTY_TEMPLATE_DOC_ID = 'onDutyLetter';
 export const ON_DUTY_HEADER_TEMPLATE_DOC_ID = 'onDutyHeader';
+export { CATC_CAMP_TEMPLATE_DOC_ID };
 
 export const DEFAULT_ON_DUTY_HEADER_TEMPLATE = `<div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #222; padding-bottom:10px;">
   {{LogoBlock}}
@@ -168,5 +176,29 @@ export async function saveReportTemplate(template: ReportTemplate) {
 export async function deleteReportTemplate(templateId: string) {
   const templateRef = doc(db, 'reportTemplates', templateId);
   await deleteDoc(templateRef);
+}
+
+export async function getCatcCampTemplate(): Promise<CatcCampTemplateData> {
+  const templateRef = doc(db, 'reportTemplates', CATC_CAMP_TEMPLATE_DOC_ID);
+  const snapshot = await getDoc(templateRef);
+
+  if (!snapshot.exists()) {
+    return structuredClone(DEFAULT_CATC_CAMP_TEMPLATE);
+  }
+
+  const data = snapshot.data() as Partial<ReportTemplate>;
+  return parseCatcCampTemplate(data.content || serializeCatcCampTemplate(DEFAULT_CATC_CAMP_TEMPLATE));
+}
+
+export async function saveCatcCampTemplate(data: CatcCampTemplateData) {
+  const templateRef = doc(db, 'reportTemplates', CATC_CAMP_TEMPLATE_DOC_ID);
+  await setDoc(templateRef, {
+    id: CATC_CAMP_TEMPLATE_DOC_ID,
+    title: 'CATC Camp Document Template',
+    description: 'Page-wise content for CATC camp PDF generation (4 pages).',
+    content: serializeCatcCampTemplate(data),
+    logoUrl: '',
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
 }
 
