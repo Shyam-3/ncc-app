@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
+import { TablePaginationFooter } from '@/components';
 import {
   DEFAULT_ON_DUTY_HEADER_TEMPLATE,
   DEFAULT_ON_DUTY_TEMPLATE,
@@ -109,6 +110,31 @@ const OnDutyLetterReport: React.FC = () => {
   const [departmentFilter, setDepartmentFilter] = useState<'ALL' | string>('ALL');
   const [residentialFilter, setResidentialFilter] = useState<'ALL' | string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const listYearOptions = useMemo(() => {
+    if (departmentFilter !== 'ALL') {
+      const dept = DEPARTMENT_DEFS.find(d => d.code === departmentFilter);
+      if (dept && dept.courseTenure !== 5) {
+        return ACADEMIC_YEARS.filter(y => y !== '5th Year');
+      }
+    }
+    return ACADEMIC_YEARS;
+  }, [departmentFilter]);
+
+  useEffect(() => {
+    if (departmentFilter !== 'ALL') {
+      const dept = DEPARTMENT_DEFS.find(d => d.code === departmentFilter);
+      if (dept && dept.courseTenure !== 5 && yearFilter === '5th Year') {
+        setYearFilter('4th Year');
+      }
+    }
+  }, [departmentFilter, yearFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [divisionFilter, yearFilter, departmentFilter, residentialFilter, searchTerm, rowsPerPage]);
 
   const [formData, setFormData] = useState<OnDutyLetterForm>({
     letterDate: toISTDateInputValue(),
@@ -124,7 +150,6 @@ const OnDutyLetterReport: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const YEAR_OPTIONS = ACADEMIC_YEARS.filter(y => y !== '4th Year');
   const REASONS = ['Camp', 'Sports Event', 'Training', 'Duty', 'Others'];
   const LOCATIONS = ['College Premises', 'Training Center', 'Sports Ground', 'City', 'Others'];
 
@@ -246,6 +271,12 @@ const OnDutyLetterReport: React.FC = () => {
       return (a.registerNumber || '').localeCompare((b.registerNumber || ''), undefined, { numeric: true });
     });
   }, [users, divisionFilter, yearFilter, departmentFilter, residentialFilter, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCadets.length / rowsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, filteredCadets.length);
+  const paginatedCadets = filteredCadets.slice(startIndex, endIndex);
 
   const handleFormChange = (field: keyof OnDutyLetterForm, value: string) => {
     setFormData(prev => {
@@ -561,7 +592,7 @@ const OnDutyLetterReport: React.FC = () => {
                 <Col xs={12} sm={6} md={3}>
                   <Form.Select size="sm" value={yearFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setYearFilter(e.target.value)}>
                     <option value="ALL">All Years</option>
-                    {YEAR_OPTIONS.map(item => <option key={item} value={item}>{item}</option>)}
+                     {listYearOptions.map(item => <option key={item} value={item}>{item}</option>)}
                   </Form.Select>
                 </Col>
                 <Col xs={12} sm={6} md={3}>
@@ -601,7 +632,7 @@ const OnDutyLetterReport: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCadets.map((cadet, index) => {
+                    {paginatedCadets.map((cadet, index) => {
                       return (
                         <tr key={cadet.uid}>
                           <td>
@@ -612,7 +643,7 @@ const OnDutyLetterReport: React.FC = () => {
                               aria-label={`Select ${cadet.name || cadet.uid}`}
                             />
                           </td>
-                          <td>{index + 1}</td>
+                          <td>{startIndex + index + 1}</td>
                           <td><Badge bg="secondary">{formatAcademicYear(cadet.year || cadet.nccYear)}</Badge></td>
                           <td>{cadet.registerNumber || '-'}</td>
                           <td>{cadet.name || '-'}</td>
@@ -628,6 +659,16 @@ const OnDutyLetterReport: React.FC = () => {
                   </tbody>
                 </Table>
               </div>
+              <TablePaginationFooter
+                totalItems={filteredCadets.length}
+                currentPage={safePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={setRowsPerPage}
+                onFirstPage={() => setCurrentPage(1)}
+                onPreviousPage={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                onNextPage={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                onLastPage={() => setCurrentPage(totalPages)}
+              />
             </Card.Body>
             <Card.Footer className="d-flex justify-content-between align-items-center">
               <small className="text-muted">Selected: {selectedCadets.size} / {filteredCadets.length}</small>

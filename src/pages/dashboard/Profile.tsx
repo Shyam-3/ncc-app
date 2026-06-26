@@ -64,7 +64,9 @@ const Profile: React.FC = () => {
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   const isAdminEditor = profile?.role === 'admin' || profile?.role === 'superadmin';
-  const fiveYearDepartments = new Set(['AMCS', 'ARCH']);
+  const fiveYearDepartments = new Set<string>(
+    DEPARTMENT_DEFS.filter(d => d.courseTenure === 5).map(d => d.code)
+  );
   const academicYearOptions = fiveYearDepartments.has(editForm.department)
     ? ACADEMIC_YEARS
     : ACADEMIC_YEARS.filter(y => y !== '5th Year');
@@ -136,10 +138,16 @@ const Profile: React.FC = () => {
         return next;
       });
     }
-    setEditForm(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    setEditForm(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'department') {
+        const dept = DEPARTMENT_DEFS.find(d => d.code === value);
+        if (dept && dept.courseTenure !== 5 && prev.year === '5th Year') {
+          next.year = '4th Year';
+        }
+      }
+      return next;
+    });
   };
 
   const validateEditForm = () => {

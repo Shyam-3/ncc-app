@@ -1,4 +1,4 @@
-import { ACADEMIC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
+import { ACADEMIC_YEARS, NCC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
 import { useNavigate } from 'react-router-dom';
 import { db } from '@/shared/config/firebase';
 import { formatISTDate } from '@/shared/utils/dateTime';
@@ -6,6 +6,7 @@ import { collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/fi
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import { TablePaginationFooter } from '@/components';
 import './CadetManagement.css';
 
 type UserRole = 'member' | 'admin' | 'superadmin';
@@ -47,6 +48,8 @@ const CadetManagement: React.FC = () => {
   const [yearFilter, setYearFilter] = useState<'ALL' | string>('ALL');
   const [departmentFilter, setDepartmentFilter] = useState<'ALL' | string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [cadetEditForm, setCadetEditForm] = useState({
     division: '',
     regimentalNumber: '',
@@ -61,7 +64,37 @@ const CadetManagement: React.FC = () => {
   });
   const [cadetEditErrors, setCadetEditErrors] = useState<Record<string, string>>({});
 
-  const YEAR_OPTIONS = ACADEMIC_YEARS.filter(y => y !== '4th Year');
+  const listYearOptions = useMemo(() => {
+    if (departmentFilter !== 'ALL') {
+      const dept = DEPARTMENT_DEFS.find(d => d.code === departmentFilter);
+      if (dept && dept.courseTenure !== 5) {
+        return ACADEMIC_YEARS.filter(y => y !== '5th Year');
+      }
+    }
+    return ACADEMIC_YEARS;
+  }, [departmentFilter]);
+
+  const editAcademicYearOptions = useMemo(() => {
+    const fiveYearDepartments = new Set(
+      DEPARTMENT_DEFS.filter(d => d.courseTenure === 5).map(d => d.code)
+    );
+    return fiveYearDepartments.has(cadetEditForm.department)
+      ? ACADEMIC_YEARS
+      : ACADEMIC_YEARS.filter(y => y !== '5th Year');
+  }, [cadetEditForm.department]);
+
+  useEffect(() => {
+    if (departmentFilter !== 'ALL') {
+      const dept = DEPARTMENT_DEFS.find(d => d.code === departmentFilter);
+      if (dept && dept.courseTenure !== 5 && yearFilter === '5th Year') {
+        setYearFilter('4th Year');
+      }
+    }
+  }, [departmentFilter, yearFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [divisionFilter, yearFilter, departmentFilter, searchTerm, rowsPerPage]);
 
   useEffect(() => {
     fetchUsers();
@@ -106,6 +139,12 @@ const CadetManagement: React.FC = () => {
 
     return list;
   }, [users, divisionFilter, yearFilter, departmentFilter, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(cadetUsers.length / rowsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, cadetUsers.length);
+  const paginatedCadets = cadetUsers.slice(startIndex, endIndex);
 
   const clearFilters = () => {
     setDivisionFilter('ALL');
@@ -163,10 +202,16 @@ const CadetManagement: React.FC = () => {
         return next;
       });
     }
-    setCadetEditForm(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    setCadetEditForm(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'department') {
+        const dept = DEPARTMENT_DEFS.find(d => d.code === value);
+        if (dept && dept.courseTenure !== 5 && prev.year === '5th Year') {
+          next.year = '4th Year';
+        }
+      }
+      return next;
+    });
   };
 
   const validateCadetEdit = () => {
@@ -322,7 +367,7 @@ const CadetManagement: React.FC = () => {
               >
                 <option value="" disabled>Select Year</option>
                 <option value="ALL">All Years</option>
-                {YEAR_OPTIONS.map(y => (
+                {listYearOptions.map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
               </Form.Select>
@@ -369,9 +414,9 @@ const CadetManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {cadetUsers.map((u, index) => (
+              {paginatedCadets.map((u, index) => (
                 <tr key={u.uid}>
-                  <td className="text-center">{index + 1}</td>
+                  <td className="text-center">{startIndex + index + 1}</td>
                   <td className="text-break" dir="ltr">{u.name || 'N/A'}</td>
                   <td>{u.regimentalNumber || '-'}</td>
                   <td className="text-center">
@@ -395,6 +440,16 @@ const CadetManagement: React.FC = () => {
               )}
             </tbody>
           </Table>
+          <TablePaginationFooter
+            totalItems={cadetUsers.length}
+            currentPage={safePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={setRowsPerPage}
+            onFirstPage={() => setCurrentPage(1)}
+            onPreviousPage={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            onNextPage={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            onLastPage={() => setCurrentPage(totalPages)}
+          />
         </Card.Body>
       </Card>
 
@@ -554,7 +609,7 @@ const CadetManagement: React.FC = () => {
                       isInvalid={Boolean(cadetEditErrors.nccYear)}
                     >
                       <option value="" disabled>Select Year</option>
-                      {YEAR_OPTIONS.map(y => (
+                      {NCC_YEARS.map(y => (
                         <option key={y} value={y}>{y}</option>
                       ))}
                     </Form.Select>
@@ -582,7 +637,7 @@ const CadetManagement: React.FC = () => {
                       isInvalid={Boolean(cadetEditErrors.year)}
                     >
                       <option value="" disabled>Select Year</option>
-                      {YEAR_OPTIONS.map(y => (
+                      {editAcademicYearOptions.map(y => (
                         <option key={y} value={y}>{y}</option>
                       ))}
                     </Form.Select>

@@ -165,5 +165,26 @@ service cloud.firestore {
       allow create: if isAdmin() || isSuperAdmin();
       allow update, delete: if false; // Immutable
     }
+
+    // App settings (configurable by admins — rollover date, retention, etc.)
+    match /settings/{docId} {
+      allow read: if isAdmin() || isSuperAdmin();
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+
+    // Pending auth deletions queue (written by admins, processed by automation)
+    match /pendingAuthDeletions/{uid} {
+      allow read: if isAdmin() || isSuperAdmin();
+      allow create: if isAdmin() || isSuperAdmin();
+      allow update: if false;
+      allow delete: if isAdmin() || isSuperAdmin(); // Allowed for rollback
+    }
+
+    // Rollback snapshots (created by automation or admin rollover, read by admins)
+    match /rollbackSnapshots/{snapshotId} {
+      allow read: if isAdmin() || isSuperAdmin();
+      allow create: if isAdmin() || isSuperAdmin();
+      allow update, delete: if false; // Immutable snapshots
+    }
   }
 }

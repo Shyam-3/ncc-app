@@ -1,0 +1,63 @@
+.admin-settings {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.admin-settings .settings-section {
+  margin-bottom: 1.5rem;
+}
+
+.admin-settings .settings-section .card {
+  border: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.admin-settings .settings-section .card-header {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.admin-settings .preview-table {
+  font-size: 0.85rem;
+}
+
+.admin-settings .preview-table th {
+  white-space: nowrap;
+}
+
+.admin-settings .action-badge {
+  font-size: 0.75rem;
+  padding: 0.3em 0.6em;
+}
+
+.admin-settings .summary-card {
+  text-align: center;
+}
+
+.admin-settings .summary-card .display-6 {
+  font-weight: 700;
+}
+
+.admin-settings .rollback-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.admin-settings .rollback-item {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.admin-settings .rollback-item:hover {
+  background-color: rgba(var(--bs-primary-rgb), 0.08);
+}
+
+.admin-settings .rollback-item.active {
+  background-color: rgba(var(--bs-primary-rgb), 0.12);
+  border-color: var(--bs-primary);
+}
+
+.admin-settings .pending-queue-badge {
+  font-size: 1.5rem;
+  font-weight: 700;
+}

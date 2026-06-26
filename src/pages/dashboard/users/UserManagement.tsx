@@ -15,6 +15,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Tab, Table, Tabs } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import { TablePaginationFooter } from '@/components';
 import './UserManagement.css';
 
 type UserRole = 'member' | 'admin' | 'superadmin';
@@ -83,6 +84,10 @@ const UserManagement: React.FC = () => {
   // Filter states for users tab
   const [divisionFilterUsers, setDivisionFilterUsers] = useState<'ALL' | 'SD' | 'SW'>('ALL');
   const [searchTermUsers, setSearchTermUsers] = useState('');
+  const [usersCurrentPage, setUsersCurrentPage] = useState(1);
+  const [usersRowsPerPage, setUsersRowsPerPage] = useState(10);
+  const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
+  const [pendingRowsPerPage, setPendingRowsPerPage] = useState(10);
 
   const isSelf = (uid: string) => uid === currentUser?.uid;
   const canDeleteUser = (target: UserData) => {
@@ -102,6 +107,14 @@ const UserManagement: React.FC = () => {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    setUsersCurrentPage(1);
+  }, [divisionFilterUsers, searchTermUsers, usersRowsPerPage]);
+
+  useEffect(() => {
+    setPendingCurrentPage(1);
+  }, [divisionFilter, searchTerm, pendingRowsPerPage]);
 
   const fetchUsers = async () => {
     const usersRef = collection(db, 'users');
@@ -286,6 +299,18 @@ const UserManagement: React.FC = () => {
     return list;
   }, [users, divisionFilterUsers, searchTermUsers]);
 
+  const usersTotalPages = Math.max(1, Math.ceil(filteredUsers.length / usersRowsPerPage));
+  const usersSafePage = Math.min(usersCurrentPage, usersTotalPages);
+  const usersStartIndex = (usersSafePage - 1) * usersRowsPerPage;
+  const usersEndIndex = Math.min(usersStartIndex + usersRowsPerPage, filteredUsers.length);
+  const paginatedUsers = filteredUsers.slice(usersStartIndex, usersEndIndex);
+
+  const pendingTotalPages = Math.max(1, Math.ceil(filteredPending.length / pendingRowsPerPage));
+  const pendingSafePage = Math.min(pendingCurrentPage, pendingTotalPages);
+  const pendingStartIndex = (pendingSafePage - 1) * pendingRowsPerPage;
+  const pendingEndIndex = Math.min(pendingStartIndex + pendingRowsPerPage, filteredPending.length);
+  const paginatedPending = filteredPending.slice(pendingStartIndex, pendingEndIndex);
+
   const clearUsersFilters = () => {
     setDivisionFilterUsers('ALL');
     setSearchTermUsers('');
@@ -304,6 +329,11 @@ const UserManagement: React.FC = () => {
     try {
       await deleteDoc(doc(db, 'users', u.uid));
       
+      // Also remove cadet profile if exists
+      try {
+        await deleteDoc(doc(db, 'cadets', u.uid));
+      } catch (_) { /* cadet doc may not exist */ }
+
       // Also remove from pendingCadets if exists (by email)
       const pendingSnapshot = await getDocs(
         query(collection(db, 'pendingCadets'))
@@ -314,8 +344,15 @@ const UserManagement: React.FC = () => {
       if (matchingPending) {
         await deleteDoc(doc(db, 'pendingCadets', matchingPending.id));
       }
+
+      // Queue Firebase Auth account for automated cleanup
+      await setDoc(doc(db, 'pendingAuthDeletions', u.uid), {
+        email: u.email,
+        deletedBy: currentUser?.uid || 'unknown',
+        deletedAt: new Date().toISOString(),
+      });
       
-      toast.success('User deleted from Firestore');
+      toast.success('User deleted. Auth account will be cleaned up automatically.');
       await Promise.all([fetchUsers(), fetchPending()]);
     } catch (e) {
       console.error(e);
@@ -395,9 +432,9 @@ const UserManagement: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredPending.map((c, index) => (
+          {paginatedPending.map((c, index) => (
             <tr key={c.id}>
-              <td className="text-center">{index + 1}</td>
+              <td className="text-center">{pendingStartIndex + index + 1}</td>
               <td>{c.name}</td>
               <td className="text-center">
                 <Badge bg={c.division === 'SD' ? 'info' : 'warning'}>{c.division}</Badge>
@@ -437,8 +474,18 @@ const UserManagement: React.FC = () => {
           )}
         </tbody>
       </Table>
+      <TablePaginationFooter
+        totalItems={filteredPending.length}
+        currentPage={pendingSafePage}
+        rowsPerPage={pendingRowsPerPage}
+        onRowsPerPageChange={setPendingRowsPerPage}
+        onFirstPage={() => setPendingCurrentPage(1)}
+        onPreviousPage={() => setPendingCurrentPage((page) => Math.max(1, page - 1))}
+        onNextPage={() => setPendingCurrentPage((page) => Math.min(pendingTotalPages, page + 1))}
+        onLastPage={() => setPendingCurrentPage(pendingTotalPages)}
+      />
     </>
-  ), [filteredPending, divisionFilter, searchTerm]);
+  ), [filteredPending, pendingSafePage, pendingRowsPerPage, pendingStartIndex, pendingTotalPages]);
 
   const UsersTable = useMemo(() => (
     <>
@@ -507,9 +554,9 @@ const UserManagement: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map((u, index) => (
+          {paginatedUsers.map((u, index) => (
             <tr key={u.uid}>
-              <td className="text-center">{index + 1}</td>
+              <td className="text-center">{usersStartIndex + index + 1}</td>
               <td className="text-break" dir="ltr">{u.name || 'N/A'} {isSelf(u.uid) && <Badge bg="success" className="ms-1">You</Badge>}</td>
               <td className="text-center">
                 {u.division ? (
@@ -540,8 +587,18 @@ const UserManagement: React.FC = () => {
           )}
         </tbody>
       </Table>
+      <TablePaginationFooter
+        totalItems={filteredUsers.length}
+        currentPage={usersSafePage}
+        rowsPerPage={usersRowsPerPage}
+        onRowsPerPageChange={setUsersRowsPerPage}
+        onFirstPage={() => setUsersCurrentPage(1)}
+        onPreviousPage={() => setUsersCurrentPage((page) => Math.max(1, page - 1))}
+        onNextPage={() => setUsersCurrentPage((page) => Math.min(usersTotalPages, page + 1))}
+        onLastPage={() => setUsersCurrentPage(usersTotalPages)}
+      />
     </>
-  ), [filteredUsers, divisionFilterUsers, searchTermUsers, userProfile?.role]);
+  ), [filteredUsers, paginatedUsers, usersSafePage, usersRowsPerPage, usersStartIndex, usersTotalPages, userProfile?.role]);
 
 
   if (loading) {

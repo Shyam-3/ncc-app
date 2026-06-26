@@ -62,20 +62,21 @@ export const NCC_RANKS: Rank[] = [
 export interface DepartmentDef {
   code: string;
   name: string;
+  courseTenure: number;
 }
 
 export const DEPARTMENT_DEFS = [
-  { code: 'IT', name: 'Information Technology' },
-  { code: 'CSE', name: 'Computer Science and Engineering' },
-  { code: 'ECE', name: 'Electronics and Communication Engineering' },
-  { code: 'EEE', name: 'Electrical and Electronics Engineering' },
-  { code: 'AMCS', name: 'Data Science' },
-  { code: 'CSE AIML', name: 'Computer Science and Engineering (AI & ML)' },
-  { code: 'MECH', name: 'Mechanical Engineering' },
-  { code: 'MECT', name: 'Mechatronics Engineering' },
-  { code: 'CIVIL', name: 'Civil Engineering' },
-  { code: 'CSBS', name: 'Computer Science and Business Systems' },
-  { code: 'ARCH', name: 'Architecture' }
+  { code: 'IT', name: 'Information Technology', courseTenure: 4 },
+  { code: 'CSE', name: 'Computer Science and Engineering', courseTenure: 4 },
+  { code: 'ECE', name: 'Electronics and Communication Engineering', courseTenure: 4 },
+  { code: 'EEE', name: 'Electrical and Electronics Engineering', courseTenure: 4 },
+  { code: 'AMCS', name: 'Data Science', courseTenure: 5 },
+  { code: 'CSE AIML', name: 'Computer Science and Engineering (AI & ML)', courseTenure: 4 },
+  { code: 'MECH', name: 'Mechanical Engineering', courseTenure: 4 },
+  { code: 'MECT', name: 'Mechatronics Engineering', courseTenure: 4 },
+  { code: 'CIVIL', name: 'Civil Engineering', courseTenure: 4 },
+  { code: 'CSBS', name: 'Computer Science and Business Systems', courseTenure: 4 },
+  { code: 'ARCH', name: 'Architecture', courseTenure: 5 }
 ] as const;
 
 export type Department = typeof DEPARTMENT_DEFS[number]['code'];

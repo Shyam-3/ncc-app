@@ -1,0 +1,39 @@
+name: NCC Year Rollover
+
+on:
+  # Auto-schedule (COMMENTED OUT until tested)
+  # schedule:
+  #   - cron: '30 18 30 6 *'    # July 1st 00:00 IST (June 30 18:30 UTC)
+  
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — preview changes without applying'
+        type: boolean
+        default: true
+      rollback_id:
+        description: 'Rollback to a snapshot (leave empty for normal run)'
+        type: string
+        default: ''
+
+jobs:
+  rollover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: cd scripts && npm install
+      - name: Run rollover
+        run: |
+          if [ -n "${{ inputs.rollback_id }}" ]; then
+            node scripts/rollback.mjs --snapshot-id=${{ inputs.rollback_id }}
+          elif [ "${{ inputs.dry_run }}" = "true" ]; then
+            node scripts/year-rollover.mjs --dry-run
+          else
+            node scripts/year-rollover.mjs
+          fi
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

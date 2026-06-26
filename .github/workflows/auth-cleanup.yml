@@ -1,0 +1,21 @@
+name: Auth Account Cleanup
+
+on:
+  schedule:
+    - cron: '0 18 * * 0'    # Every Sunday at 00:00 IST
+  workflow_dispatch: {}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: cd scripts && npm install
+      - name: Run auth cleanup
+        run: node scripts/auth-cleanup.mjs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

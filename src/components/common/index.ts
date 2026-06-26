@@ -5,3 +5,4 @@ export { default as AnimatedSection } from './AnimatedSection';
 export { default as Markdown } from './Markdown';
 export { Loader } from './Loader';
 export { EmptyState } from './EmptyState';
+export { default as TablePaginationFooter } from './TablePaginationFooter';

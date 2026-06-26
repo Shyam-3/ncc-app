@@ -1,4 +1,4 @@
-import { ACADEMIC_YEARS, DEPARTMENT_DEFS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
+import { NCC_YEARS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
 import { db } from '@/shared/config/firebase';
 import { toISTDateInputValue } from '@/shared/utils/dateTime';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Button, Card, Col, Container, Form, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { TablePaginationFooter } from '@/components';
 import {
   generateCatcZip,
   DEFAULT_CAMP_LOCATION,
@@ -36,7 +37,6 @@ const formatAcademicYear = (value?: string) => {
 
 /* ──────────── Component ──────────── */
 
-const YEAR_OPTIONS = ACADEMIC_YEARS.filter((y) => y !== '4th Year');
 const CAMP_LOCATIONS = [DEFAULT_CAMP_LOCATION, 'Others'];
 
 const CatcCampReport: React.FC = () => {
@@ -52,10 +52,10 @@ const CatcCampReport: React.FC = () => {
 
   // Filters
   const [divisionFilter, setDivisionFilter] = useState<'ALL' | 'SD' | 'SW'>('ALL');
-  const [yearFilter, setYearFilter] = useState<'ALL' | string>('ALL');
-  const [departmentFilter, setDepartmentFilter] = useState<'ALL' | string>('ALL');
-  const [residentialFilter, setResidentialFilter] = useState<'ALL' | string>('ALL');
+  const [nccYearFilter, setNccYearFilter] = useState<'ALL' | string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Form
   const [formData, setFormData] = useState<CatcFormData>({
@@ -72,6 +72,10 @@ const CatcCampReport: React.FC = () => {
     initialized.current = true;
     void fetchCadets();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [divisionFilter, nccYearFilter, searchTerm, rowsPerPage]);
 
   const fetchCadets = async () => {
     try {
@@ -94,9 +98,7 @@ const CatcCampReport: React.FC = () => {
     let list = [...users];
 
     if (divisionFilter !== 'ALL') list = list.filter((u) => (u.division || '') === divisionFilter);
-    if (yearFilter !== 'ALL') list = list.filter((u) => (u.year || '') === yearFilter);
-    if (departmentFilter !== 'ALL') list = list.filter((u) => (u.department || '').trim() === departmentFilter);
-    if (residentialFilter !== 'ALL') list = list.filter((u) => (u.residentialStatus || '') === residentialFilter);
+    if (nccYearFilter !== 'ALL') list = list.filter((u) => (u.nccYear || u.year || '') === nccYearFilter);
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -112,7 +114,19 @@ const CatcCampReport: React.FC = () => {
       if (yearDelta !== 0) return yearDelta;
       return (a.registerNumber || '').localeCompare(b.registerNumber || '', undefined, { numeric: true });
     });
-  }, [users, divisionFilter, yearFilter, departmentFilter, residentialFilter, searchTerm]);
+  }, [users, divisionFilter, nccYearFilter, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCadets.length / rowsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, filteredCadets.length);
+  const paginatedCadets = filteredCadets.slice(startIndex, endIndex);
+
+  const clearFilters = () => {
+    setDivisionFilter('ALL');
+    setNccYearFilter('ALL');
+    setSearchTerm('');
+  };
 
   /* ---- Selection ---- */
   const toggleCadetSelection = (uid: string) => {
@@ -335,48 +349,32 @@ const CatcCampReport: React.FC = () => {
                 <Col xs={12} sm={6} md={3}>
                   <Form.Select
                     size="sm"
-                    value={departmentFilter}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDepartmentFilter(e.target.value)}
+                    value={nccYearFilter}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNccYearFilter(e.target.value)}
                   >
-                    <option value="ALL">All Departments</option>
-                    {DEPARTMENT_DEFS.map((item) => (
-                      <option key={item.code} value={item.code}>{item.code}</option>
-                    ))}
-                  </Form.Select>
-                </Col>
-                <Col xs={12} sm={6} md={3}>
-                  <Form.Select
-                    size="sm"
-                    value={yearFilter}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setYearFilter(e.target.value)}
-                  >
-                    <option value="ALL">All Years</option>
-                    {YEAR_OPTIONS.map((item) => (
+                    <option value="ALL">All NCC Years</option>
+                    {NCC_YEARS.map((item) => (
                       <option key={item} value={item}>{item}</option>
                     ))}
                   </Form.Select>
                 </Col>
                 <Col xs={12} sm={6} md={3}>
-                  <Form.Select
+                  <Form.Control
                     size="sm"
-                    value={residentialFilter}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setResidentialFilter(e.target.value)}
-                  >
-                    <option value="ALL">All Residential</option>
-                    <option value="Day Scholar">Day Scholar</option>
-                    <option value="Hosteller">Hosteller</option>
-                  </Form.Select>
+                    type="text"
+                    placeholder="Search by name or register number"
+                    value={searchTerm}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                  />
                 </Col>
               </Row>
 
-              {/* Search */}
-              <Form.Control
-                className="mb-3"
-                type="text"
-                placeholder="Search by name or register number"
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              />
+              <div className="d-flex justify-content-end mb-3">
+                <Button variant="outline-secondary" size="sm" onClick={clearFilters}>
+                  <i className="bi bi-x-circle me-1"></i>
+                  Clear Filters
+                </Button>
+              </div>
 
               {/* Cadet table */}
               <div className="table-responsive catc-cadet-table-wrap">
@@ -398,7 +396,7 @@ const CatcCampReport: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCadets.map((cadet, index) => (
+                    {paginatedCadets.map((cadet, index) => (
                       <tr key={cadet.uid}>
                         <td>
                           <Form.Check
@@ -408,7 +406,7 @@ const CatcCampReport: React.FC = () => {
                             aria-label={`Select ${cadet.name || cadet.uid}`}
                           />
                         </td>
-                        <td>{index + 1}</td>
+                        <td>{startIndex + index + 1}</td>
                         <td>
                           <Badge bg="secondary">{formatAcademicYear(cadet.nccYear || cadet.year)}</Badge>
                         </td>
@@ -426,6 +424,16 @@ const CatcCampReport: React.FC = () => {
                   </tbody>
                 </Table>
               </div>
+              <TablePaginationFooter
+                totalItems={filteredCadets.length}
+                currentPage={safePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={setRowsPerPage}
+                onFirstPage={() => setCurrentPage(1)}
+                onPreviousPage={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                onNextPage={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                onLastPage={() => setCurrentPage(totalPages)}
+              />
             </Card.Body>
             <Card.Footer className="d-flex justify-content-between align-items-center">
               <small className="text-muted">

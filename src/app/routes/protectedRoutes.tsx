@@ -16,6 +16,7 @@ import ReportsTemplateManager from '@/pages/dashboard/reports/ReportsTemplateMan
 import ReportsWorkspace from '@/pages/dashboard/reports/ReportsWorkspace';
 import RoleManagement from '@/pages/dashboard/users/RoleManagement';
 import UserManagement from '@/pages/dashboard/users/UserManagement';
+import AdminSettings from '@/pages/dashboard/settings/AdminSettings';
 
 export const protectedRoutes = (
   <>
@@ -167,7 +168,7 @@ export const protectedRoutes = (
       path="/admin/settings"
       element={
         <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
-          <div className="container py-5"><h2>Settings</h2></div>
+          <AdminSettings />
         </ProtectedRoute>
       }
     />
