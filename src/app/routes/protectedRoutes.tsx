@@ -31,7 +31,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/dashboard"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
           <DashboardHome />
         </ProtectedRoute>
       }
@@ -63,7 +63,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/roles"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
           <RoleManagement />
         </ProtectedRoute>
       }
@@ -71,7 +71,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/users"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
           <UserManagement />
         </ProtectedRoute>
       }
@@ -79,7 +79,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/attendance"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
           <AttendanceManagement />
         </ProtectedRoute>
       }
@@ -87,7 +87,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/cadets"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
           <CadetManagement />
         </ProtectedRoute>
       }
@@ -95,7 +95,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/duties"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
           <div className="container py-5"><h2>Duty Management</h2></div>
         </ProtectedRoute>
       }
@@ -103,7 +103,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/events"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
           <div className="container py-5"><h2>Event Management</h2></div>
         </ProtectedRoute>
       }

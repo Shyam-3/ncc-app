@@ -13,12 +13,27 @@ import {
 } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Tab, Table, Tabs } from 'react-bootstrap';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  Modal,
+  Row,
+  Spinner,
+  Tab,
+  Table,
+  Tabs,
+} from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import { triggerAuthCleanup } from '@/shared/utils/githubActions';
 import { TablePaginationFooter } from '@/components';
 import './UserManagement.css';
 
-type UserRole = 'member' | 'admin' | 'superadmin';
+type UserRole = 'member' | 'admin' | 'superadmin' | 'alumni';
 
 interface UserData {
   uid: string;
@@ -31,6 +46,7 @@ interface UserData {
   division?: 'SD' | 'SW';
   dateOfBirth?: string;
   dateOfEnrollment?: string;
+  nccYear?: string;
   year?: string;
   residentialStatus?: string;
   department?: string;
@@ -118,9 +134,17 @@ const UserManagement: React.FC = () => {
 
   const fetchUsers = async () => {
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    setUsers(snapshot.docs.map(d => ({ uid: d.id, ...(d.data() as any) })) as UserData[]);
+    const qUsers = query(usersRef, orderBy('createdAt', 'desc'));
+    const snapshotUsers = await getDocs(qUsers);
+    const activeUsers = snapshotUsers.docs.map(d => ({ uid: d.id, ...(d.data() as any) }));
+
+    const alumniRef = collection(db, 'alumni');
+    const qAlumni = query(alumniRef, orderBy('archivedAt', 'desc'));
+    const snapshotAlumni = await getDocs(qAlumni);
+    const alumniUsers = snapshotAlumni.docs.map(d => ({ uid: d.id, role: 'alumni', ...(d.data() as any) }));
+
+    const all = [...activeUsers, ...alumniUsers];
+    setUsers(all as UserData[]);
   };
 
   const fetchPending = async () => {
@@ -294,7 +318,24 @@ const UserManagement: React.FC = () => {
       );
     }
 
-    list.sort((a, b) => (a.regimentalNumber || '').localeCompare(b.regimentalNumber || '', undefined, { numeric: true }));
+    list.sort((a, b) => {
+      const getRank = (u: UserData) => {
+        if (u.role === 'alumni') {
+          const yrMatch = (u.year || '').match(/(\d+)/);
+          return 10 + (yrMatch ? parseInt(yrMatch[1]) : 0);
+        } else {
+          const yrMatch = (u.nccYear || '').match(/(\d+)/);
+          return yrMatch ? parseInt(yrMatch[1]) : 0;
+        }
+      };
+
+      const rankA = getRank(a);
+      const rankB = getRank(b);
+
+      if (rankA !== rankB) return rankA - rankB;
+
+      return (a.regimentalNumber || '').localeCompare(b.regimentalNumber || '', undefined, { numeric: true });
+    });
 
     return list;
   }, [users, divisionFilterUsers, searchTermUsers]);
@@ -352,7 +393,10 @@ const UserManagement: React.FC = () => {
         deletedAt: new Date().toISOString(),
       });
       
-      toast.success('User deleted. Auth account will be cleaned up automatically.');
+      // Trigger GitHub Action to clean up auth instantly
+      triggerAuthCleanup();
+      
+      toast.success('User deleted. Auth account will be cleaned up automatically within moments.');
       await Promise.all([fetchUsers(), fetchPending()]);
     } catch (e) {
       console.error(e);
@@ -557,7 +601,12 @@ const UserManagement: React.FC = () => {
           {paginatedUsers.map((u, index) => (
             <tr key={u.uid}>
               <td className="text-center">{usersStartIndex + index + 1}</td>
-              <td className="text-break" dir="ltr">{u.name || 'N/A'} {isSelf(u.uid) && <Badge bg="success" className="ms-1">You</Badge>}</td>
+              <td className="text-break" dir="ltr">
+                {u.name || 'N/A'} 
+                {isSelf(u.uid) && <Badge bg="success" className="ms-1">You</Badge>}
+                {u.role === 'alumni' && <Badge bg="secondary" className="ms-1">Alumni ({u.year})</Badge>}
+                {u.role !== 'alumni' && u.nccYear && <Badge bg="info" className="ms-1">{u.nccYear}</Badge>}
+              </td>
               <td className="text-center">
                 {u.division ? (
                   <Badge bg={u.division === 'SD' ? 'info' : 'warning'}>{u.division}</Badge>
@@ -570,7 +619,7 @@ const UserManagement: React.FC = () => {
               <td className="d-flex gap-2">
                 {!isSelf(u.uid) ? (
                   <>
-                    {canDeleteUser(u) ? (
+                    {canDeleteUser(u) && u.role !== 'alumni' ? (
                       <Button size="sm" variant="outline-danger" onClick={() => setConfirm({ action: 'delete', payload: u })}>Delete</Button>
                     ) : (
                       <Button size="sm" variant="outline-secondary" disabled>Delete</Button>

@@ -1,9 +1,8 @@
 name: NCC Year Rollover
 
 on:
-  # Auto-schedule (COMMENTED OUT until tested)
-  # schedule:
-  #   - cron: '30 18 30 6 *'    # July 1st 00:00 IST (June 30 18:30 UTC)
+  schedule:
+    - cron: '0 * * * *'    # Every hour (0th minute)
   
   workflow_dispatch:
     inputs:
@@ -34,6 +33,7 @@ jobs:
             node scripts/year-rollover.mjs --dry-run
           else
             node scripts/year-rollover.mjs
+            node scripts/auth-cleanup.mjs
           fi
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

@@ -67,9 +67,7 @@ try {
   console.warn('⚠️ Could not dynamically read 5-year departments, falling back to default.');
 }
 
-const DEFAULT_CONFIG = {
-  alumniRetentionMonths: 24,
-};
+const DEFAULT_CONFIG = {};
 
 // ---------------------------------------------------------------------------
 // Helper functions
@@ -99,12 +97,6 @@ function isNccComplete(nccYear) {
   return nccYear === '3rd Year';
 }
 
-function getRetentionExpiry(months) {
-  const d = new Date();
-  d.setMonth(d.getMonth() + months);
-  return d.toISOString();
-}
-
 // ---------------------------------------------------------------------------
 // Main rollover logic
 // ---------------------------------------------------------------------------
@@ -121,22 +113,44 @@ async function main() {
   console.log('📋 Loading app config from settings/appConfig …');
   const configSnap = await db.doc('settings/appConfig').get();
   const config = configSnap.exists ? { ...DEFAULT_CONFIG, ...configSnap.data() } : { ...DEFAULT_CONFIG };
-  const alumniRetentionMonths = config.alumniRetentionMonths ?? DEFAULT_CONFIG.alumniRetentionMonths;
 
-  console.log(`   Alumni retention : ${alumniRetentionMonths} months`);
   console.log(`   5-year depts     : ${FIVE_YEAR_DEPARTMENTS.join(', ')}`);
   console.log();
 
-  // 2. Read all users
-  console.log('📖 Fetching all users from Firestore...');
+  // 1.5 Check dynamic schedule if triggered automatically
+  const isSchedule = process.env.GITHUB_EVENT_NAME === 'schedule';
+  if (isSchedule && !DRY_RUN) {
+    console.log('⏰ Triggered by hourly schedule. Checking dynamic schedule...');
+    if (!config.nextRolloverDate) {
+      console.log('   ⏭️ No nextRolloverDate configured in settings. Exiting.');
+      process.exit(0);
+    }
+    const targetDate = new Date(config.nextRolloverDate);
+    if (new Date() < targetDate) {
+      console.log(`   ⏭️ Scheduled time (${targetDate.toISOString()}) has not arrived yet. Exiting.`);
+      process.exit(0);
+    }
+    if (config.rolloverCompletedForTarget) {
+      console.log('   ⏭️ Rollover already completed for the target date. Exiting.');
+      process.exit(0);
+    }
+    console.log('   ✅ Time arrived! Proceeding with automated rollover...');
+  } else if (!isSchedule && !DRY_RUN) {
+    console.log('🧑‍💻 Triggered manually (workflow_dispatch). Bypassing schedule checks.');
+  }
+
+  // 2. Read all users & alumni
+  console.log('📖 Fetching all users and alumni from Firestore...');
   const usersSnap = await db.collection('users').get();
-  console.log(`   Found ${usersSnap.size} total users.`);
+  const alumniSnap = await db.collection('alumni').get();
+  console.log(`   Found ${usersSnap.size} active users, ${alumniSnap.size} existing alumni.`);
 
   // 3. Build plan
   console.log('🧠 Building rollover plan...');
   const plan = [];
-  const counts = { skip: 0, alumni_ncc: 0, delete_graduated: 0, increment: 0, increment_academic_only: 0 };
+  const counts = { skip: 0, alumni_ncc: 0, delete_graduated_cadet: 0, delete_graduated_alumni: 0, increment: 0, increment_alumni: 0 };
 
+  // 3a. Process active users
   for (const userDoc of usersSnap.docs) {
     const data = userDoc.data();
     const uid = userDoc.id;
@@ -160,48 +174,33 @@ async function main() {
     const newYear = getNextAcademicYear(year) || year;
     const newNccYear = getNextNccYear(nccYear) || nccYear;
 
-    // RULE 1: If Academic tenure is complete, they are completely deleted from the app.
-    // If they finish NCC and Academic at the same time, this takes precedence.
+    // RULE 1: If Academic tenure is complete, completely deleted from the app.
     if (isAcademicDone) {
       plan.push({
         uid,
         name: data.name || uid,
-        action: 'delete_graduated',
+        action: 'delete_graduated_cadet',
         reason: `Academic ${year} complete → delete from app`,
         data,
         userRole
       });
-      counts.delete_graduated++;
+      counts.delete_graduated_cadet++;
       continue;
     }
 
-    // RULE 2: If NCC tenure is complete (but they are still in college)
+    // RULE 2: If NCC tenure is complete (but still in college)
     if (isNccDone) {
-      if (userRole !== 'alumni') {
-        // Just finished NCC. Mark as alumni, archive their details, and increment their academic year.
-        plan.push({
-          uid,
-          name: data.name || uid,
-          action: 'alumni_ncc',
-          reason: `NCC complete → change to alumni, promote to ${newYear}`,
-          newYear,
-          data,
-          userRole
-        });
-        counts.alumni_ncc++;
-      } else {
-        // Already marked as alumni in a previous year. Just increment academic year.
-        plan.push({
-          uid,
-          name: data.name || uid,
-          action: 'increment_academic_only',
-          reason: `Already alumni → promote to ${newYear}`,
-          newYear,
-          data,
-          userRole
-        });
-        counts.increment_academic_only++;
-      }
+      // Move entirely to Alumni collection, increment academic year
+      plan.push({
+        uid,
+        name: data.name || uid,
+        action: 'alumni_ncc',
+        reason: `NCC complete → move to alumni collection, promote to ${newYear}`,
+        newYear,
+        data,
+        userRole
+      });
+      counts.alumni_ncc++;
       continue;
     }
 
@@ -219,17 +218,52 @@ async function main() {
     counts.increment++;
   }
 
+  // 3b. Process existing Alumni
+  for (const alumniDoc of alumniSnap.docs) {
+    const data = alumniDoc.data();
+    const uid = alumniDoc.id;
+    const year = data.year || '';
+    const dept = data.department || '';
+    
+    const isAcademicDone = isAcademicComplete(year, dept);
+    const newYear = getNextAcademicYear(year) || year;
+
+    if (isAcademicDone) {
+      plan.push({
+        uid,
+        name: data.name || uid,
+        action: 'delete_graduated_alumni',
+        reason: `Alumni Academic ${year} complete → delete from app`,
+        data,
+        userRole: 'alumni'
+      });
+      counts.delete_graduated_alumni++;
+    } else {
+      plan.push({
+        uid,
+        name: data.name || uid,
+        action: 'increment_alumni',
+        reason: `Alumni staying in college → promote to ${newYear}`,
+        newYear,
+        data,
+        userRole: 'alumni'
+      });
+      counts.increment_alumni++;
+    }
+  }
+
   // 4. Print plan
   console.log('\nDetailed plan:');
   plan.forEach((item, i) => {
-    console.log(`    ${String(i + 1).padStart(2, ' ')}. ${item.name.padEnd(25, ' ')} | ${String(item.action).padEnd(23, ' ')} | ${item.reason}`);
+    console.log(`    ${String(i + 1).padStart(2, ' ')}. ${item.name.padEnd(25, ' ')} | ${String(item.action).padEnd(25, ' ')} | ${item.reason}`);
   });
 
   console.log('\n─'.repeat(30));
-  console.log(`   ⏩ Increment (promote both)  : ${counts.increment}`);
-  console.log(`   🎓 Change to Alumni          : ${counts.alumni_ncc}`);
-  console.log(`   ⏭️  Increment Academic Only   : ${counts.increment_academic_only}`);
-  console.log(`   🗑️  Delete (graduated)        : ${counts.delete_graduated}`);
+  console.log(`   ⏩ Increment Cadets          : ${counts.increment}`);
+  console.log(`   🎓 Move to Alumni            : ${counts.alumni_ncc}`);
+  console.log(`   ⏩ Increment Alumni          : ${counts.increment_alumni}`);
+  console.log(`   🗑️  Delete Graduated Cadets   : ${counts.delete_graduated_cadet}`);
+  console.log(`   🗑️  Delete Graduated Alumni   : ${counts.delete_graduated_alumni}`);
   console.log(`   ⏭️  Skip (superadmin)         : ${counts.skip}`);
   console.log(`   ─── Total                     : ${plan.length}`);
   console.log('─'.repeat(30));
@@ -248,15 +282,17 @@ async function main() {
   
   const snapshotUsers = {};
   usersSnap.forEach(d => {
-    snapshotUsers[d.id] = { uid: d.id, ...d.data() };
+    snapshotUsers[d.id] = { uid: d.id, ...d.data(), _snapshotSource: 'users' };
+  });
+  alumniSnap.forEach(d => {
+    snapshotUsers[d.id] = { uid: d.id, ...d.data(), _snapshotSource: 'alumni' };
   });
 
   const summary = {
     incremented: counts.increment,
     alumniNcc: counts.alumni_ncc,
-    deletedGraduated: counts.delete_graduated,
+    deletedGraduated: counts.delete_graduated_cadet + counts.delete_graduated_alumni,
     skipped: counts.skip,
-    expiredAlumniCleaned: 0,
     timestamp: new Date().toISOString(),
   };
 
@@ -272,7 +308,7 @@ async function main() {
   console.log('🔄 Applying changes …');
 
   const actionItems = plan.filter(p => p.action !== 'skip');
-  const MAX_BATCH_OPS = 450;
+  const MAX_BATCH_OPS = 400; // conservative batch size
   
   for (let i = 0; i < actionItems.length; i += MAX_BATCH_OPS) {
     const chunk = actionItems.slice(i, i + MAX_BATCH_OPS);
@@ -280,51 +316,35 @@ async function main() {
 
     for (const item of chunk) {
       const userRef = db.doc(`users/${item.uid}`);
+      const cadetRef = db.doc(`cadets/${item.uid}`);
       const alumniRef = db.doc(`alumni/${item.uid}`);
       const userData = snapshotUsers[item.uid] || {};
 
       switch (item.action) {
         case 'alumni_ncc': {
-          // Copy data to alumni historical archive to start the 24 month retention
-          const { uid: _uid, ...alumniData } = userData;
+          // Move completely to alumni collection, delete from users/cadets
+          const { uid: _uid, _snapshotSource: _src, ...alumniData } = userData;
           batch.set(alumniRef, {
             ...alumniData,
-            reasonForArchival: 'ncc_tenure_complete',
-            archivedAt: new Date().toISOString(),
-            retentionExpiresAt: getRetentionExpiry(alumniRetentionMonths),
-          });
-          
-          // Update user role to alumni and increment their academic year
-          batch.update(userRef, { 
             role: 'alumni',
-            year: item.newYear 
+            year: item.newYear,
+            archivedAt: new Date().toISOString(),
           });
+          batch.delete(userRef);
+          batch.delete(cadetRef);
           break;
         }
 
-        case 'increment_academic_only': {
-          // Already an alumni, just keep their academic year moving forward
-          batch.update(userRef, {
+        case 'increment_alumni': {
+          batch.update(alumniRef, {
             year: item.newYear
           });
           break;
         }
 
-        case 'delete_graduated': {
-          // If they weren't already archived as alumni, archive them now (simultaneous graduation)
-          if (item.userRole !== 'alumni') {
-            const { uid: _uid, ...alumniData } = userData;
-            batch.set(alumniRef, {
-              ...alumniData,
-              reasonForArchival: 'academic_complete',
-              archivedAt: new Date().toISOString(),
-              retentionExpiresAt: getRetentionExpiry(alumniRetentionMonths),
-            });
-          }
-          
-          // Delete completely from the app
+        case 'delete_graduated_cadet': {
           batch.delete(userRef);
-          
+          batch.delete(cadetRef);
           // Queue auth deletion
           batch.set(db.doc(`pendingAuthDeletions/${item.uid}`), {
             email: userData.email || '',
@@ -335,8 +355,24 @@ async function main() {
           break;
         }
 
+        case 'delete_graduated_alumni': {
+          batch.delete(alumniRef);
+          // Queue auth deletion
+          batch.set(db.doc(`pendingAuthDeletions/${item.uid}`), {
+            email: userData.email || '',
+            deletedBy: 'rollover-script',
+            deletedAt: new Date().toISOString(),
+            reason: 'alumni_academic_complete_rollover',
+          });
+          break;
+        }
+
         case 'increment': {
           batch.update(userRef, {
+            year: item.newYear,
+            nccYear: item.newNccYear,
+          });
+          batch.update(cadetRef, {
             year: item.newYear,
             nccYear: item.newNccYear,
           });
@@ -349,32 +385,44 @@ async function main() {
     console.log(`   ✓ Batch ${Math.floor(i / MAX_BATCH_OPS) + 1} committed.`);
   }
 
-  // 8. Clean up expired alumni
-  console.log('🧹 Cleaning up expired alumni records …');
-  let expiredCount = 0;
+  // 8. Clear Attendance Records
+  console.log('🧹 Clearing attendance records for the new year …');
   try {
-    const alumniSnap = await db.collection('alumni').where('retentionExpiresAt', '<', new Date().toISOString()).get();
-    if (!alumniSnap.empty) {
-      for (let i = 0; i < alumniSnap.size; i += MAX_BATCH_OPS) {
-        const chunk = alumniSnap.docs.slice(i, i + MAX_BATCH_OPS);
-        const batch = db.batch();
-        chunk.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-        expiredCount += chunk.length;
+    const collectionsToClear = ['attendanceSessions', 'cadetAttendanceStats'];
+    for (const col of collectionsToClear) {
+      const snap = await db.collection(col).get();
+      if (!snap.empty) {
+        for (let i = 0; i < snap.size; i += MAX_BATCH_OPS) {
+          const chunk = snap.docs.slice(i, i + MAX_BATCH_OPS);
+          const batch = db.batch();
+          chunk.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+        }
+        console.log(`   ✓ Cleared ${snap.size} documents from ${col}.`);
       }
     }
   } catch (err) {
-    console.error('   ⚠️ Error cleaning up alumni:', err.message);
+    console.error('   ⚠️ Error clearing attendance:', err.message);
   }
-  summary.expiredAlumniCleaned = expiredCount;
-  console.log(`   ✓ Cleaned ${expiredCount} expired alumni.`);
 
   // 9. Update settings
-  console.log('⚙️  Updating settings with last rollover timestamp …');
+  console.log('📝 Updating appConfig...');
+  let nextRolloverDateStr = config.nextRolloverDate || '';
+  if (nextRolloverDateStr) {
+    const d = new Date(nextRolloverDateStr);
+    if (!isNaN(d.getTime())) {
+      d.setFullYear(d.getFullYear() + 1);
+      nextRolloverDateStr = d.toISOString();
+    }
+  }
+
   await db.doc('settings/appConfig').set({
     lastRolloverAt: new Date().toISOString(),
     lastRolloverSummary: summary,
+    rolloverCompletedForTarget: false, // Reset for next year!
+    nextRolloverDate: nextRolloverDateStr, // Advanced by 1 year
   }, { merge: true });
+  console.log(`   ✓ Next rollover date automatically set to ${nextRolloverDateStr}`);
 
   // 10. Audit log
   console.log('📝 Writing audit log …');

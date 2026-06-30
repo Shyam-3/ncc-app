@@ -48,6 +48,7 @@ interface AuthContextType {
   hasRole: (role: UserRole | UserRole[]) => boolean;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
+  isAlumni: () => boolean;
 
   isMember: () => boolean;
   isCadet: () => boolean; // back-compat helper
@@ -76,7 +77,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Fetch user profile from Firestore
   const fetchUserProfile = async (uid: string): Promise<User | null> => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', uid));
+      let userDoc = await getDoc(doc(db, 'users', uid));
+      
+      // If not in users, check alumni collection
+      if (!userDoc.exists()) {
+        userDoc = await getDoc(doc(db, 'alumni', uid));
+      }
+
       if (userDoc.exists()) {
         const data = userDoc.data() as Partial<User>;
         const normalized = {
@@ -271,6 +278,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check if user is admin or superadmin
   const isAdmin = (): boolean => hasRole(['admin', 'superadmin']);
   const isSuperAdmin = (): boolean => hasRole('superadmin');
+  const isAlumni = (): boolean => hasRole('alumni' as UserRole);
 
   const isMember = (): boolean => hasRole('member');
   // Removed legacy 'cadet' role; retain helper returning false for compatibility
