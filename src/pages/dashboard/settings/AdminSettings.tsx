@@ -250,9 +250,13 @@ const AdminSettings: React.FC = () => {
     setShowSaveModal(false);
     setSavingConfig(true);
     try {
-      await setDoc(doc(db, 'settings', 'appConfig'), config, { merge: true });
+      await setDoc(doc(db, 'settings', 'appConfig'), {
+        nextRolloverDate: config.nextRolloverDate,
+        rolloverCompletedForTarget: false
+      }, { merge: true });
       setIsDateUnlocked(false);
       toast.success('Settings saved');
+      loadConfig();
     } catch (e) {
       console.error(e);
       toast.error('Failed to save settings');
@@ -287,32 +291,34 @@ const AdminSettings: React.FC = () => {
     setPlan(null);
     try {
       const usersSnap = await getDocs(collection(db, 'users'));
+      const alumniSnap = await getDocs(collection(db, 'alumni'));
       const items: RolloverPlanItem[] = [];
 
+      // Process active users
       for (const userDoc of usersSnap.docs) {
-        const cadet = { id: userDoc.id, ...userDoc.data() } as CadetDoc;
-        const cadetId = cadet.id;
+        const data = userDoc.data();
+        const cadetId = userDoc.id;
 
-        const userRole = cadet.role || 'member';
-
-        const year = cadet.year || '';
-        const nccYear = cadet.nccYear || '';
-        const dept = cadet.department || '';
+        const userRole = data.role || 'member';
 
         // Skip superadmins
         if (userRole === 'superadmin') {
           items.push({
             cadetId,
-            cadetName: cadet.name || cadetId,
-            currentYear: year,
-            currentNccYear: nccYear,
-            department: dept,
+            cadetName: data.name || cadetId,
+            currentYear: data.year || '',
+            currentNccYear: data.nccYear || '',
+            department: data.department || '',
             userRole,
             action: 'skip',
             reason: 'Superadmin — not touched',
           });
           continue;
         }
+
+        const year = data.year || '';
+        const nccYear = data.nccYear || '';
+        const dept = data.department || '';
 
         const isAcademicDone = isAcademicComplete(year, dept);
         const isNccDone = isNccComplete(nccYear);
@@ -323,7 +329,7 @@ const AdminSettings: React.FC = () => {
         if (isAcademicDone) {
           items.push({
             cadetId,
-            cadetName: cadet.name || cadetId,
+            cadetName: data.name || cadetId,
             currentYear: year,
             currentNccYear: nccYear,
             department: dept,
@@ -336,38 +342,24 @@ const AdminSettings: React.FC = () => {
 
         // RULE 2: If NCC tenure is complete
         if (isNccDone) {
-          if (userRole !== 'alumni') {
-            items.push({
-              cadetId,
-              cadetName: cadet.name || cadetId,
-              currentYear: year,
-              currentNccYear: nccYear,
-              department: dept,
-              userRole,
-              action: 'alumni_ncc',
-              newYear,
-              reason: `NCC complete → change to alumni, promote to ${newYear}`,
-            });
-          } else {
-            items.push({
-              cadetId,
-              cadetName: cadet.name || cadetId,
-              currentYear: year,
-              currentNccYear: nccYear,
-              department: dept,
-              userRole,
-              action: 'increment_academic_only',
-              newYear,
-              reason: `Already alumni → promote to ${newYear}`,
-            });
-          }
+          items.push({
+            cadetId,
+            cadetName: data.name || cadetId,
+            currentYear: year,
+            currentNccYear: nccYear,
+            department: dept,
+            userRole,
+            action: 'alumni_ncc',
+            newYear,
+            reason: `NCC complete → move to alumni, promote to ${newYear}`,
+          });
           continue;
         }
 
         // RULE 3: Still active in both
         items.push({
           cadetId,
-          cadetName: cadet.name || cadetId,
+          cadetName: data.name || cadetId,
           currentYear: year,
           currentNccYear: nccYear,
           department: dept,
@@ -377,6 +369,42 @@ const AdminSettings: React.FC = () => {
           newNccYear,
           reason: `${year} → ${newYear}, NCC ${nccYear} → ${newNccYear}`,
         });
+      }
+
+      // Process existing Alumni
+      for (const alumniDoc of alumniSnap.docs) {
+        const data = alumniDoc.data();
+        const cadetId = alumniDoc.id;
+        const year = data.year || '';
+        const dept = data.department || '';
+        
+        const isAcademicDone = isAcademicComplete(year, dept);
+        const newYear = getNextYear(year, ACADEMIC_YEARS) || year;
+
+        if (isAcademicDone) {
+          items.push({
+            cadetId,
+            cadetName: data.name || cadetId,
+            currentYear: year,
+            currentNccYear: '',
+            department: dept,
+            userRole: 'alumni',
+            action: 'delete_graduated',
+            reason: `Alumni Academic ${year} complete → delete from app`,
+          });
+        } else {
+          items.push({
+            cadetId,
+            cadetName: data.name || cadetId,
+            currentYear: year,
+            currentNccYear: '',
+            department: dept,
+            userRole: 'alumni',
+            action: 'increment_academic_only',
+            newYear,
+            reason: `Alumni staying in college → promote to ${newYear}`,
+          });
+        }
       }
 
       setPlan(items);
@@ -443,49 +471,44 @@ const AdminSettings: React.FC = () => {
                 ...alumniData,
                 reasonForArchival: 'ncc_tenure_complete',
                 archivedAt: new Date().toISOString(),
-                retentionExpiresAt: getRetentionExpiry(config.alumniRetentionMonths),
-              });
-              batch.update(userRef, { 
                 role: 'alumni',
-                year: item.newYear 
+                year: item.newYear,
               });
+              batch.delete(userRef);
+              batch.delete(doc(db, 'cadets', item.cadetId));
               break;
             }
 
             case 'increment_academic_only': {
-              batch.update(userRef, {
+              batch.set(alumniRef, {
                 year: item.newYear
-              });
+              }, { merge: true });
               break;
             }
 
             case 'delete_graduated': {
               const userData = snapshotUsers[item.cadetId] || {};
-              // Only archive if they weren't already an alumni
-              if (item.userRole !== 'alumni') {
-                const { uid: _uid, ...alumniData } = userData;
-                batch.set(alumniRef, {
-                  ...alumniData,
-                  reasonForArchival: 'academic_complete',
-                  archivedAt: new Date().toISOString(),
-                  retentionExpiresAt: getRetentionExpiry(config.alumniRetentionMonths),
-                });
-              }
               batch.delete(userRef);
+              batch.delete(alumniRef);
+              batch.delete(doc(db, 'cadets', item.cadetId));
               batch.set(doc(db, 'pendingAuthDeletions', item.cadetId), {
                 email: snapshotUsers[item.cadetId]?.email || '',
                 deletedBy: userProfile?.uid || 'rollover-script',
                 deletedAt: new Date().toISOString(),
                 reason: 'academic_complete_rollover',
-              });
+              }, { merge: true });
               break;
             }
 
             case 'increment': {
-              batch.update(userRef, {
+              batch.set(userRef, {
                 year: item.newYear,
                 nccYear: item.newNccYear,
-              });
+              }, { merge: true });
+              batch.set(doc(db, 'cadets', item.cadetId), {
+                year: item.newYear,
+                nccYear: item.newNccYear,
+              }, { merge: true });
               break;
             }
           }
