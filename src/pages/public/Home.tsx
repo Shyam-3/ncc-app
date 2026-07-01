@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Card, Carousel, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { AnimatedSection } from '../../components';
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import './Home.css';
 
 const Home: React.FC = () => {

@@ -336,9 +336,9 @@ async function main() {
         }
 
         case 'increment_alumni': {
-          batch.update(alumniRef, {
+          batch.set(alumniRef, {
             year: item.newYear
-          });
+          }, { merge: true });
           break;
         }
 
@@ -368,14 +368,14 @@ async function main() {
         }
 
         case 'increment': {
-          batch.update(userRef, {
+          batch.set(userRef, {
             year: item.newYear,
             nccYear: item.newNccYear,
-          });
-          batch.update(cadetRef, {
+          }, { merge: true });
+          batch.set(cadetRef, {
             year: item.newYear,
             nccYear: item.newNccYear,
-          });
+          }, { merge: true });
           break;
         }
       }

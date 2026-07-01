@@ -1,5 +1,2 @@
 export * from './service';
-export * from './hooks/useAttendance';
-export type * from './model/attendance.types';
-
-
+export type * from './attendance.types';

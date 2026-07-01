@@ -1,4 +1,4 @@
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import { db } from '@/shared/config/firebase';
 import { DEPARTMENT_DEFS } from '@/shared/config/constants';
 import {
@@ -39,6 +39,7 @@ interface AppConfig {
   rolloverCompletedForTarget: boolean;
   lastRolloverAt: string | null;
   lastRolloverSummary: RolloverSummary | null;
+  alumniRetentionMonths?: number;
 }
 
 interface GithubConfig {
@@ -93,10 +94,19 @@ interface RolloverPlanItem {
   currentNccYear: string;
   department: string;
   userRole: string;
-  action: RolloverAction;
+  action: 'increment' | 'increment_academic_only' | 'alumni_ncc' | 'delete_graduated' | 'skip';
   newYear?: string;
   newNccYear?: string;
   reason: string;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getRetentionExpiry(months?: number): string | null {
+  if (!months || months <= 0) return null;
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString();
 }
 
 interface RollbackSnapshot {

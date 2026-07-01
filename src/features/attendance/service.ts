@@ -10,7 +10,7 @@ import type {
   SessionFormData,
   CadetAttendanceStats,
   BulkMarkPayload,
-} from './model/attendance.types';
+} from './attendance.types';
 import {
   addDoc,
   collection,

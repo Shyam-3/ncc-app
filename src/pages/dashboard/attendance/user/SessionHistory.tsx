@@ -1,8 +1,8 @@
 import { Table, Badge, Form, Card, Button } from 'react-bootstrap';
 import { useState, useMemo, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { AttendanceSession, AttendanceMark } from '@/features/attendance/model/attendance.types';
-import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/model/attendance.types';
+import type { AttendanceSession, AttendanceMark } from '@/features/attendance/attendance.types';
+import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/attendance.types';
 
 interface SessionWithMark {
   session: AttendanceSession & { id: string };

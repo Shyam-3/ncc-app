@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Card, Row, Col } from 'react-bootstrap';
-import { AttendanceTrendChart, AttendanceBarChart } from '@/components/charts';
-import type { CadetAttendanceStats } from '@/features/attendance/model/attendance.types';
+import { AttendanceTrendChart, AttendanceBarChart } from '@/features/attendance/charts';
+import type { CadetAttendanceStats } from '@/features/attendance/attendance.types';
 import { format, subMonths } from 'date-fns';
 
 interface PerformanceGraphsProps {

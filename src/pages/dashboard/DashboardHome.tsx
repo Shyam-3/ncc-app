@@ -4,7 +4,7 @@ import { Badge, Button, Card, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { AnimatedSection } from '../../components';
 import { db } from '../../shared/config/firebase';
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import './DashboardHome.css';
 
 const Dashboard: React.FC = () => {

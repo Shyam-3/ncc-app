@@ -20,6 +20,9 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
+# Firebase Service Accounts
+*-firebase-adminsdk-*.json
+
 # Environment variables
 .env
 .env.local

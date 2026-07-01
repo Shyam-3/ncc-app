@@ -3,7 +3,7 @@ import { Button, Col, Form, Row, Spinner, Tab, Table, Tabs, Badge, Card, Modal }
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 
 import { AdminDashboard, BatchSelector, BulkMarker } from './admin';
 import AttendanceView from './AttendanceView';
@@ -15,7 +15,7 @@ import {
   listMarks,
   listenSessions,
 } from '@/features/attendance/service';
-import type { AttendanceSession, SessionFormData } from '@/features/attendance/model/attendance.types';
+import type { AttendanceSession, SessionFormData } from '@/features/attendance/attendance.types';
 import type { Cadet } from '@/shared/types';
 import type { Division, NccYear } from '@/shared/config/constants';
 import {

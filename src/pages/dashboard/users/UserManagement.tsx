@@ -1,5 +1,5 @@
 import { db, FIREBASE_CONFIG } from '@/shared/config/firebase';
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import { deleteApp, initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import {
@@ -31,6 +31,7 @@ import {
 import toast from 'react-hot-toast';
 import { triggerAuthCleanup } from '@/shared/utils/githubActions';
 import { TablePaginationFooter } from '@/components';
+import { ROMAN_YEAR_MAP } from '@/shared/config/constants';
 import './UserManagement.css';
 
 type UserRole = 'member' | 'admin' | 'superadmin' | 'alumni';
@@ -83,6 +84,12 @@ interface PendingCadet {
   rank: string;
   createdAt: string;
 }
+
+const formatAcademicYear = (value?: string) => {
+  if (!value) return '-';
+  const cleaned = value.replace(' Year', '').trim();
+  return ROMAN_YEAR_MAP[cleaned] || cleaned;
+};
 
 const UserManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -593,6 +600,7 @@ const UserManagement: React.FC = () => {
             <th>Name</th>
             <th className="user-col-division">SD/SW</th>
             <th>Regimental Number</th>
+            <th>Academic Year</th>
             <th>Email</th>
             <th className="user-col-actions">Actions</th>
           </tr>
@@ -604,8 +612,7 @@ const UserManagement: React.FC = () => {
               <td className="text-break" dir="ltr">
                 {u.name || 'N/A'} 
                 {isSelf(u.uid) && <Badge bg="success" className="ms-1">You</Badge>}
-                {u.role === 'alumni' && <Badge bg="secondary" className="ms-1">Alumni ({u.year})</Badge>}
-                {u.role !== 'alumni' && u.nccYear && <Badge bg="info" className="ms-1">{u.nccYear}</Badge>}
+                {u.role === 'alumni' && <Badge bg="secondary" className="ms-1">Alumni</Badge>}
               </td>
               <td className="text-center">
                 {u.division ? (
@@ -615,6 +622,7 @@ const UserManagement: React.FC = () => {
                 )}
               </td>
               <td>{u.regimentalNumber || '-'}</td>
+              <td>{formatAcademicYear(u.year)}</td>
               <td>{u.email}</td>
               <td className="d-flex gap-2">
                 {!isSelf(u.uid) ? (
@@ -632,7 +640,7 @@ const UserManagement: React.FC = () => {
             </tr>
           ))}
           {filteredUsers.length === 0 && (
-            <tr><td colSpan={6} className="text-center text-muted">No users match filters</td></tr>
+            <tr><td colSpan={7} className="text-center text-muted">No users match filters</td></tr>
           )}
         </tbody>
       </Table>

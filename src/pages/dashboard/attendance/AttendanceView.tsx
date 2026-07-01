@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, Spinner, Tab, Tabs } from 'react-bootstrap';
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import { StatsOverview, AttendanceCalendar, PerformanceGraphs, SessionHistory } from './user';
 import {
   getCadetByUserId,
@@ -12,7 +12,7 @@ import type {
   AttendanceMark,
   CadetAttendanceStats,
   AttendanceStatus,
-} from '@/features/attendance/model/attendance.types';
+} from '@/features/attendance/attendance.types';
 import type { Cadet } from '@/shared/types';
 import { normalizeNccYear } from '@/shared/config/constants';
 import type { Division } from '@/shared/config/constants';

@@ -6,7 +6,7 @@ import {
   listMarks,
   getCadetsByDivision,
 } from '@/features/attendance/service';
-import type { AttendanceSession } from '@/features/attendance/model/attendance.types';
+import type { AttendanceSession } from '@/features/attendance/attendance.types';
 import type { Cadet } from '@/shared/types';
 
 // ============ TYPES ============

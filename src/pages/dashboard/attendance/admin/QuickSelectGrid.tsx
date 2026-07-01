@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback, type ChangeEvent } from 'react';
 import { Form, InputGroup, Badge, Button, ButtonGroup } from 'react-bootstrap';
 import type { Cadet } from '@/shared/types';
-import type { AttendanceStatus } from '@/features/attendance/model/attendance.types';
-import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/model/attendance.types';
+import type { AttendanceStatus } from '@/features/attendance/attendance.types';
+import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/attendance.types';
 import './QuickSelectGrid.css';
 
 interface QuickSelectGridProps {

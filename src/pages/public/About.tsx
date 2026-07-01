@@ -1,4 +1,4 @@
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import { CmsDoc, listenCms } from '@/features/cms/service';
 import { formatISTDateTime } from '@/shared/utils/dateTime';
 import React, { useEffect, useState } from 'react';

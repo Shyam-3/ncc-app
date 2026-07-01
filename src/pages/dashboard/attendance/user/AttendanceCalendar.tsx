@@ -10,8 +10,8 @@ import {
   addMonths,
   subMonths,
 } from 'date-fns';
-import type { AttendanceStatus } from '@/features/attendance/model/attendance.types';
-import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/model/attendance.types';
+import type { AttendanceStatus } from '@/features/attendance/attendance.types';
+import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/attendance.types';
 import './AttendanceCalendar.css';
 
 interface CalendarEntry {

@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import { Spinner } from 'react-bootstrap';
 import { Navigate } from 'react-router-dom';
 import { UserRole } from '../../shared/config/constants';
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 
 interface ProtectedRouteProps {
   children: ReactNode;

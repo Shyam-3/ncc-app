@@ -1,7 +1,7 @@
 // Announcements service - API layer for announcements
 import { db } from '@/shared/config/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import type { Announcement, AnnouncementFilter } from './model/announcement.types';
+import type { Announcement, AnnouncementFilter } from './announcement.types';
 
 const announcementsCol = collection(db, 'announcements');
 

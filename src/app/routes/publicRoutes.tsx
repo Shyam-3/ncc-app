@@ -9,7 +9,6 @@ import {
   Contact,
   Home,
   NationalDays,
-  NotFound,
   Notifications,
   Parades,
   Photos,
@@ -18,6 +17,7 @@ import {
   SocialService,
   Videos,
 } from '@/pages/public';
+import NotFound from '@/pages/NotFound';
 import { ForgotPassword, Login, Register, VerifyEmail } from '@/pages/auth';
 
 const Unauthorized: React.FC = () => (

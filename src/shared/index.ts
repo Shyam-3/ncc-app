@@ -6,5 +6,6 @@ export * from './utils/dateTime';
 export * from './utils/firebaseErrors';
 export * from './utils/formatters';
 export * from './utils/validators';
+export * from './utils/githubActions';
 export * from './lib/logger';
 export type * from './types';

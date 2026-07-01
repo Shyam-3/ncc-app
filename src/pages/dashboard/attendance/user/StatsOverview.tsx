@@ -1,5 +1,5 @@
 import { Row, Col, Card, ProgressBar } from 'react-bootstrap';
-import type { CadetAttendanceStats } from '@/features/attendance/model/attendance.types';
+import type { CadetAttendanceStats } from '@/features/attendance/attendance.types';
 import { ATTENDANCE_THRESHOLDS } from '@/shared/config/constants';
 
 interface StatsOverviewProps {

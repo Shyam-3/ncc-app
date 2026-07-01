@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { Card, Button, Alert, Spinner, Badge, Form } from 'react-bootstrap';
 
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import { QuickSelectGrid } from './QuickSelectGrid';
 import {
   getSession,
@@ -13,7 +13,7 @@ import {
   updateSessionParadeFlags,
 } from '@/features/attendance/service';
 import type { Division, NccYear } from '@/shared/config/constants';
-import type { AttendanceSession, AttendanceStatus } from '@/features/attendance/model/attendance.types';
+import type { AttendanceSession, AttendanceStatus } from '@/features/attendance/attendance.types';
 import type { Cadet } from '@/shared/types';
 import toast from 'react-hot-toast';
 import { formatISTDate } from '@/shared/utils/dateTime';

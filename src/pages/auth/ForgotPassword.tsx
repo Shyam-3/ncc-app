@@ -1,4 +1,4 @@
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import { mapFirebaseAuthError } from '@/shared/utils/firebaseErrors';
 import React, { FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';

@@ -1,4 +1,4 @@
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import { CmsDoc, CmsSection, fetchCms, saveCms } from '@/features/cms/service';
 import React, { useEffect, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';

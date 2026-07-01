@@ -12,7 +12,7 @@ import {
   ROMAN_YEAR_MAP,
 } from '../../shared/config/constants';
 import { db } from '../../shared/config/firebase';
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/AuthContext';
 
 interface UserProfile {
   name: string;

@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Table, Spinner, Alert, Button, Badge } from 'react-bootstrap';
-import { AttendanceTrendChart, AttendanceBarChart, AttendancePieChart } from '@/components/charts';
-import { chartColors } from '@/components/charts/ChartConfig';
+import { AttendanceTrendChart, AttendanceBarChart, AttendancePieChart } from '@/features/attendance/charts';
+import { chartColors } from '@/features/attendance/charts/ChartConfig';
 import { BatchSelector } from './BatchSelector';
 import {
   DIVISIONS,
@@ -10,7 +10,7 @@ import {
   normalizeNccYear,
 } from '@/shared/config/constants';
 import type { Division, NccYear } from '@/shared/config/constants';
-import type { AttendanceSession } from '@/features/attendance/model/attendance.types';
+import type { AttendanceSession } from '@/features/attendance/attendance.types';
 import type { Cadet } from '@/shared/types';
 import { format, subMonths } from 'date-fns';
 
