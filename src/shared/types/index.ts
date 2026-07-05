@@ -2,11 +2,14 @@
 
 import { AcademicYear, AttendanceStatus, Department, EventType, NccYear, UserRole } from '../config/constants';
 
+export type UserType = 'ano' | 'cadet';
+
 export interface User {
   uid: string;
   email: string;
   name: string;
   role: UserRole;
+  userType?: UserType;
   status: 'pending' | 'active' | 'inactive' | 'rejected';
   createdAt: string;
   approvedAt?: string;

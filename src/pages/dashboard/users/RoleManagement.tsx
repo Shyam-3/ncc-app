@@ -1,4 +1,5 @@
 import { UserRole } from '@/shared/config/constants';
+import { isAnoUser } from '@/shared/utils/userType';
 import { db } from '@/shared/config/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -13,6 +14,7 @@ interface UserData {
   email: string;
   name: string;
   role: UserRole;
+  userType?: 'ano' | 'cadet';
   nccYear?: string;
   regimentalNumber?: string;
   division?: 'SD' | 'SW';
@@ -127,6 +129,7 @@ const RoleManagement: React.FC = () => {
 
   // Determine if the current user can change a target user's role
   const canChangeRole = (targetUser: UserData): boolean => {
+    if (isAnoUser(targetUser) && targetUser.role === 'superadmin') return false;
     // Can never change own role
     if (targetUser.uid === currentUser?.uid) return false;
     // Superadmins can modify anyone
@@ -173,10 +176,15 @@ const RoleManagement: React.FC = () => {
       return;
     }
 
+    if (isAnoUser(targetUser) && newRole !== 'superadmin') {
+      toast.error('ANO superadmins cannot be demoted');
+      return;
+    }
+
     // Superadmin-specific rules
     const superAdminCount = users.filter(u => u.role === 'superadmin').length;
-    if (newRole === 'superadmin' && superAdminCount >= 3) {
-      toast.error('Maximum 3 superadmins allowed');
+    if (newRole === 'superadmin' && superAdminCount >= 6) {
+      toast.error('Maximum 6 superadmins allowed');
       return;
     }
     if (targetUser.role === 'superadmin' && superAdminCount === 1) {
@@ -230,7 +238,7 @@ const RoleManagement: React.FC = () => {
         <Card.Body>
           <Alert variant="info">
             <i className="bi bi-info-circle me-2"></i>
-            <strong>Rules:</strong> Max 3 superadmins. Admins can modify admins &amp; members. Only superadmins can modify superadmin roles. You cannot change your own role.
+            <strong>Rules:</strong> Max 6 superadmins. ANO superadmins cannot be demoted. Admins can modify admins &amp; members. Only superadmins can modify superadmin roles. You cannot change your own role.
           </Alert>
 
           {/* Filter controls */}

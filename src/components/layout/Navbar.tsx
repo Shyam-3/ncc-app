@@ -77,6 +77,7 @@ const AppNavbar: React.FC = () => {
               <NavDropdown.Item as={Link} to="/cadets/list" onClick={closeMenu}>List</NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/cadets/ranks" onClick={closeMenu}>Ranks</NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/cadets/achievements" onClick={closeMenu}>Achievements</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/alumni" onClick={closeMenu}>Alumni</NavDropdown.Item>
             </NavDropdown>
             {/* Removed Resources, Notifications, Alumni, Contact from top nav as requested */}
             

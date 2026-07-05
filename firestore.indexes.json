@@ -17,6 +17,15 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "alumniProfiles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "visible", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

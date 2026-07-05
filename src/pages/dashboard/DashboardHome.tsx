@@ -218,6 +218,23 @@ const Dashboard: React.FC = () => {
 
         {(isAdmin || isSuperAdmin) && (
           <>
+            {isSuperAdmin && (
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+              <Card className="text-center h-100 shadow-sm hover-lift">
+                <Card.Body className="d-flex flex-column justify-content-between">
+                  <div>
+                    <i className="bi bi-mortarboard text-primary dashboard-home-icon"></i>
+                    <h3 className="mt-3">Alumni</h3>
+                    <p className="text-muted small">Manage alumni profiles</p>
+                  </div>
+                  <Button as={Link} to="/admin/alumni" variant="primary" className="mt-2">
+                    Manage
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+            )}
+
             <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">
                 <Card.Body className="d-flex flex-column justify-content-between">

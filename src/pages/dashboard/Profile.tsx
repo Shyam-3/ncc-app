@@ -14,12 +14,14 @@ import {
 import { db } from '../../shared/config/firebase';
 import { checkUniqueField, updateTakenNumberBatch } from '../../shared/utils/dbValidators';
 import { useAuth } from '@/features/auth/AuthContext';
+import { isAnoUser } from '@/shared/utils/userType';
 import { writeBatch } from 'firebase/firestore';
 
 interface UserProfile {
   name: string;
   email: string;
   role: string;
+  userType?: 'ano' | 'cadet';
   status?: 'pending' | 'active' | 'inactive' | 'rejected';
   dateOfBirth?: string;
   division?: 'SD' | 'SW';
@@ -65,7 +67,8 @@ const Profile: React.FC = () => {
   });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-  const isAdminEditor = profile?.role === 'admin' || profile?.role === 'superadmin';
+  const isAdminEditor = !isAnoUser(profile) && (profile?.role === 'admin' || profile?.role === 'superadmin');
+  const isAnoProfile = isAnoUser(profile);
   const fiveYearDepartments = new Set<string>(
     DEPARTMENT_DEFS.filter(d => d.courseTenure === 5).map(d => d.code)
   );
@@ -171,7 +174,7 @@ const Profile: React.FC = () => {
       nextErrors.bloodGroup = 'Invalid blood group';
     }
 
-    if (!editForm.residentialStatus.trim()) {
+    if (!isAnoProfile && !editForm.residentialStatus.trim()) {
       nextErrors.residentialStatus = 'Residential status is required';
     }
 
@@ -279,23 +282,28 @@ const Profile: React.FC = () => {
           address: editForm.address || '',
         });
       } else {
-        await updateDoc(doc(db, 'users', currentUser.uid), {
+        const updatePayload: Record<string, string> = {
           name: editForm.name,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
-          fatherName: editForm.fatherName || '',
-          residentialStatus: editForm.residentialStatus,
-          address: editForm.address || '',
-        });
+        };
+        if (!isAnoProfile) {
+          updatePayload.fatherName = editForm.fatherName || '';
+          updatePayload.residentialStatus = editForm.residentialStatus;
+          updatePayload.address = editForm.address || '';
+        }
+        await updateDoc(doc(db, 'users', currentUser.uid), updatePayload);
 
         setProfile({
           ...profile,
           name: editForm.name,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
-          fatherName: editForm.fatherName || '',
-          residentialStatus: editForm.residentialStatus,
-          address: editForm.address || '',
+          ...(isAnoProfile ? {} : {
+            fatherName: editForm.fatherName || '',
+            residentialStatus: editForm.residentialStatus,
+            address: editForm.address || '',
+          }),
         });
       }
 
@@ -382,29 +390,55 @@ const Profile: React.FC = () => {
                   <p className="mb-0">{profile.name || '-'}</p>
                 </Col>
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Date of Birth</Form.Label>
-                  <p className="mb-0">{formatDate(profile.dateOfBirth)}</p>
-                </Col>
-                <Col xs={12} md={6}>
                   <Form.Label className="fw-bold text-muted small">Email</Form.Label>
                   <p className="mb-0">{profile.email || '-'}</p>
                 </Col>
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Account Status</Form.Label>
+                  <Form.Label className="fw-bold text-muted small">Phone</Form.Label>
+                  <p className="mb-0">+91 {profile.phone || '-'}</p>
+                </Col>
+                <Col xs={12} md={6}>
+                  <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
+                  <p className="mb-0">{profile.bloodGroup || '-'}</p>
+                </Col>
+                <Col xs={12} md={6}>
+                  <Form.Label className="fw-bold text-muted small">Role</Form.Label>
                   <div>
-                    <Badge bg={profile.status === 'active' ? 'success' : profile.status === 'pending' ? 'warning' : 'secondary'}>
-                      {(profile.status || 'unknown').toString().toUpperCase()}
-                    </Badge>
                     <Badge
                       bg={
                         profile.role === 'superadmin' ? 'danger' :
                         profile.role === 'admin' ? 'primary' : 'secondary'
                       }
-                      className="ms-2"
                     >
                       {profile.role.toUpperCase()}
                     </Badge>
+                    {isAnoProfile && <Badge bg="dark" className="ms-2">ANO</Badge>}
                   </div>
+                </Col>
+                {!isAnoProfile && (
+                  <Col xs={12} md={6}>
+                    <Form.Label className="fw-bold text-muted small">Account Status</Form.Label>
+                    <div>
+                      <Badge bg={profile.status === 'active' ? 'success' : profile.status === 'pending' ? 'warning' : 'secondary'}>
+                        {(profile.status || 'unknown').toString().toUpperCase()}
+                      </Badge>
+                    </div>
+                  </Col>
+                )}
+              </Row>
+
+              {!isAnoProfile && (
+                <>
+              <hr />
+
+              <h5 className="mb-3 text-primary">
+                <i className="bi bi-person-fill me-2"></i>
+                Personal Details
+              </h5>
+              <Row className="mb-4 g-3">
+                <Col xs={12} md={6}>
+                  <Form.Label className="fw-bold text-muted small">Date of Birth</Form.Label>
+                  <p className="mb-0">{formatDate(profile.dateOfBirth)}</p>
                 </Col>
               </Row>
 
@@ -480,14 +514,6 @@ const Profile: React.FC = () => {
               </h5>
               <Row className="mb-4 g-3">
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Phone Number</Form.Label>
-                  <p className="mb-0">+91 {profile.phone || '-'}</p>
-                </Col>
-                <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
-                  <p className="mb-0">{profile.bloodGroup || '-'}</p>
-                </Col>
-                <Col xs={12} md={4}>
                   <Form.Label className="fw-bold text-muted small">Father's / Guardian's Name</Form.Label>
                   <p className="mb-0">{profile.fatherName || '-'}</p>
                 </Col>
@@ -496,6 +522,8 @@ const Profile: React.FC = () => {
                   <p className="mb-0">{profile.address || '-'}</p>
                 </Col>
               </Row>
+                </>
+              )}
 
             </Card.Body>
           </Card>
@@ -688,6 +716,7 @@ const Profile: React.FC = () => {
               {editErrors.bloodGroup && <Form.Text className="text-danger d-block mt-1">{editErrors.bloodGroup}</Form.Text>}
             </Form.Group>
 
+            {!isAnoProfile && (
             <Form.Group className="mb-3" controlId="editResidentialStatus">
               <Form.Label>Residential Status</Form.Label>
               <Form.Select
@@ -701,7 +730,10 @@ const Profile: React.FC = () => {
               </Form.Select>
               {editErrors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{editErrors.residentialStatus}</Form.Text>}
             </Form.Group>
+            )}
 
+            {!isAnoProfile && (
+            <>
             <Form.Group className="mb-3" controlId="editFatherName">
               <Form.Label>Father's / Guardian's Name</Form.Label>
               <Form.Control
@@ -722,10 +754,14 @@ const Profile: React.FC = () => {
                 placeholder="Enter your full address"
               />
             </Form.Group>
+            </>
+            )}
 
             <Alert variant="warning" className="small">
               <i className="bi bi-exclamation-triangle me-2"></i>
-              Only name, residential status, and additional details can be modified by cadets.
+              {isAnoProfile
+                ? 'ANO profiles can update name, phone, and blood group only.'
+                : 'Only name, residential status, and additional details can be modified by cadets.'}
             </Alert>
           </Form>
         </Modal.Body>

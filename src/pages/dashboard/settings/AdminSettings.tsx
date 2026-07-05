@@ -1,6 +1,7 @@
 import { useAuth } from '@/features/auth/AuthContext';
 import { db } from '@/shared/config/firebase';
 import { DEPARTMENT_DEFS } from '@/shared/config/constants';
+import { isAnoUser } from '@/shared/utils/userType';
 import {
   collection,
   doc,
@@ -28,6 +29,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { triggerAuthCleanup } from '@/shared/utils/githubActions';
+import { buildAlumniProfileFromCadet } from '@/features/alumni';
 import './AdminSettings.css';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -333,8 +335,8 @@ const AdminSettings: React.FC = () => {
 
         const userRole = data.role || 'member';
 
-        // Skip superadmins
-        if (userRole === 'superadmin') {
+        // Skip ANO accounts
+        if (isAnoUser(data)) {
           items.push({
             cadetId,
             cadetName: data.name || cadetId,
@@ -343,7 +345,7 @@ const AdminSettings: React.FC = () => {
             department: data.department || '',
             userRole,
             action: 'skip',
-            reason: 'Superadmin — not touched',
+            reason: 'ANO — not touched',
           });
           continue;
         }
@@ -506,6 +508,10 @@ const AdminSettings: React.FC = () => {
                 role: 'alumni',
                 year: item.newYear,
               });
+              batch.set(doc(collection(db, 'alumniProfiles')), buildAlumniProfileFromCadet(userData, 'rollover', {
+                reasonForArchival: 'ncc_tenure_complete',
+                createdBy: userProfile?.uid,
+              }));
               batch.delete(userRef);
               batch.delete(doc(db, 'cadets', item.cadetId));
               break;
@@ -519,6 +525,11 @@ const AdminSettings: React.FC = () => {
             }
 
             case 'delete_graduated': {
+              const userData = snapshotUsers[item.cadetId] || {};
+              batch.set(doc(collection(db, 'alumniProfiles')), buildAlumniProfileFromCadet(userData, 'rollover', {
+                reasonForArchival: 'academic_complete',
+                createdBy: userProfile?.uid,
+              }));
               batch.delete(userRef);
               batch.delete(alumniRef);
               batch.delete(doc(db, 'cadets', item.cadetId));
@@ -1190,7 +1201,7 @@ const AdminSettings: React.FC = () => {
               <li><strong>{planCounts.increment}</strong> cadets will have their years incremented</li>
               <li><strong>{planCounts.alumniNcc}</strong> cadets will be moved to alumni (NCC tenure complete)</li>
               <li><strong>{planCounts.deleteGraduated}</strong> cadets will be archived & deleted (academic complete)</li>
-              <li><strong>{planCounts.skip}</strong> superadmin(s) will be skipped</li>
+              <li><strong>{planCounts.skip}</strong> ANO account(s) will be skipped</li>
             </ul>
           )}
           <p className="text-muted small mb-0">

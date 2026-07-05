@@ -43,6 +43,55 @@ const auth = getAuth(app);
 // Main cleanup logic
 // ---------------------------------------------------------------------------
 
+async function cleanupFirestoreTraces(db, uid) {
+  console.log(`     -> Sweeping Firestore traces for user ${uid}...`);
+  
+  // 1. Delete cadetAttendanceStats
+  try {
+    await db.collection('cadetAttendanceStats').doc(uid).delete();
+  } catch (e) {
+    console.error(`     -> Error deleting stats:`, e);
+  }
+
+  // 2. Delete reads from all announcements
+  try {
+    const announcements = await db.collection('announcements').get();
+    for (const ann of announcements.docs) {
+      await ann.ref.collection('reads').doc(uid).delete().catch(() => {});
+    }
+  } catch (e) {
+    console.error(`     -> Error deleting announcement reads:`, e);
+  }
+
+  // 3. Delete marks from all attendance sessions
+  try {
+    const sessions = await db.collection('attendanceSessions').get();
+    for (const session of sessions.docs) {
+      await session.ref.collection('marks').doc(uid).delete().catch(() => {});
+    }
+  } catch (e) {
+    console.error(`     -> Error deleting attendance marks:`, e);
+  }
+
+  // 4. Delete orphaned readAnnouncements subcollection under users/{uid}
+  try {
+    const readAnns = await db.collection('users').doc(uid).collection('readAnnouncements').get();
+    for (const doc of readAnns.docs) {
+      await doc.ref.delete().catch(() => {});
+    }
+  } catch (e) {
+    console.error(`     -> Error deleting orphaned user subcollections:`, e);
+  }
+  
+  // 5. Delete the user doc itself just in case the frontend failed to do so
+  try {
+    await db.collection('users').doc(uid).delete().catch(() => {});
+    await db.collection('cadets').doc(uid).delete().catch(() => {});
+  } catch (e) {}
+
+  console.log(`     -> Sweep complete for ${uid}.`);
+}
+
 async function main() {
   console.log('='.repeat(60));
   console.log('  Firebase Auth Account Cleanup');
@@ -78,15 +127,20 @@ async function main() {
     const data = doc.data();
     const label = data.name ?? data.email ?? uid;
 
-    try {
       // Attempt to delete the Firebase Auth account
       await auth.deleteUser(uid);
       console.log(`   ✓ Deleted auth account: ${label} (${uid})`);
+      
+      // Perform deep Firestore cleanup
+      await cleanupFirestoreTraces(db, uid);
+      
       successCount++;
     } catch (err) {
       if (err.code === 'auth/user-not-found') {
         // User was already deleted — that's fine, still clean up the queue entry
         console.log(`   ⚠ Auth account not found (already deleted): ${label} (${uid})`);
+        // We still run the firestore sweep in case auth was deleted but traces remain
+        await cleanupFirestoreTraces(db, uid);
         alreadyDeletedCount++;
       } else {
         // Unexpected error — log it but continue processing others

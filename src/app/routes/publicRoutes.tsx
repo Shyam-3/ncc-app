@@ -19,6 +19,7 @@ import {
   Videos,
 } from '@/pages/public';
 import NotFound from '@/pages/NotFound';
+import AlumniSubmitForm from '@/pages/public/AlumniSubmitForm';
 import { ForgotPassword, Login, Register, VerifyEmail } from '@/pages/auth';
 
 const Unauthorized: React.FC = () => (
@@ -47,6 +48,7 @@ export const publicRoutes = (
     <Route path="/cadets/achievements" element={<Achievements />} />
     <Route path="/resources" element={<Resources />} />
     <Route path="/alumni" element={<Alumni />} />
+    <Route path="/alumni/submit" element={<AlumniSubmitForm />} />
     <Route path="/contact" element={<Contact />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="/recruitment" element={<Recruitment />} />

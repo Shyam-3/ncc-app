@@ -17,6 +17,7 @@ import ReportsWorkspace from '@/pages/dashboard/reports/ReportsWorkspace';
 import RoleManagement from '@/pages/dashboard/users/RoleManagement';
 import UserManagement from '@/pages/dashboard/users/UserManagement';
 import AdminSettings from '@/pages/dashboard/settings/AdminSettings';
+import AlumniManagement from '@/pages/dashboard/alumni/AlumniManagement';
 
 export const protectedRoutes = (
   <>
@@ -161,6 +162,14 @@ export const protectedRoutes = (
       element={
         <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
           <AdminSettings />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/alumni"
+      element={
+        <ProtectedRoute requiredRoles={['superadmin']}>
+          <AlumniManagement />
         </ProtectedRoute>
       }
     />

@@ -8,6 +8,7 @@ import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, 
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { TablePaginationFooter } from '@/components';
+import { isCadetUser } from '@/shared/utils/userType';
 import {
   DEFAULT_ON_DUTY_HEADER_TEMPLATE,
   DEFAULT_ON_DUTY_TEMPLATE,
@@ -168,7 +169,7 @@ const OnDutyLetterReport: React.FC = () => {
       const snapshot = await getDocs(q);
       const cadetUsers = snapshot.docs
         .map(d => ({ uid: d.id, ...(d.data() as any) }))
-        .filter(u => u.role !== 'superadmin') as CadetUser[];
+        .filter(u => isCadetUser(u)) as CadetUser[];
       setUsers(cadetUsers);
     } catch (error) {
       console.error(error);

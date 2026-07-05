@@ -15,6 +15,7 @@ import type {
 } from '@/features/attendance/attendance.types';
 import type { Cadet } from '@/shared/types';
 import { normalizeNccYear } from '@/shared/config/constants';
+import { isAnoUser } from '@/shared/utils/userType';
 import type { Division } from '@/shared/config/constants';
 
 const AttendanceView: React.FC = () => {
@@ -142,13 +143,13 @@ const AttendanceView: React.FC = () => {
   }
 
   if (!cadet) {
-    if (userProfile?.role === 'superadmin') {
+    if (isAnoUser(userProfile)) {
       return (
         <div className="container py-4">
           <Card>
             <Card.Body className="text-center py-5 text-muted">
               <i className="bi bi-shield-check fs-1 d-block mb-3"></i>
-              <p className="mb-2">Attendance is not applicable to Super Admin accounts.</p>
+              <p className="mb-2">Attendance is not applicable to ANO accounts.</p>
               <p className="mb-0">You can still manage and mark attendance for all cadets from Admin Attendance.</p>
             </Card.Body>
           </Card>

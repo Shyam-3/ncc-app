@@ -1,7 +1,7 @@
 import { db } from '@/shared/config/firebase';
 import type { Cadet } from '@/shared/types';
 import type { Division, NccYear } from '@/shared/config/constants';
-import { ROLES } from '@/shared/config/constants';
+import { isCadetUser } from '@/shared/utils/userType';
 import type {
   AttendanceMark,
   AttendanceSession,
@@ -311,29 +311,16 @@ export async function recalculateCadetStats(
 export async function listCadets(): Promise<(Cadet & { id: string })[]> {
   const snap = await getDocs(collection(db, 'users'));
 
-  const normalizeRole = (value: unknown): string =>
-    String(value || '')
-      .trim()
-      .toLowerCase()
-      .replace(/[\s_-]+/g, '');
-
   const normalizeStatus = (value: unknown): string =>
     String(value || '')
       .trim()
       .toLowerCase();
 
-  const allowedCadetRoles = new Set<string>([
-    normalizeRole(ROLES.MEMBER),
-    normalizeRole(ROLES.ADMIN),
-  ]);
-
   return snap.docs
     .filter((d) => {
       const data = d.data();
-      const role = normalizeRole(data.role);
       const status = normalizeStatus(data.status);
-
-      return allowedCadetRoles.has(role) && status === 'active';
+      return isCadetUser(data) && status === 'active';
     })
     .map((d) => {
       const data = d.data();
@@ -381,7 +368,7 @@ export async function getCadetByUserId(
   if (!userDoc.exists()) return null;
 
   const data = userDoc.data();
-  if (data.role === 'superadmin' || data.status !== 'active') return null;
+  if (!isCadetUser(data) || data.status !== 'active') return null;
 
   return {
     id: userId,

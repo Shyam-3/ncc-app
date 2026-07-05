@@ -1,8 +1,11 @@
 import { calculateAge, checkUniqueField, deleteTakenNumberBatch, updateTakenNumberBatch } from '@/shared/utils/dbValidators';
 import { formatISTDate } from '@/shared/utils/dateTime';
+import { DEPARTMENT_DEFS, ACADEMIC_YEARS, ROMAN_YEAR_MAP, NCC_RANKS, NCC_YEARS } from '@/shared/config/constants';
+import { db } from '@/shared/config/firebase';
 import { collection, doc, getDocs, orderBy, query, updateDoc, writeBatch } from 'firebase/firestore';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { TablePaginationFooter } from '@/components';
 import './CadetManagement.css';

@@ -34,6 +34,8 @@ import { triggerAuthCleanup } from '@/shared/utils/githubActions';
 import { TablePaginationFooter } from '@/components';
 import { ROMAN_YEAR_MAP } from '@/shared/config/constants';
 import { deleteTakenNumberBatch } from '@/shared/utils/dbValidators';
+import { createAlumniProfileFromCadet } from '@/features/alumni';
+import { isAnoUser, resolveUserType } from '@/shared/utils/userType';
 import './UserManagement.css';
 
 type UserRole = 'member' | 'admin' | 'superadmin' | 'alumni';
@@ -43,6 +45,7 @@ interface UserData {
   email: string;
   name: string;
   role: UserRole;
+  userType?: 'ano' | 'cadet';
   createdAt: string;
   status: string;
   regimentalNumber?: string;
@@ -114,9 +117,23 @@ const UserManagement: React.FC = () => {
   const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
   const [pendingRowsPerPage, setPendingRowsPerPage] = useState(10);
 
+  // ANO creation modal
+  const [showAnoModal, setShowAnoModal] = useState(false);
+  const [anoForm, setAnoForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    bloodGroup: '',
+  });
+  const [anoErrors, setAnoErrors] = useState<Record<string, string>>({});
+
   const isSelf = (uid: string) => uid === currentUser?.uid;
   const canDeleteUser = (target: UserData) => {
     if (isSelf(target.uid)) return false;
+    const targetIsAnoSuperadmin = isAnoUser(target) && target.role === 'superadmin';
+    const callerIsAnoSuperadmin = isAnoUser(userProfile) && isSuperAdmin();
+    if (targetIsAnoSuperadmin && !callerIsAnoSuperadmin) return false;
     if (isSuperAdmin()) return true;
     if (isAdmin()) return target.role !== 'superadmin';
     return false;
@@ -197,6 +214,7 @@ const UserManagement: React.FC = () => {
         name: candidate.name,
         email: candidate.email,
         role: 'member',
+        userType: 'cadet',
         status: 'active',
         createdAt: candidate.createdAt || new Date().toISOString(),
         dateOfBirth: candidate.dateOfBirth,
@@ -389,42 +407,45 @@ const UserManagement: React.FC = () => {
     }
     setSaving(true);
     try {
-      await deleteDoc(doc(db, 'users', u.uid));
-      
-      // Also remove cadet profile if exists
-      try {
-        await deleteDoc(doc(db, 'cadets', u.uid));
-      } catch (_) { /* cadet doc may not exist */ }
+      const userType = resolveUserType(u);
 
-      // Also remove from pendingCadets if exists (by email)
-      const pendingSnapshot = await getDocs(
-        query(collection(db, 'pendingCadets'))
-      );
-      const matchingPending = pendingSnapshot.docs.find(
-        d => d.data().email?.toLowerCase() === u.email.toLowerCase()
-      );
-      if (matchingPending) {
-        await deleteDoc(doc(db, 'pendingCadets', matchingPending.id));
+      await deleteDoc(doc(db, 'users', u.uid));
+
+      if (userType === 'cadet') {
+        try {
+          await deleteDoc(doc(db, 'cadets', u.uid));
+        } catch (_) { /* cadet doc may not exist */ }
+
+        const pendingSnapshot = await getDocs(
+          query(collection(db, 'pendingCadets'))
+        );
+        const matchingPending = pendingSnapshot.docs.find(
+          d => d.data().email?.toLowerCase() === u.email.toLowerCase()
+        );
+        if (matchingPending) {
+          await deleteDoc(doc(db, 'pendingCadets', matchingPending.id));
+        }
+
+        const batch = writeBatch(db);
+        deleteTakenNumberBatch(batch, 'regimentalNumber', u.regimentalNumber);
+        deleteTakenNumberBatch(batch, 'registerNumber', u.registerNumber);
+        deleteTakenNumberBatch(batch, 'rollNo', u.rollNo);
+        await batch.commit();
       }
 
-      // Queue Firebase Auth account for automated cleanup
       await setDoc(doc(db, 'pendingAuthDeletions', u.uid), {
         email: u.email,
         deletedBy: currentUser?.uid || 'unknown',
         deletedAt: new Date().toISOString(),
       });
-      
-      // Free up taken numbers
-      const batch = writeBatch(db);
-      deleteTakenNumberBatch(batch, 'regimentalNumber', u.regimentalNumber);
-      deleteTakenNumberBatch(batch, 'registerNumber', u.registerNumber);
-      deleteTakenNumberBatch(batch, 'rollNo', u.rollNo);
-      await batch.commit();
 
-      // Trigger GitHub Action to clean up auth instantly
       triggerAuthCleanup();
-      
-      toast.success('User deleted. Auth account will be cleaned up automatically within moments.');
+
+      toast.success(
+        userType === 'ano'
+          ? 'ANO account deleted. Auth account will be cleaned up automatically.'
+          : 'User completely deleted. Auth cleanup queued.'
+      );
       await Promise.all([fetchUsers(), fetchPending()]);
     } catch (e) {
       console.error(e);
@@ -432,6 +453,64 @@ const UserManagement: React.FC = () => {
     } finally {
       setSaving(false);
       setConfirm(null);
+    }
+  };
+
+  const validateAnoForm = () => {
+    const errors: Record<string, string> = {};
+    if (!anoForm.name.trim()) errors.name = 'Name is required';
+    if (!anoForm.email.trim()) errors.email = 'Email is required';
+    else if (!anoForm.email.includes('@')) errors.email = 'Valid email is required';
+    if (!anoForm.password || anoForm.password.length < 6) errors.password = 'Password must be at least 6 characters';
+    if (!anoForm.phone.match(/^\d{10}$/)) errors.phone = 'Phone must be exactly 10 digits';
+    if (!anoForm.bloodGroup) errors.bloodGroup = 'Blood group is required';
+    setAnoErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCreateAno = async () => {
+    if (!validateAnoForm()) return;
+    setSaving(true);
+    try {
+      const secondaryApp = initializeApp(FIREBASE_CONFIG, `SecondaryAno-${Date.now()}`);
+      const secondaryAuth = getAuth(secondaryApp);
+
+      const userCredential = await createUserWithEmailAndPassword(
+        secondaryAuth,
+        anoForm.email.trim(),
+        anoForm.password
+      );
+      const authUid = userCredential.user.uid;
+
+      await signOut(secondaryAuth);
+      await deleteApp(secondaryApp);
+
+      await setDoc(doc(db, 'users', authUid), {
+        name: anoForm.name.trim(),
+        email: anoForm.email.trim(),
+        phone: anoForm.phone.trim(),
+        bloodGroup: anoForm.bloodGroup,
+        role: 'superadmin',
+        userType: 'ano',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: currentUser?.uid || 'unknown',
+      });
+
+      toast.success('ANO account created successfully');
+      setShowAnoModal(false);
+      setAnoForm({ name: '', email: '', password: '', phone: '', bloodGroup: '' });
+      setAnoErrors({});
+      await fetchUsers();
+    } catch (e: any) {
+      console.error(e);
+      if (e.code === 'auth/email-already-in-use') {
+        toast.error('This email is already registered');
+      } else {
+        toast.error('Failed to create ANO account: ' + (e.message || 'Unknown error'));
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -634,6 +713,7 @@ const UserManagement: React.FC = () => {
                 {u.name || 'N/A'} 
                 {isSelf(u.uid) && <Badge bg="success" className="ms-1">You</Badge>}
                 {u.role === 'alumni' && <Badge bg="secondary" className="ms-1">Alumni</Badge>}
+                {isAnoUser(u) && <Badge bg="dark" className="ms-1">ANO</Badge>}
               </td>
               <td className="text-center">
                 {u.division ? (
@@ -696,19 +776,28 @@ const UserManagement: React.FC = () => {
             <i className="bi bi-people-fill me-2"></i>
             User Management
           </h3>
-          <Button variant="light" size="sm" onClick={() => navigate(-1)}>
-            <i className="bi bi-arrow-left me-1"></i> Back
-          </Button>
+          <div>
+            {isSuperAdmin() && (
+              <Button variant="danger" size="sm" onClick={() => setShowAnoModal(true)} className="me-2">
+                <i className="bi bi-person-plus me-1"></i> Add ANO
+              </Button>
+            )}
+            <Button variant="light" size="sm" onClick={() => navigate(-1)}>
+              <i className="bi bi-arrow-left me-1"></i> Back
+            </Button>
+          </div>
         </Card.Header>
         <Card.Body>
           <Tabs defaultActiveKey="users" id="user-mgmt-tabs" className="mb-3">
             <Tab eventKey="users" title="Users">
-              <Alert variant="info">
-                View or delete users. On Firebase Spark plan, deletion removes user data from Firestore only.
-              </Alert>
-              <Alert variant="warning">
-                Firebase Authentication account deletion requires a privileged backend (Cloud Functions/Admin SDK), which is not available on Spark plan.
-              </Alert>
+              <div className="mb-3">
+                <Alert variant="info" className="mb-2">
+                  View or delete users. On Firebase Spark plan, deletion removes user data from Firestore only.
+                </Alert>
+                <Alert variant="warning" className="mb-0">
+                  Firebase Authentication account deletion requires a privileged backend (Cloud Functions/Admin SDK), which is not available on Spark plan.
+                </Alert>
+              </div>
               {UsersTable}
             </Tab>
             <Tab 
@@ -772,6 +861,75 @@ const UserManagement: React.FC = () => {
           {confirm?.action === 'delete' && (
             <Button variant="danger" onClick={() => handleDeleteUser(confirm.payload)} disabled={saving}>Delete</Button>
           )}
+        </Modal.Footer>
+      </Modal>
+
+      {/* ANO Creation Modal */}
+      <Modal show={showAnoModal} onHide={() => setShowAnoModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Create ANO Account</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Name *</Form.Label>
+              <Form.Control
+                value={anoForm.name}
+                onChange={(e) => setAnoForm(f => ({ ...f, name: e.target.value }))}
+                isInvalid={Boolean(anoErrors.name)}
+              />
+              {anoErrors.name && <Form.Text className="text-danger">{anoErrors.name}</Form.Text>}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Email *</Form.Label>
+              <Form.Control
+                type="email"
+                value={anoForm.email}
+                onChange={(e) => setAnoForm(f => ({ ...f, email: e.target.value }))}
+                isInvalid={Boolean(anoErrors.email)}
+              />
+              {anoErrors.email && <Form.Text className="text-danger">{anoErrors.email}</Form.Text>}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Password *</Form.Label>
+              <Form.Control
+                type="password"
+                value={anoForm.password}
+                onChange={(e) => setAnoForm(f => ({ ...f, password: e.target.value }))}
+                isInvalid={Boolean(anoErrors.password)}
+              />
+              {anoErrors.password && <Form.Text className="text-danger">{anoErrors.password}</Form.Text>}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Phone *</Form.Label>
+              <Form.Control
+                value={anoForm.phone}
+                onChange={(e) => setAnoForm(f => ({ ...f, phone: e.target.value }))}
+                isInvalid={Boolean(anoErrors.phone)}
+              />
+              {anoErrors.phone && <Form.Text className="text-danger">{anoErrors.phone}</Form.Text>}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Blood Group *</Form.Label>
+              <Form.Select
+                value={anoForm.bloodGroup}
+                onChange={(e) => setAnoForm(f => ({ ...f, bloodGroup: e.target.value }))}
+                isInvalid={Boolean(anoErrors.bloodGroup)}
+              >
+                <option value="">Select</option>
+                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                  <option key={bg} value={bg}>{bg}</option>
+                ))}
+              </Form.Select>
+              {anoErrors.bloodGroup && <Form.Text className="text-danger">{anoErrors.bloodGroup}</Form.Text>}
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAnoModal(false)} disabled={saving}>Cancel</Button>
+          <Button variant="danger" onClick={handleCreateAno} disabled={saving}>
+            {saving ? 'Creating...' : 'Create ANO'}
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>

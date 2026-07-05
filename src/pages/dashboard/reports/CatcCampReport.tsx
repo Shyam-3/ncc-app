@@ -15,6 +15,7 @@ import {
 } from '@/features/reports/catcDocService';
 import { getCatcCampTemplate } from '@/features/reports/templateService';
 import './CatcCampReport.css';
+import { isCadetUser } from '@/shared/utils/userType';
 
 /* ──────────── Helpers ──────────── */
 
@@ -83,7 +84,7 @@ const CatcCampReport: React.FC = () => {
       const snapshot = await getDocs(q);
       const cadetUsers = snapshot.docs
         .map((d) => ({ uid: d.id, ...(d.data() as Record<string, unknown>) }))
-        .filter((u) => (u as { role?: string }).role !== 'superadmin') as CatcCadet[];
+        .filter((u) => isCadetUser(u as { userType?: string })) as CatcCadet[];
       setUsers(cadetUsers);
     } catch (error) {
       console.error(error);

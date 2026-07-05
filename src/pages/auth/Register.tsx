@@ -310,6 +310,7 @@ const Register: React.FC = () => {
         address: formData.address,
         
         // System fields
+        userType: 'cadet',
         createdAt: new Date().toISOString(),
         status: 'pending'
       });
