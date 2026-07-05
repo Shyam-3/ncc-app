@@ -17,8 +17,8 @@ const ForgotPassword: React.FC = () => {
     const errors: {email?: string} = {};
     if (!email.trim()) {
       errors.email = 'Email is required';
-    } else if (!email.includes('@') || !email.includes('tce.edu')) {
-      errors.email = 'Email must be from tce.edu domain (e.g., name@tce.edu or name@student.tce.edu)';
+    } else if (!email.includes('@')) {
+      errors.email = 'Valid email is required';
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;

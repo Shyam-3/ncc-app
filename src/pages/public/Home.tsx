@@ -198,46 +198,55 @@ const Home: React.FC = () => {
       </Container>
 
       {/* Latest Updates & Announcements */}
-      {latestAnnouncements.length > 0 && (
-        <div className="bg-light py-5">
-          <Container>
-            <AnimatedSection effect="fade" delay={0.05}>
-              <h2 className="text-center mb-2">Latest Updates & Announcements</h2>
-              <p className="text-center text-muted mb-4">Stay informed about upcoming events, camps, and activities</p>
-            </AnimatedSection>
-            <Row className="g-4">
-              {latestAnnouncements.map((ann) => (
-                <Col key={ann.id} xs={12} sm={6} lg={3}>
-                  <Card className="h-100 border-0 shadow-sm hover-lift home-announcement-card">
-                    <Card.Body className="d-flex flex-column">
-                      <div className="mb-2">
-                        <Badge bg={ANNOUNCEMENT_CATEGORY_COLORS[ann.category] || 'secondary'}>
-                          {ANNOUNCEMENT_CATEGORY_LABELS[ann.category] || ann.category}
-                        </Badge>
-                      </div>
-                      <Card.Title className="fs-6 fw-semibold">{ann.title}</Card.Title>
-                      <Card.Text className="text-muted small flex-grow-1 home-announcement-body">
-                        {ann.body.length > 100 ? `${ann.body.slice(0, 100)}…` : ann.body}
-                      </Card.Text>
-                      <div className="text-muted small mt-2">
-                        <i className="bi bi-calendar3 me-1" />
-                        {ann.createdAt?.toDate
-                          ? formatISTDate(ann.createdAt.toDate())
-                          : formatISTDate(ann.createdAt)}
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-            <div className="text-center mt-4">
-              <Button as={Link} to="/notifications" variant="outline-primary">
-                View All <i className="bi bi-arrow-right ms-1" />
-              </Button>
+      <div className="bg-light py-5">
+        <Container>
+          <AnimatedSection effect="fade" delay={0.05}>
+            <h2 className="text-center mb-2">Latest Updates & Announcements</h2>
+            <p className="text-center text-muted mb-4">Stay informed about upcoming events, camps, and activities</p>
+          </AnimatedSection>
+          
+          {latestAnnouncements.length > 0 ? (
+            <>
+              <Row className="g-4">
+                {latestAnnouncements.map((ann) => (
+                  <Col key={ann.id} xs={12} sm={6} lg={3}>
+                    <Card className="h-100 border-0 shadow-sm hover-lift home-announcement-card">
+                      <Card.Body className="d-flex flex-column">
+                        <div className="mb-2">
+                          <Badge bg={ANNOUNCEMENT_CATEGORY_COLORS[ann.category] || 'secondary'}>
+                            {ANNOUNCEMENT_CATEGORY_LABELS[ann.category] || ann.category}
+                          </Badge>
+                        </div>
+                        <Card.Title className="fs-6 fw-semibold">{ann.title}</Card.Title>
+                        <Card.Text className="text-muted small flex-grow-1 home-announcement-body">
+                          {ann.body.length > 100 ? `${ann.body.slice(0, 100)}…` : ann.body}
+                        </Card.Text>
+                        <div className="text-muted small mt-2">
+                          <i className="bi bi-calendar3 me-1" />
+                          {ann.createdAt?.toDate
+                            ? formatISTDate(ann.createdAt.toDate())
+                            : formatISTDate(ann.createdAt)}
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+              <div className="text-center mt-4">
+                <Button as={Link} to="/notifications" variant="outline-primary">
+                  View All <i className="bi bi-arrow-right ms-1" />
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-4 bg-white rounded shadow-sm border border-light">
+              <i className="bi bi-bell-slash text-muted mb-2" style={{ fontSize: '2.5rem' }}></i>
+              <h5 className="text-muted mt-2">No active announcements</h5>
+              <p className="text-muted mb-0 small">Check back later for updates on camps and activities.</p>
             </div>
-          </Container>
-        </div>
-      )}
+          )}
+        </Container>
+      </div>
 
       {/* Stats Section - NCC by the Numbers */}
       <AnimatedSection as="div" effect="fade" className="bg-light py-5" delay={0.1}>

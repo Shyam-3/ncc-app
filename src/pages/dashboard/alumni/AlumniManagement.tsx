@@ -64,7 +64,10 @@ const AlumniManagement: React.FC = () => {
   const fetchProfiles = async () => {
     try {
       const snap = await getDocs(query(collection(db, 'alumniProfiles'), orderBy('createdAt', 'desc')));
-      setProfiles(snap.docs.map(d => ({ id: d.id, ...(d.data() as AlumniProfile) })));
+      const fetchedProfiles = snap.docs.map(d => ({ id: d.id, ...(d.data() as AlumniProfile) }));
+      console.log('DEBUG - Total profiles fetched:', fetchedProfiles.length);
+      console.log('DEBUG - Pending profiles:', fetchedProfiles.filter(p => p.status === 'pending'));
+      setProfiles(fetchedProfiles);
     } catch (e) {
       console.error(e);
       toast.error('Failed to load alumni profiles');
@@ -243,7 +246,7 @@ const AlumniManagement: React.FC = () => {
           </div>
         </Card.Header>
         <Card.Body>
-          <Tabs defaultActiveKey="active" className="mb-3">
+          <Tabs id="alumni-tabs" defaultActiveKey="active" className="mb-3">
             <Tab eventKey="pending" title={<span>Pending {pending.length > 0 && <Badge bg="danger" className="ms-1">{pending.length}</Badge>}</span>}>
               <Table striped bordered hover responsive size="sm">
                 <thead>

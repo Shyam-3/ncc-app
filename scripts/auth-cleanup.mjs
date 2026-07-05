@@ -127,6 +127,7 @@ async function main() {
     const data = doc.data();
     const label = data.name ?? data.email ?? uid;
 
+    try {
       // Attempt to delete the Firebase Auth account
       await auth.deleteUser(uid);
       console.log(`   ✓ Deleted auth account: ${label} (${uid})`);

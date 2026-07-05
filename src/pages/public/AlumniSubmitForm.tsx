@@ -134,9 +134,9 @@ const AlumniSubmitForm: React.FC = () => {
                 <div className="visually-hidden" aria-hidden="true">
                   <Form.Control
                     type="text"
-                    name="website"
+                    name="_contact_me_by_fax_only"
                     tabIndex={-1}
-                    autoComplete="off"
+                    autoComplete="new-password"
                     value={form.website}
                     onChange={(e) => handleChange('website', e.target.value)}
                   />

@@ -1,4 +1,4 @@
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Badge, Button, Card, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
@@ -12,6 +12,7 @@ const Dashboard: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
   const [pendingCount, setPendingCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingAlumniCount, setPendingAlumniCount] = useState(0);
   const isAdmin = userProfile?.role === 'admin';
   const isSuperAdmin = userProfile?.role === 'superadmin';
 
@@ -65,6 +66,20 @@ const Dashboard: React.FC = () => {
 
     fetchUnreadCount();
   }, [currentUser?.uid, isAdmin, isSuperAdmin]);
+
+  // Fetch pending alumni count for super admins
+  useEffect(() => {
+    const fetchPendingAlumniCount = async () => {
+      if (!isSuperAdmin) return;
+      try {
+        const snap = await getDocs(query(collection(db, 'alumniProfiles'), where('status', '==', 'pending')));
+        setPendingAlumniCount(snap.size);
+      } catch (error) {
+        console.error('Failed to fetch pending alumni count:', error);
+      }
+    };
+    fetchPendingAlumniCount();
+  }, [isSuperAdmin]);
 
   return (
     <Container className="py-5">
@@ -224,7 +239,14 @@ const Dashboard: React.FC = () => {
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-mortarboard text-primary dashboard-home-icon"></i>
-                    <h3 className="mt-3">Alumni</h3>
+                    <h3 className="mt-3">
+                      Alumni
+                      {pendingAlumniCount > 0 && (
+                        <Badge bg="danger" className="ms-2 fs-6 align-middle">
+                          {pendingAlumniCount}
+                        </Badge>
+                      )}
+                    </h3>
                     <p className="text-muted small">Manage alumni profiles</p>
                   </div>
                   <Button as={Link} to="/admin/alumni" variant="primary" className="mt-2">
