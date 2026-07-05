@@ -1,3 +1,116 @@
+/* ─── Announcements Admin Page ─────────────────────────────────────────────── */
+
+/* ── Filter Pills ────────────────────────────────────────────────────────────── */
+
+.category-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.filter-pill {
+  border-radius: 20px !important;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+  white-space: nowrap;
+}
+
+/* ── Form Card ───────────────────────────────────────────────────────────────── */
+
+.admin-form-card {
+  position: sticky;
+  top: 1rem;
+}
+
+@media (max-width: 991.98px) {
+  .admin-form-card {
+    position: static;
+  }
+}
+
+/* ── Announcement Cards ──────────────────────────────────────────────────────── */
+
+.announcement-card {
+  transition: box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.announcement-card:hover {
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12) !important;
+}
+
+.announcement-expired {
+  opacity: 0.55;
+}
+
+.announcement-expired:hover {
+  opacity: 0.75;
+}
+
+.announcement-body-preview {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Message cell truncation (for any table usage) ───────────────────────────── */
+
 .announcements-admin-message-cell {
   max-width: 480px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Read Analytics Section ──────────────────────────────────────────────────── */
+
+.read-analytics-section {
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #e9ecef;
+}
+
+.analytics-group {
+  padding: 0.4rem 0;
+}
+
+.analytics-group:not(:last-child) {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.analytics-group-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.analytics-group-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.reader-name {
+  background: #dee2e6;
+  border-radius: 12px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.78rem;
+  color: #495057;
+}
+
+/* ── Responsive tweaks ───────────────────────────────────────────────────────── */
+
+@media (max-width: 575.98px) {
+  .announcements-admin h4 {
+    font-size: 1.15rem;
+  }
+
+  .filter-pill {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+  }
+
+  .announcement-card .d-flex.gap-3 {
+    gap: 0.35rem !important;
+  }
 }

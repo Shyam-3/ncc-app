@@ -1,11 +1,12 @@
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from 'firebase/auth';
-import { addDoc, collection } from 'firebase/firestore';
+import { collection, doc, writeBatch } from 'firebase/firestore';
 import React, { ChangeEvent, FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { DEPARTMENT_DEFS } from '../../shared/config/constants';
 import { auth, db } from '../../shared/config/firebase';
+import { calculateAge, checkUniqueField } from '../../shared/utils/dbValidators';
 import './Register.css';
 
 interface FormData {
@@ -66,16 +67,26 @@ const Register: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const navigate = useNavigate();
 
+  // Calculate maximum allowed date (17 years ago today)
+  const maxDobDate = new Date();
+  maxDobDate.setFullYear(maxDobDate.getFullYear() - 17);
+  const maxDobString = maxDobDate.toISOString().split('T')[0];
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
     // Personal Details Validation
     if (!formData.name.trim()) {
-      newErrors.name = 'Full name is required';
+      newErrors.name = 'Name is required';
     }
     
     if (!formData.dateOfBirth) {
       newErrors.dateOfBirth = 'Date of birth is required';
+    } else {
+      const age = calculateAge(formData.dateOfBirth);
+      if (age < 17) {
+        newErrors.dateOfBirth = 'Cadets must be at least 17 years old';
+      }
     }
     
     if (!formData.email.trim()) {
@@ -141,6 +152,10 @@ const Register: React.FC = () => {
       newErrors.bloodGroup = 'Blood group is required';
     }
 
+    if (!formData.fatherName.trim()) {
+      newErrors.fatherName = 'Father\'s / Guardian\'s name is required';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -213,11 +228,37 @@ const Register: React.FC = () => {
 
     if (!validateForm()) {
       toast.error('Please fix all validation errors');
+      setTimeout(() => {
+        document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
       return;
     }
 
+    setLoading(true);
+
     try {
-      setLoading(true);
+      // Step 0: Check uniqueness of Regimental Number, Register Number, and Roll No
+      // Unauthenticated users can query takenNumbers because it's public
+      const [isRegimentalUnique, isRegisterUnique, isRollUnique] = await Promise.all([
+        checkUniqueField('regimentalNumber', formData.regimentalNumber),
+        checkUniqueField('registerNumber', formData.registerNumber),
+        checkUniqueField('rollNo', formData.rollNo),
+      ]);
+
+      const uniqueErrors: FormErrors = {};
+      if (!isRegimentalUnique) uniqueErrors.regimentalNumber = 'This Regimental Number is already in use by another cadet';
+      if (!isRegisterUnique) uniqueErrors.registerNumber = 'This Register Number is already in use by another cadet';
+      if (!isRollUnique) uniqueErrors.rollNo = 'This Roll Number is already in use by another cadet';
+
+      if (Object.keys(uniqueErrors).length > 0) {
+        setErrors(prev => ({ ...prev, ...uniqueErrors }));
+        toast.error('One or more identification numbers are already in use');
+        setTimeout(() => {
+          document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        setLoading(false);
+        return;
+      }
       
       // Step 1: Create Firebase Auth account (needed for email verification)
       const userCredential = await createUserWithEmailAndPassword(
@@ -233,8 +274,11 @@ const Register: React.FC = () => {
       // Step 2: Send verification email
       await sendEmailVerification(user);
 
-      // Step 3: Submit to pendingCadets collection for admin approval
-      await addDoc(collection(db, 'pendingCadets'), {
+      // Step 3: Submit to pendingCadets and takenNumbers using a Batch Write
+      const batch = writeBatch(db);
+      const pendingRef = doc(collection(db, 'pendingCadets'));
+      
+      batch.set(pendingRef, {
         // Auth reference
         uid: user.uid,
         emailVerified: false,
@@ -270,15 +314,41 @@ const Register: React.FC = () => {
         status: 'pending'
       });
 
+      // Add to takenNumbers registry
+      const writeTaken = (field: string, value: string) => {
+        const clean = value.trim();
+        const safeId = clean.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        if (safeId) {
+          batch.set(doc(db, 'takenNumbers', `${field}_${safeId}`), {
+            type: field,
+            uid: user.uid,
+            originalValue: clean,
+            createdAt: new Date().toISOString()
+          });
+        }
+      };
+
+      writeTaken('regimentalNumber', formData.regimentalNumber);
+      writeTaken('registerNumber', formData.registerNumber);
+      writeTaken('rollNo', formData.rollNo);
+
+      await batch.commit();
+
       // Step 4: Sign out immediately — user cannot access the app until admin approves
       await signOut(auth);
 
       toast.success('Registration submitted! Please check your email to verify.');
       navigate('/verify-email');
     } catch (err: any) {
-      // If auth account was created but subsequent steps failed, 
-      // the account remains for retry. User can re-verify later.
-      toast.error('Failed to submit registration. ' + err.message);
+      if (err.code === 'auth/email-already-in-use') {
+        setErrors(prev => ({ ...prev, email: 'This email is already registered' }));
+        toast.error('Email is already registered. Please login instead.');
+        setTimeout(() => {
+          document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      } else {
+        toast.error('Failed to submit registration. ' + err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -297,7 +367,7 @@ const Register: React.FC = () => {
               <div className="text-center mb-4">
                 <i className="bi bi-person-plus-fill text-primary register-hero-icon"></i>
                 <h2 className="mt-3">Cadet Registration</h2>
-                <p className="text-muted">Join the NCC Army Wing</p>
+                <p className="text-muted">Join TCE NCC</p>
               </div>
 
               <Form onSubmit={handleSubmit} noValidate>
@@ -316,7 +386,7 @@ const Register: React.FC = () => {
                         value={formData.name}
                         onChange={handleChange}
                         className={getFieldClass('name')}
-                        placeholder="Enter your full name"
+                        placeholder="Enter your full name with initials at the end"
                       />
                       {errors.name && <Form.Text className="text-danger d-block mt-1">{errors.name}</Form.Text>}
                     </Form.Group>
@@ -330,6 +400,7 @@ const Register: React.FC = () => {
                         value={formData.dateOfBirth}
                         onChange={handleChange}
                         className={getFieldClass('dateOfBirth')}
+                        max={maxDobString}
                       />
                       {errors.dateOfBirth && <Form.Text className="text-danger d-block mt-1">{errors.dateOfBirth}</Form.Text>}
                     </Form.Group>
@@ -346,10 +417,10 @@ const Register: React.FC = () => {
                         value={formData.email}
                         onChange={handleChange}
                         className={getFieldClass('email')}
-                        placeholder="name@tce.edu or name@student.tce.edu"
+                        placeholder="Use your student email"
                       />
                       {errors.email && <Form.Text className="text-danger d-block mt-1">{errors.email}</Form.Text>}
-                      <Form.Text className="text-muted">Use your TCE email (@tce.edu or @student.tce.edu)</Form.Text>
+                      <Form.Text className="text-muted">TCE email id (@student.tce.edu)</Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>
@@ -455,7 +526,7 @@ const Register: React.FC = () => {
                         value={formData.regimentalNumber}
                         onChange={handleChange}
                         className={getFieldClass('regimentalNumber')}
-                        placeholder="e.g., TN-09-123"
+                        placeholder="TN20XX(SD/SW)AXXXXXX"
                       />
                       {errors.regimentalNumber && <Form.Text className="text-danger d-block mt-1">{errors.regimentalNumber}</Form.Text>}
                     </Form.Group>
@@ -540,7 +611,7 @@ const Register: React.FC = () => {
                         value={formData.rollNo}
                         onChange={handleChange}
                         className={getFieldClass('rollNo')}
-                        placeholder="e.g., 001"
+                        placeholder="eg 670123"
                       />
                       {errors.rollNo && <Form.Text className="text-danger d-block mt-1">{errors.rollNo}</Form.Text>}
                     </Form.Group>
@@ -580,7 +651,7 @@ const Register: React.FC = () => {
                         value={formData.phone}
                         onChange={handleChange}
                         className={getFieldClass('phone')}
-                        placeholder="10-digit mobile"
+                        placeholder="10-digit mobile number"
                         min="0"
                       />
                       {errors.phone && <Form.Text className="text-danger d-block mt-1">{errors.phone}</Form.Text>}
@@ -645,14 +716,16 @@ const Register: React.FC = () => {
                 <Row className="g-3">
                   <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="fatherName">
-                      <Form.Label>Father's / Guardian's Name <span className="text-muted">(Optional)</span></Form.Label>
+                      <Form.Label>Father's / Guardian's Name <span className="text-danger">*</span></Form.Label>
                       <Form.Control
                         type="text"
                         name="fatherName"
                         value={formData.fatherName}
                         onChange={handleChange}
+                        className={getFieldClass('fatherName')}
                         placeholder="Enter father's or guardian's name"
                       />
+                      {errors.fatherName && <Form.Text className="text-danger d-block mt-1">{errors.fatherName}</Form.Text>}
                     </Form.Group>
                   </Col>
                 </Row>
@@ -668,9 +741,7 @@ const Register: React.FC = () => {
                     placeholder="Enter your full address"
                   />
                 </Form.Group>
-
-
-
+                
                 <Button
                   variant="primary"
                   type="submit"
@@ -684,7 +755,7 @@ const Register: React.FC = () => {
                 <Alert variant="info" className="mt-3 mb-0">
                   <i className="bi bi-info-circle me-2"></i>
                   After submitting, a verification email will be sent to your email address.
-                  Please verify your email (check Spam/Junk folder too), then wait for admin approval.
+                  Please verify your email (check Spam/Junk folder too), then wait for senior's approval.
                 </Alert>
               </Form>
 
@@ -692,9 +763,9 @@ const Register: React.FC = () => {
 
               <div className="text-center">
                 <p className="mb-0">
-                  Already have an account?{' '}
+                  Already a cadet?{' '}
                   <Link to="/login" className="text-decoration-none">
-                    Login here
+                    Login
                   </Link>
                 </p>
               </div>

@@ -1,12 +1,34 @@
-import React from 'react';
-import { Button, Card, Carousel, Col, Container, Row } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Badge, Button, Card, Carousel, Col, Container, Row } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
 import { AnimatedSection } from '../../components';
 import { useAuth } from '@/features/auth/AuthContext';
+import { getActiveRecruitmentAnnouncements, listPublicAnnouncements } from '@/features/announcements/service';
+import type { Announcement } from '@/features/announcements/announcement.types';
+import { ANNOUNCEMENT_CATEGORY_LABELS, ANNOUNCEMENT_CATEGORY_COLORS } from '@/shared/config/constants';
+import { formatISTDate } from '@/shared/utils/dateTime';
 import './Home.css';
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [recruitmentAnnouncements, setRecruitmentAnnouncements] = useState<Announcement[]>([]);
+  const [latestAnnouncements, setLatestAnnouncements] = useState<Announcement[]>([]);
+
+  useEffect(() => {
+    getActiveRecruitmentAnnouncements()
+      .then(setRecruitmentAnnouncements)
+      .catch(() => { });
+
+    listPublicAnnouncements()
+      .then((all) => {
+        const nonRecruitment = all.filter((a) => a.category !== 'recruitment');
+        setLatestAnnouncements(nonRecruitment.slice(0, 4));
+      })
+      .catch(() => { });
+  }, []);
+
+  const recruitment = recruitmentAnnouncements[0];
 
   return (
     <div>
@@ -57,6 +79,48 @@ const Home: React.FC = () => {
           </Carousel.Caption>
         </Carousel.Item>
       </Carousel>
+
+      {/* Recruitment Banner */}
+      {recruitment && (
+        <AnimatedSection effect="fade" delay={0.05}>
+          <div className="home-recruitment-banner">
+            <Container>
+              <Row className="align-items-center justify-content-center text-center text-md-start">
+                <Col md={8} lg={7}>
+                  <h2 className="home-recruitment-title">
+                    📢 {recruitment.title}
+                  </h2>
+                  <p className="home-recruitment-body">
+                    {recruitment.body}
+                  </p>
+                  {recruitment.expiresAt && (
+                    <p className="home-recruitment-expiry">
+                      <i className="bi bi-clock me-1" />
+                      Application closes on {' '}
+                      {formatISTDate(recruitment.expiresAt, {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </p>
+                  )}
+                </Col>
+                <Col md={4} lg={3} className="mt-3 mt-md-0 text-center">
+                  <Link
+                    to="/recruitment"
+                    className="btn btn-light btn-lg home-recruitment-cta"
+                  >
+                    Apply Now <i className="bi bi-arrow-right ms-1" />
+                  </Link>
+                </Col>
+              </Row>
+            </Container>
+          </div>
+        </AnimatedSection>
+      )}
 
       {/* Features Section */}
       <Container className="my-5">
@@ -132,6 +196,48 @@ const Home: React.FC = () => {
           </Col>
         </Row>
       </Container>
+
+      {/* Latest Updates & Announcements */}
+      {latestAnnouncements.length > 0 && (
+        <div className="bg-light py-5">
+          <Container>
+            <AnimatedSection effect="fade" delay={0.05}>
+              <h2 className="text-center mb-2">Latest Updates & Announcements</h2>
+              <p className="text-center text-muted mb-4">Stay informed about upcoming events, camps, and activities</p>
+            </AnimatedSection>
+            <Row className="g-4">
+              {latestAnnouncements.map((ann) => (
+                <Col key={ann.id} xs={12} sm={6} lg={3}>
+                  <Card className="h-100 border-0 shadow-sm hover-lift home-announcement-card">
+                    <Card.Body className="d-flex flex-column">
+                      <div className="mb-2">
+                        <Badge bg={ANNOUNCEMENT_CATEGORY_COLORS[ann.category] || 'secondary'}>
+                          {ANNOUNCEMENT_CATEGORY_LABELS[ann.category] || ann.category}
+                        </Badge>
+                      </div>
+                      <Card.Title className="fs-6 fw-semibold">{ann.title}</Card.Title>
+                      <Card.Text className="text-muted small flex-grow-1 home-announcement-body">
+                        {ann.body.length > 100 ? `${ann.body.slice(0, 100)}…` : ann.body}
+                      </Card.Text>
+                      <div className="text-muted small mt-2">
+                        <i className="bi bi-calendar3 me-1" />
+                        {ann.createdAt?.toDate
+                          ? formatISTDate(ann.createdAt.toDate())
+                          : formatISTDate(ann.createdAt)}
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+            <div className="text-center mt-4">
+              <Button as={Link} to="/notifications" variant="outline-primary">
+                View All <i className="bi bi-arrow-right ms-1" />
+              </Button>
+            </div>
+          </Container>
+        </div>
+      )}
 
       {/* Stats Section - NCC by the Numbers */}
       <AnimatedSection as="div" effect="fade" className="bg-light py-5" delay={0.1}>

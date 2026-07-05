@@ -13,6 +13,7 @@ import {
   Parades,
   Photos,
   Ranks,
+  Recruitment,
   Resources,
   SocialService,
   Videos,
@@ -48,6 +49,7 @@ export const publicRoutes = (
     <Route path="/alumni" element={<Alumni />} />
     <Route path="/contact" element={<Contact />} />
     <Route path="/notifications" element={<Notifications />} />
+    <Route path="/recruitment" element={<Recruitment />} />
     <Route path="/unauthorized" element={<Unauthorized />} />
     <Route path="*" element={<NotFound />} />
   </>

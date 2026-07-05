@@ -54,7 +54,7 @@ const AppNavbar: React.FC = () => {
       <Container className="position-relative">
         <Navbar.Brand as={Link} to="/" onClick={closeMenu}>
           <i className="bi bi-shield-fill me-2"></i>
-          NCC Army Wing
+          TCE NCC Army
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" className="ms-auto" />
         <Navbar.Collapse id="basic-navbar-nav">

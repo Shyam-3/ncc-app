@@ -12,7 +12,9 @@ import {
   ROMAN_YEAR_MAP,
 } from '../../shared/config/constants';
 import { db } from '../../shared/config/firebase';
+import { checkUniqueField, updateTakenNumberBatch } from '../../shared/utils/dbValidators';
 import { useAuth } from '@/features/auth/AuthContext';
+import { writeBatch } from 'firebase/firestore';
 
 interface UserProfile {
   name: string;
@@ -189,7 +191,13 @@ const Profile: React.FC = () => {
     }
 
     setEditErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    const isValid = Object.keys(nextErrors).length === 0;
+    if (!isValid) {
+      setTimeout(() => {
+        document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+    return isValid;
   };
 
   const handleSaveChanges = async () => {
@@ -199,7 +207,37 @@ const Profile: React.FC = () => {
     setSaving(true);
     try {
       if (isAdminEditor) {
-        await updateDoc(doc(db, 'users', currentUser.uid), {
+        const [isRegimentalUnique, isRegisterUnique, isRollUnique] = await Promise.all([
+          checkUniqueField('regimentalNumber', editForm.regimentalNumber, currentUser.uid),
+          checkUniqueField('registerNumber', editForm.registerNumber, currentUser.uid),
+          checkUniqueField('rollNo', editForm.rollNo, currentUser.uid),
+        ]);
+
+        const uniqueErrors: Record<string, string> = {};
+        if (!isRegimentalUnique) {
+          uniqueErrors.regimentalNumber = 'This Regimental Number is already in use';
+        }
+        if (!isRegisterUnique) {
+          uniqueErrors.registerNumber = 'This Register Number is already in use';
+        }
+        if (!isRollUnique) {
+          uniqueErrors.rollNo = 'This Roll Number is already in use';
+        }
+
+        if (Object.keys(uniqueErrors).length > 0) {
+          setEditErrors(prev => ({ ...prev, ...uniqueErrors }));
+          toast.error('One or more identification numbers are already in use');
+          setTimeout(() => {
+            document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+          setSaving(false);
+          return;
+        }
+
+        const batch = writeBatch(db);
+        const userRef = doc(db, 'users', currentUser.uid);
+
+        batch.update(userRef, {
           name: editForm.name,
           regimentalNumber: editForm.regimentalNumber,
           dateOfEnrollment: editForm.dateOfEnrollment,
@@ -215,6 +253,13 @@ const Profile: React.FC = () => {
           fatherName: editForm.fatherName || '',
           address: editForm.address || '',
         });
+
+        // Update the taken numbers registry
+        updateTakenNumberBatch(batch, 'regimentalNumber', profile.regimentalNumber, editForm.regimentalNumber, currentUser.uid);
+        updateTakenNumberBatch(batch, 'registerNumber', profile.registerNumber, editForm.registerNumber, currentUser.uid);
+        updateTakenNumberBatch(batch, 'rollNo', profile.rollNo, editForm.rollNo, currentUser.uid);
+
+        await batch.commit();
 
         setProfile({
           ...profile,

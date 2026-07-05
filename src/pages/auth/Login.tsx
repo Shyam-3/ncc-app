@@ -67,8 +67,8 @@ const Login: React.FC = () => {
             <Card.Body className="p-4 p-md-5">
               <div className="text-center mb-4">
                 <i className="bi bi-shield-fill text-primary login-hero-icon"></i>
-                <h2 className="mt-3">Login</h2>
-                <p className="text-muted">Access your NCC account</p>
+                <h2 className="mt-3">Cadet Login</h2>
+                <p className="text-muted">Access your NCC profile</p>
               </div>
 
               {error && <Alert variant="danger">{error}</Alert>}
@@ -78,7 +78,7 @@ const Login: React.FC = () => {
                   <Form.Label>Email Address</Form.Label>
                   <Form.Control
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Enter your student email"
                     value={email}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                     required
@@ -155,7 +155,7 @@ const Login: React.FC = () => {
 
               <div className="text-center">
                 <p className="mb-0">
-                  Don't have an account?{' '}
+                 A New Cadet?{' '}
                   <Link to="/register" className="text-decoration-none">
                     Register here
                   </Link>

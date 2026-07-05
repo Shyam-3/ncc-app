@@ -25,15 +25,6 @@ service cloud.firestore {
       return isRole('superadmin');
     }
 
-    function isMember() {
-      return isRole('member');
-    }
-
-    function isAlumni() {
-      return isAuthenticated() && 
-        exists(/databases/$(database)/documents/alumni/$(request.auth.uid));
-    }
-    
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
@@ -49,6 +40,29 @@ service cloud.firestore {
       allow update: if (isAdmin() || isSuperAdmin()) && 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
       allow delete: if isSuperAdmin() || (isAdmin() && resource.data.role != 'superadmin');
+
+      // User's read-announcements tracking (for unread count)
+      match /readAnnouncements/{announcementId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if false;
+      }
+    }
+
+    // Public Registry for unique ID numbers (Regimental, Register, Roll)
+    // Document ID is the number itself (e.g., 'TN20SDA123456')
+    match /takenNumbers/{numberId} {
+      // Anyone can read this collection to check for duplicates securely
+      allow read: if true;
+      // User can create/delete their own numbers, or Admins can manage them
+      allow create, delete: if isAuthenticated() && (
+        request.resource.data.uid == request.auth.uid || 
+        resource.data.uid == request.auth.uid || 
+        isAdmin() || 
+        isSuperAdmin()
+      );
+      // Updates are not allowed; if a number changes, delete old and create new
+      allow update: if false;
     }
 
     // Pending cadet registrations awaiting approval
@@ -131,12 +145,21 @@ service cloud.firestore {
       allow write: if isAdmin() || isSuperAdmin();
     }
 
-    // Announcements (public feed)
+    // Announcements — visibility-based read access
     match /announcements/{announcementId} {
-      allow read: if true; // public announcements
+      // Public announcements readable by anyone; auth_only by authenticated users
+      allow read: if resource.data.visibility == 'public' || isAuthenticated();
       allow create: if isAdmin() || isSuperAdmin();
       allow update: if isAdmin() || isSuperAdmin();
       allow delete: if isAdmin() || isSuperAdmin();
+
+      // Read tracking subcollection (who has read this announcement)
+      match /reads/{userId} {
+        allow read: if isAdmin() || isSuperAdmin();
+        allow create: if isAuthenticated() && request.auth.uid == userId;
+        allow update: if false;
+        allow delete: if isAdmin() || isSuperAdmin();
+      }
     }
     
     // Parade logs
@@ -177,8 +200,9 @@ service cloud.firestore {
     }
 
     // App settings (configurable by admins — rollover date, retention, etc.)
+    // Recruitment settings need public read for the recruitment page
     match /settings/{docId} {
-      allow read: if isAdmin() || isSuperAdmin();
+      allow read: if docId == 'recruitment' || isAdmin() || isSuperAdmin();
       allow write: if isAdmin() || isSuperAdmin();
     }
 

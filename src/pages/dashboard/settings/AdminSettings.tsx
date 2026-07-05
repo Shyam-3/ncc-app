@@ -25,6 +25,7 @@ import {
   Tab,
   Tabs,
 } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { triggerAuthCleanup } from '@/shared/utils/githubActions';
 import './AdminSettings.css';
@@ -45,6 +46,11 @@ interface AppConfig {
 interface GithubConfig {
   token: string;
   repo: string;
+}
+
+interface RecruitmentConfig {
+  sdFormUrl: string;
+  swFormUrl: string;
 }
 
 interface RolloverSummary {
@@ -102,13 +108,6 @@ interface RolloverPlanItem {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getRetentionExpiry(months?: number): string | null {
-  if (!months || months <= 0) return null;
-  const d = new Date();
-  d.setMonth(d.getMonth() + months);
-  return d.toISOString();
-}
-
 interface RollbackSnapshot {
   id: string;
   timestamp: string;
@@ -149,6 +148,7 @@ const DEFAULT_CONFIG: AppConfig = {
 
 const AdminSettings: React.FC = () => {
   const { userProfile } = useAuth();
+  const navigate = useNavigate();
 
   // Settings state
   const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
@@ -180,6 +180,13 @@ const AdminSettings: React.FC = () => {
   const [showGithubUnlockModal, setShowGithubUnlockModal] = useState(false);
   const [showGithubSaveModal, setShowGithubSaveModal] = useState(false);
 
+  // Recruitment settings state
+  const [recruitmentConfig, setRecruitmentConfig] = useState<RecruitmentConfig>({ sdFormUrl: '', swFormUrl: '' });
+  const [isRecruitmentUnlocked, setIsRecruitmentUnlocked] = useState(false);
+  const [savingRecruitment, setSavingRecruitment] = useState(false);
+  const [showRecruitmentUnlockModal, setShowRecruitmentUnlockModal] = useState(false);
+  const [showRecruitmentSaveModal, setShowRecruitmentSaveModal] = useState(false);
+
   // ─── Load settings ───────────────────────────────────────────────────────
 
   const loadConfig = useCallback(async () => {
@@ -192,6 +199,10 @@ const AdminSettings: React.FC = () => {
       const ghSnap = await getDoc(doc(db, 'settings', 'github'));
       if (ghSnap.exists()) {
         setGithubConfig(ghSnap.data() as GithubConfig);
+      }
+      const recruitSnap = await getDoc(doc(db, 'settings', 'recruitment'));
+      if (recruitSnap.exists()) {
+        setRecruitmentConfig(recruitSnap.data() as RecruitmentConfig);
       }
     } catch (e) {
       console.error('Failed to load settings:', e);
@@ -281,6 +292,27 @@ const AdminSettings: React.FC = () => {
       toast.error('Failed to save GitHub settings');
     } finally {
       setSavingGithubConfig(false);
+    }
+  };
+
+  // ─── Save recruitment settings ───────────────────────────────────────
+
+  const handleSaveRecruitmentClick = () => {
+    setShowRecruitmentSaveModal(true);
+  };
+
+  const handleSaveRecruitmentConfig = async () => {
+    setShowRecruitmentSaveModal(false);
+    setSavingRecruitment(true);
+    try {
+      await setDoc(doc(db, 'settings', 'recruitment'), recruitmentConfig, { merge: true });
+      setIsRecruitmentUnlocked(false);
+      toast.success('Recruitment settings saved');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to save recruitment settings');
+    } finally {
+      setSavingRecruitment(false);
     }
   };
 
@@ -487,7 +519,6 @@ const AdminSettings: React.FC = () => {
             }
 
             case 'delete_graduated': {
-              const userData = snapshotUsers[item.cadetId] || {};
               batch.delete(userRef);
               batch.delete(alumniRef);
               batch.delete(doc(db, 'cadets', item.cadetId));
@@ -688,14 +719,22 @@ const AdminSettings: React.FC = () => {
   }
 
   return (
-    <Container className="py-4 admin-settings">
-      <h2 className="mb-1">
-        <i className="bi bi-gear me-2" />
-        Admin Settings
-      </h2>
-      <p className="text-muted mb-4">Configure automation and manage year rollover</p>
-
-      <Tabs defaultActiveKey="automation" id="admin-settings-tabs" className="mb-4">
+    <Container className="py-5 admin-settings">
+      <Card className="shadow border-0">
+        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-gear fs-4 me-2" />
+            <div>
+              <h3 className="mb-0">Admin Settings</h3>
+              <div className="small opacity-75">Configure automation and manage year rollover</div>
+            </div>
+          </div>
+          <Button variant="light" size="sm" onClick={() => navigate('/dashboard')}>
+            <i className="bi bi-arrow-left me-1"></i> Back
+          </Button>
+        </Card.Header>
+        <Card.Body className="bg-light">
+          <Tabs defaultActiveKey="automation" id="admin-settings-tabs" className="mb-4">
         <Tab eventKey="automation" title="Automation">
           {/* ── Settings Section ──────────────────────────────────────────────── */}
           <div className="settings-section mt-3">
@@ -948,7 +987,10 @@ const AdminSettings: React.FC = () => {
                         <td>{item.currentYear}</td>
                         <td>{item.currentNccYear}</td>
                         <td>
-                          <Badge bg={item.userRole === 'admin' ? 'info' : item.userRole === 'superadmin' ? 'dark' : 'light'} text={item.userRole === 'member' ? 'dark' : undefined}>
+                          <Badge 
+                            bg={item.userRole === 'admin' ? 'info' : item.userRole === 'superadmin' ? 'dark' : item.userRole === 'alumni' ? 'secondary' : 'light'} 
+                            text={(item.userRole === 'member' || item.userRole === 'light') ? 'dark' : undefined}
+                          >
                             {item.userRole}
                           </Badge>
                         </td>
@@ -1045,7 +1087,91 @@ const AdminSettings: React.FC = () => {
         </Card>
       </div>
       </Tab>
+
+        {/* ── Recruitment Tab ──────────────────────────────────────────────── */}
+        <Tab eventKey="recruitment" title="Recruitment">
+          <div className="settings-section mt-3">
+            <Card>
+              <Card.Header className="bg-white">
+                <i className="bi bi-megaphone me-2" />
+                Recruitment Form Links
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted small mb-3">
+                  Configure the Google Form URLs for SD and SW recruitment. These URLs will be shown to applicants when they click "Apply Now" on a recruitment announcement.
+                </p>
+                <Row className="g-3">
+                  <Col md={6}>
+                    <Form.Label className="small fw-semibold">SD (Senior Division) Form URL</Form.Label>
+                    <div className="d-flex gap-2">
+                      <Form.Control
+                        type="url"
+                        size="sm"
+                        placeholder="https://forms.google.com/..."
+                        value={recruitmentConfig.sdFormUrl}
+                        disabled={Boolean(recruitmentConfig.sdFormUrl || recruitmentConfig.swFormUrl) && !isRecruitmentUnlocked}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setRecruitmentConfig((c) => ({ ...c, sdFormUrl: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                      Google Form link for male cadets (Senior Division)
+                    </Form.Text>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Label className="small fw-semibold">SW (Senior Wing) Form URL</Form.Label>
+                    <div className="d-flex gap-2">
+                      <Form.Control
+                        type="url"
+                        size="sm"
+                        placeholder="https://forms.google.com/..."
+                        value={recruitmentConfig.swFormUrl}
+                        disabled={Boolean(recruitmentConfig.sdFormUrl || recruitmentConfig.swFormUrl) && !isRecruitmentUnlocked}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setRecruitmentConfig((c) => ({ ...c, swFormUrl: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                      Google Form link for female cadets (Senior Wing)
+                    </Form.Text>
+                  </Col>
+                </Row>
+                <div className="mt-3 d-flex gap-2">
+                  {Boolean(recruitmentConfig.sdFormUrl || recruitmentConfig.swFormUrl) && !isRecruitmentUnlocked && (
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={() => setShowRecruitmentUnlockModal(true)}
+                    >
+                      <i className="bi bi-pencil me-1" />
+                      Modify URLs
+                    </Button>
+                  )}
+                  {(isRecruitmentUnlocked || (!recruitmentConfig.sdFormUrl && !recruitmentConfig.swFormUrl)) && (
+                    <Button
+                      size="sm"
+                      variant="success"
+                      onClick={handleSaveRecruitmentClick}
+                      disabled={savingRecruitment}
+                    >
+                      {savingRecruitment ? (
+                        <Spinner animation="border" size="sm" className="me-1" />
+                      ) : (
+                        <i className="bi bi-check-lg me-1" />
+                      )}
+                      Save Recruitment Settings
+                    </Button>
+                  )}
+                </div>
+              </Card.Body>
+            </Card>
+          </div>
+        </Tab>
       </Tabs>
+        </Card.Body>
+      </Card>
 
       {/* ── Execute Confirmation Modal ────────────────────────────────────── */}
       <Modal show={showExecuteModal} onHide={() => setShowExecuteModal(false)} centered>
@@ -1191,6 +1317,47 @@ const AdminSettings: React.FC = () => {
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowGithubSaveModal(false)}>Cancel</Button>
           <Button variant="success" onClick={handleSaveGithubConfig}>
+            Yes, Save Settings
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── Recruitment Unlock Modal ───────────────────────────────────────── */}
+      <Modal show={showRecruitmentUnlockModal} onHide={() => setShowRecruitmentUnlockModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-pencil-square text-primary me-2" />
+            Modify Recruitment URLs
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to modify the recruitment form URLs?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowRecruitmentUnlockModal(false)}>Cancel</Button>
+          <Button variant="primary" onClick={() => {
+            setIsRecruitmentUnlocked(true);
+            setShowRecruitmentUnlockModal(false);
+          }}>
+            Yes, Modify
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── Recruitment Save Confirmation Modal ────────────────────────────── */}
+      <Modal show={showRecruitmentSaveModal} onHide={() => setShowRecruitmentSaveModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-save text-success me-2" />
+            Confirm Recruitment Settings
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to save these recruitment form URLs? Applicants will be redirected to these links when they click "Apply Now".
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowRecruitmentSaveModal(false)}>Cancel</Button>
+          <Button variant="success" onClick={handleSaveRecruitmentConfig}>
             Yes, Save Settings
           </Button>
         </Modal.Footer>

@@ -6,3 +6,86 @@
 .home-feature-icon {
   font-size: 48px;
 }
+
+/* ── Recruitment Banner ───────────────────────────────────────────────────── */
+.home-recruitment-banner {
+  position: relative;
+  background: linear-gradient(135deg, #0a1628 0%, #0d2b5e 50%, #14396d 100%);
+  color: #fff;
+  padding: 3rem 0;
+  overflow: hidden;
+}
+
+.home-recruitment-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  padding: 3px;
+  background: linear-gradient(135deg, #ffd700, #ff6b35, #ffd700);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: recruitmentGlow 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes recruitmentGlow {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+.home-recruitment-banner::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.15), 0 0 60px rgba(255, 107, 53, 0.1);
+  animation: recruitmentGlow 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.home-recruitment-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.home-recruitment-body {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.home-recruitment-expiry {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin-bottom: 0;
+}
+
+.home-recruitment-cta {
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-recruitment-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+}
+
+/* ── Announcement Cards ───────────────────────────────────────────────────── */
+.home-announcement-card {
+  transition: transform 0.2s ease;
+}
+
+.home-announcement-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+

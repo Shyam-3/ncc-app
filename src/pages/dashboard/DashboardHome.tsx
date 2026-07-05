@@ -5,11 +5,13 @@ import { Link } from 'react-router-dom';
 import { AnimatedSection } from '../../components';
 import { db } from '../../shared/config/firebase';
 import { useAuth } from '@/features/auth/AuthContext';
+import { listAnnouncementsForUser, getUserReadIds } from '@/features/announcements/service';
 import './DashboardHome.css';
 
 const Dashboard: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const [pendingCount, setPendingCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   const isAdmin = userProfile?.role === 'admin';
   const isSuperAdmin = userProfile?.role === 'superadmin';
 
@@ -22,14 +24,14 @@ const Dashboard: React.FC = () => {
             getDocs(query(collection(db, 'pendingCadets'))),
             getDocs(query(collection(db, 'users')))
           ]);
-          
+
           const existingEmails = new Set(
             usersSnap.docs.map(d => d.data().email?.toLowerCase())
           );
           const actualPending = pendingSnap.docs.filter(
             d => !existingEmails.has(d.data().email?.toLowerCase())
           ).length;
-          
+
           setPendingCount(actualPending);
         } catch (error) {
           console.error('Failed to fetch pending count:', error);
@@ -40,11 +42,35 @@ const Dashboard: React.FC = () => {
     fetchPendingCount();
   }, [isAdmin, isSuperAdmin]);
 
+  // Fetch unread announcement count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!currentUser?.uid) return;
+      try {
+        const [announcements, readIds] = await Promise.all([
+          listAnnouncementsForUser(),
+          getUserReadIds(currentUser.uid),
+        ]);
+        const unread = announcements.filter((a) => {
+          if (!a.id || readIds.has(a.id)) return false;
+          // Admins: exclude own announcements from unread count
+          if ((isAdmin || isSuperAdmin) && a.createdBy === currentUser.uid) return false;
+          return true;
+        }).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+  }, [currentUser?.uid, isAdmin, isSuperAdmin]);
+
   return (
     <Container className="py-5">
       <AnimatedSection effect="fade">
         <h2 className="mb-4">
-          Welcome, {userProfile?.name || 'Cadet'}!
+          Welcome, {userProfile?.name || 'Cadet'} !
         </h2>
       </AnimatedSection>
 
@@ -65,6 +91,7 @@ const Dashboard: React.FC = () => {
             </Card>
           </Col>
         )}
+
         {(isAdmin || isSuperAdmin) && (
           <Col xs={12} sm={6} md={4} lg={3} xl={3}>
             <Card className="text-center h-100 shadow-sm hover-lift">
@@ -126,7 +153,9 @@ const Dashboard: React.FC = () => {
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-bell text-warning dashboard-home-icon"></i>
-                    <h3 className="mt-3">Announcements</h3>
+                    <h3 className="mt-3">
+                      Announcements
+                    </h3>
                     <p className="text-muted small">Publish updates</p>
                   </div>
                   <Button as={Link} to="/admin/announcements" variant="warning" className="mt-2">
@@ -161,7 +190,7 @@ const Dashboard: React.FC = () => {
                   <div>
                     <i className="bi bi-file-earmark-text text-secondary dashboard-home-icon"></i>
                     <h3 className="mt-3">Reports</h3>
-                    <p className="text-muted small">Doc generators & templates</p>
+                    <p className="text-muted small">Document generator</p>
                   </div>
                   <Button as={Link} to="/admin/reports" variant="secondary" className="mt-2">
                     Open
@@ -188,20 +217,44 @@ const Dashboard: React.FC = () => {
         )}
 
         {(isAdmin || isSuperAdmin) && (
-          <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-            <Card className="text-center h-100 shadow-sm hover-lift">
-              <Card.Body className="d-flex flex-column justify-content-between">
-                <div>
-                  <i className="bi bi-gear text-secondary dashboard-home-icon"></i>
-                  <h3 className="mt-3">Settings</h3>
-                  <p className="text-muted small">System config</p>
-                </div>
-                <Button as={Link} to="/admin/settings" variant="secondary" className="mt-2">
-                  Configure
-                </Button>
-              </Card.Body>
-            </Card>
-          </Col>
+          <>
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+              <Card className="text-center h-100 shadow-sm hover-lift">
+                <Card.Body className="d-flex flex-column justify-content-between">
+                  <div>
+                    <i className="bi bi-gear text-secondary dashboard-home-icon"></i>
+                    <h3 className="mt-3">Settings</h3>
+                    <p className="text-muted small">App configuration</p>
+                  </div>
+                  <Button as={Link} to="/admin/settings" variant="secondary" className="mt-2">
+                    Configure
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+              <Card className="text-center h-100 shadow-sm hover-lift">
+                <Card.Body className="d-flex flex-column justify-content-between">
+                  <div>
+                    <i className="bi bi-bell text-dark dashboard-home-icon"></i>
+                    <h3 className="mt-3">
+                      Notifications
+                      {unreadCount > 0 && (
+                        <Badge bg="danger" className="ms-2 dashboard-pending-badge">
+                          {unreadCount}
+                        </Badge>
+                      )}
+                    </h3>
+                    <p className="text-muted small">View Updates</p>
+                  </div>
+                  <Button as={Link} to="/notifications" variant="dark" className="mt-2">
+                    View
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          </>
         )}
 
         {(!isAdmin && !isSuperAdmin) && (
@@ -288,11 +341,18 @@ const Dashboard: React.FC = () => {
                 <Card.Body className="d-flex flex-column justify-content-between">
                   <div>
                     <i className="bi bi-bell text-dark dashboard-home-icon"></i>
-                    <h3 className="mt-3">Notifications</h3>
-                    <p className="text-muted small">Announcements</p>
+                    <h3 className="mt-3">
+                      Notifications
+                      {unreadCount > 0 && (
+                        <Badge bg="danger" className="ms-2 dashboard-pending-badge">
+                          {unreadCount}
+                        </Badge>
+                      )}
+                    </h3>
+                    <p className="text-muted small">View Updates</p>
                   </div>
                   <Button as={Link} to="/notifications" variant="dark" className="mt-2">
-                    View All
+                    View
                   </Button>
                 </Card.Body>
               </Card>

@@ -160,7 +160,19 @@ export function AdminDashboard({ sessions, cadets, loading = false }: AdminDashb
   }
 
   return (
-    <div className="admin-dashboard">
+    <div className="admin-dashboard py-5 container">
+      <Card className="shadow border-0">
+        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-clipboard-data fs-4 me-2" />
+            <h3 className="mb-0">Attendance Dashboard</h3>
+          </div>
+          <Button variant="light" size="sm" onClick={() => navigate('/dashboard')}>
+            <i className="bi bi-arrow-left me-1"></i> Back
+          </Button>
+        </Card.Header>
+        <Card.Body className="bg-light">
+
       {/* Filters */}
       <Card className="mb-4">
         <Card.Body>
@@ -346,6 +358,8 @@ export function AdminDashboard({ sessions, cadets, loading = false }: AdminDashb
             </tbody>
             </Table>
           )}
+        </Card.Body>
+      </Card>
         </Card.Body>
       </Card>
     </div>

@@ -33,7 +33,7 @@ const Footer: React.FC = () => {
             <h6>Contact Info</h6>
             <p className="text-light mb-1">
               <i className="bi bi-geo-alt me-2"></i>
-              College Campus
+              TCE, Madurai
             </p>
             <p className="text-light mb-1">
               <i className="bi bi-envelope me-2"></i>
@@ -49,7 +49,7 @@ const Footer: React.FC = () => {
         <Row>
           <Col className="text-center text-white-50">
             <small>
-              &copy; {currentYear} NCC Army Wing. All rights reserved.
+              &copy; {currentYear} TCE NCC Army . All rights reserved.
             </small>
           </Col>
         </Row>

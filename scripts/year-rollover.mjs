@@ -117,26 +117,11 @@ async function main() {
   console.log(`   5-year depts     : ${FIVE_YEAR_DEPARTMENTS.join(', ')}`);
   console.log();
 
-  // 1.5 Check dynamic schedule if triggered automatically
-  const isSchedule = process.env.GITHUB_EVENT_NAME === 'schedule';
-  if (isSchedule && !DRY_RUN) {
-    console.log('⏰ Triggered by hourly schedule. Checking dynamic schedule...');
-    if (!config.nextRolloverDate) {
-      console.log('   ⏭️ No nextRolloverDate configured in settings. Exiting.');
-      process.exit(0);
-    }
-    const targetDate = new Date(config.nextRolloverDate);
-    if (new Date() < targetDate) {
-      console.log(`   ⏭️ Scheduled time (${targetDate.toISOString()}) has not arrived yet. Exiting.`);
-      process.exit(0);
-    }
-    if (config.rolloverCompletedForTarget) {
-      console.log('   ⏭️ Rollover already completed for the target date. Exiting.');
-      process.exit(0);
-    }
-    console.log('   ✅ Time arrived! Proceeding with automated rollover...');
-  } else if (!isSchedule && !DRY_RUN) {
-    console.log('🧑‍💻 Triggered manually (workflow_dispatch). Bypassing schedule checks.');
+  // 1.5 Execution Mode
+  if (DRY_RUN) {
+    console.log('🧑‍💻 Triggered manually as DRY RUN (preview only).');
+  } else {
+    console.log('🧑‍💻 Triggered for FULL EXECUTION.');
   }
 
   // 2. Read all users & alumni
@@ -332,6 +317,15 @@ async function main() {
           });
           batch.delete(userRef);
           batch.delete(cadetRef);
+          
+          // Free up taken numbers
+          const regId = userData.regimentalNumber ? `regimentalNumber_${userData.regimentalNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}` : null;
+          const regNumId = userData.registerNumber ? `registerNumber_${userData.registerNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}` : null;
+          const rollId = userData.rollNo ? `rollNo_${userData.rollNo.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}` : null;
+          if (regId) batch.delete(db.doc(`takenNumbers/${regId}`));
+          if (regNumId) batch.delete(db.doc(`takenNumbers/${regNumId}`));
+          if (rollId) batch.delete(db.doc(`takenNumbers/${rollId}`));
+          
           break;
         }
 
@@ -352,6 +346,14 @@ async function main() {
             deletedAt: new Date().toISOString(),
             reason: 'academic_complete_rollover',
           });
+          
+          // Free up taken numbers
+          const regId = userData.regimentalNumber ? `regimentalNumber_${userData.regimentalNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}` : null;
+          const regNumId = userData.registerNumber ? `registerNumber_${userData.registerNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}` : null;
+          const rollId = userData.rollNo ? `rollNo_${userData.rollNo.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}` : null;
+          if (regId) batch.delete(db.doc(`takenNumbers/${regId}`));
+          if (regNumId) batch.delete(db.doc(`takenNumbers/${regNumId}`));
+          if (rollId) batch.delete(db.doc(`takenNumbers/${rollId}`));
           break;
         }
 

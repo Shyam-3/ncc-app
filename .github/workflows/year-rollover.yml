@@ -1,9 +1,6 @@
 name: NCC Year Rollover
 
 on:
-  schedule:
-    - cron: '0 * * * *'    # Every hour (0th minute)
-  
   workflow_dispatch:
     inputs:
       dry_run:
@@ -22,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Install dependencies
         run: cd scripts && npm install
       - name: Run rollover

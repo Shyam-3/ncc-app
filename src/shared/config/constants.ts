@@ -198,3 +198,43 @@ export const ATTENDANCE_THRESHOLDS = {
   GOOD: 85,     // Above this is good
   EXCELLENT: 95 // Above this is excellent
 } as const;
+
+// Announcement categories
+export const ANNOUNCEMENT_CATEGORIES = {
+  CELEBRATIONS: 'celebrations',
+  CAMPS: 'camps',
+  ACTIVITIES: 'activities',
+  PARADES: 'parades',
+  RECRUITMENT: 'recruitment',
+} as const;
+
+export type AnnouncementCategory = typeof ANNOUNCEMENT_CATEGORIES[keyof typeof ANNOUNCEMENT_CATEGORIES];
+
+export const ANNOUNCEMENT_CATEGORY_LABELS: Record<AnnouncementCategory, string> = {
+  celebrations: '🎉 Celebrations',
+  camps: '⛺ Camps',
+  activities: '🌳 Activities',
+  parades: '🎖️ Parades',
+  recruitment: '📢 Recruitment',
+};
+
+export const ANNOUNCEMENT_CATEGORY_COLORS: Record<AnnouncementCategory, string> = {
+  celebrations: 'warning',
+  camps: 'success',
+  activities: 'info',
+  parades: 'primary',
+  recruitment: 'danger',
+};
+
+// Announcement visibility
+export const ANNOUNCEMENT_VISIBILITY = {
+  PUBLIC: 'public',
+  AUTH_ONLY: 'auth_only',
+} as const;
+
+export type AnnouncementVisibility = typeof ANNOUNCEMENT_VISIBILITY[keyof typeof ANNOUNCEMENT_VISIBILITY];
+
+export const ANNOUNCEMENT_VISIBILITY_LABELS: Record<AnnouncementVisibility, string> = {
+  public: '🌐 All Users (Public)',
+  auth_only: '🔒 Cadets & ANOs Only',
+};

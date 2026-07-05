@@ -10,6 +10,7 @@ import {
   orderBy,
   query,
   setDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +33,7 @@ import toast from 'react-hot-toast';
 import { triggerAuthCleanup } from '@/shared/utils/githubActions';
 import { TablePaginationFooter } from '@/components';
 import { ROMAN_YEAR_MAP } from '@/shared/config/constants';
+import { deleteTakenNumberBatch } from '@/shared/utils/dbValidators';
 import './UserManagement.css';
 
 type UserRole = 'member' | 'admin' | 'superadmin' | 'alumni';
@@ -250,13 +252,25 @@ const UserManagement: React.FC = () => {
           // Clean up secondary app
           await deleteApp(secondaryApp);
         } catch (authError: any) {
-          console.warn('Could not delete Firebase Auth account (may not exist):', authError.message);
-          // Continue with Firestore cleanup even if Auth deletion fails
+          console.error('Failed to delete pending Auth account:', authError);
+          // If the auth account was not found, we can still proceed to delete the pending document
+          if (authError.code !== 'auth/user-not-found') {
+            toast.error('Failed to delete user account: ' + authError.message);
+            return;
+          }
         }
       }
 
       // Delete from pending collection
       await deleteDoc(doc(db, 'pendingCadets', candidate.id));
+
+      // Free up taken numbers
+      const batch = writeBatch(db);
+      deleteTakenNumberBatch(batch, 'regimentalNumber', candidate.regimentalNumber);
+      deleteTakenNumberBatch(batch, 'registerNumber', candidate.registerNumber);
+      deleteTakenNumberBatch(batch, 'rollNo', candidate.rollNo);
+      await batch.commit();
+
       toast.success('Registration rejected and account removed');
       await fetchPending();
     } catch (e) {
@@ -400,6 +414,13 @@ const UserManagement: React.FC = () => {
         deletedAt: new Date().toISOString(),
       });
       
+      // Free up taken numbers
+      const batch = writeBatch(db);
+      deleteTakenNumberBatch(batch, 'regimentalNumber', u.regimentalNumber);
+      deleteTakenNumberBatch(batch, 'registerNumber', u.registerNumber);
+      deleteTakenNumberBatch(batch, 'rollNo', u.rollNo);
+      await batch.commit();
+
       // Trigger GitHub Action to clean up auth instantly
       triggerAuthCleanup();
       

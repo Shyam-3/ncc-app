@@ -3,6 +3,7 @@ export { default as Alumni } from './Alumni';
 export { default as Contact } from './Contact';
 export { default as Home } from './Home';
 export { default as Notifications } from './Notifications';
+export { default as Recruitment } from './Recruitment';
 export { default as Resources } from './Resources';
 export * from './activities';
 export * from './cadets';

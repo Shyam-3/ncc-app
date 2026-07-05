@@ -2,7 +2,7 @@
 import { initializeApp } from 'firebase/app';
 // Analytics (optional)
 import { getAnalytics, isSupported } from 'firebase/analytics';
-import { browserLocalPersistence, getAuth, setPersistence } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -49,11 +49,6 @@ try {
 
 // Initialize services
 export const auth = getAuth(app);
-// Persist auth state across reloads
-setPersistence(auth, browserLocalPersistence).catch(() => {
-  // eslint-disable-next-line no-console
-  console.warn('[Firebase] Could not set auth persistence (likely in unsupported env).');
-});
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

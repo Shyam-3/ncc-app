@@ -1,13 +1,15 @@
-import { ACADEMIC_YEARS, NCC_YEARS, DEPARTMENT_DEFS, NCC_RANKS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
-import { useNavigate } from 'react-router-dom';
-import { db } from '@/shared/config/firebase';
+import { calculateAge, checkUniqueField, deleteTakenNumberBatch, updateTakenNumberBatch } from '@/shared/utils/dbValidators';
 import { formatISTDate } from '@/shared/utils/dateTime';
-import { collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
-import React, { useEffect, useMemo, useState } from 'react';
+import { collection, doc, getDocs, orderBy, query, updateDoc, writeBatch } from 'firebase/firestore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { TablePaginationFooter } from '@/components';
 import './CadetManagement.css';
+
+const maxDobDate = new Date();
+maxDobDate.setFullYear(maxDobDate.getFullYear() - 17);
+const maxDobString = maxDobDate.toISOString().split('T')[0];
 
 type UserRole = 'member' | 'admin' | 'superadmin';
 
@@ -218,7 +220,14 @@ const CadetManagement: React.FC = () => {
     const nextErrors: Record<string, string> = {};
 
     if (!cadetEditForm.name.trim()) nextErrors.name = 'Name is required';
-    if (!cadetEditForm.dateOfBirth) nextErrors.dateOfBirth = 'Date of birth is required';
+    if (!cadetEditForm.dateOfBirth) {
+      nextErrors.dateOfBirth = 'Date of birth is required';
+    } else {
+      const age = calculateAge(cadetEditForm.dateOfBirth);
+      if (age < 17) {
+        nextErrors.dateOfBirth = 'Cadets must be at least 17 years old';
+      }
+    }
     if (!cadetEditForm.division) nextErrors.division = 'Division is required';
     if (!cadetEditForm.regimentalNumber.trim()) nextErrors.regimentalNumber = 'Regimental number is required';
     if (!cadetEditForm.dateOfEnrollment) nextErrors.dateOfEnrollment = 'Date of enrollment is required';
@@ -241,7 +250,13 @@ const CadetManagement: React.FC = () => {
     if (!cadetEditForm.bloodGroup.trim()) nextErrors.bloodGroup = 'Blood group is required';
 
     setCadetEditErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    const isValid = Object.keys(nextErrors).length === 0;
+    if (!isValid) {
+      setTimeout(() => {
+        document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+    return isValid;
   };
 
   const requestSave = () => {
@@ -254,7 +269,32 @@ const CadetManagement: React.FC = () => {
     if (!validateCadetEdit()) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'users', cadetView.uid), {
+      const [isRegimentalUnique, isRegisterUnique, isRollUnique] = await Promise.all([
+        checkUniqueField('regimentalNumber', cadetEditForm.regimentalNumber, cadetView.uid),
+        checkUniqueField('registerNumber', cadetEditForm.registerNumber, cadetView.uid),
+        checkUniqueField('rollNo', cadetEditForm.rollNo, cadetView.uid),
+      ]);
+
+      const uniqueErrors: Record<string, string> = {};
+      if (!isRegimentalUnique) uniqueErrors.regimentalNumber = 'This Regimental Number is already in use';
+      if (!isRegisterUnique) uniqueErrors.registerNumber = 'This Register Number is already in use';
+      if (!isRollUnique) uniqueErrors.rollNo = 'This Roll Number is already in use';
+
+      if (Object.keys(uniqueErrors).length > 0) {
+        setCadetEditErrors(prev => ({ ...prev, ...uniqueErrors }));
+        toast.error('One or more identification numbers are already in use');
+        setTimeout(() => {
+          document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        setSaving(false);
+        setConfirmSave(false);
+        return;
+      }
+
+      const batch = writeBatch(db);
+      const userRef = doc(db, 'users', cadetView.uid);
+
+      batch.update(userRef, {
         name: cadetEditForm.name,
         dateOfBirth: cadetEditForm.dateOfBirth,
         division: cadetView.division,
@@ -273,6 +313,12 @@ const CadetManagement: React.FC = () => {
         address: cadetEditForm.address,
         lastUpdated: new Date().toISOString(),
       });
+
+      updateTakenNumberBatch(batch, 'regimentalNumber', cadetView.regimentalNumber, cadetEditForm.regimentalNumber, cadetView.uid);
+      updateTakenNumberBatch(batch, 'registerNumber', cadetView.registerNumber, cadetEditForm.registerNumber, cadetView.uid);
+      updateTakenNumberBatch(batch, 'rollNo', cadetView.rollNo, cadetEditForm.rollNo, cadetView.uid);
+
+      await batch.commit();
 
       setUsers(prev => prev.map(u => u.uid === cadetView.uid ? {
         ...u,
@@ -595,7 +641,10 @@ const CadetManagement: React.FC = () => {
                       type="date"
                       value={cadetEditForm.dateOfBirth}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('dateOfBirth', e.target.value)}
+                      isInvalid={Boolean(cadetEditErrors.dateOfBirth)}
+                      max={maxDobString}
                     />
+                    {cadetEditErrors.dateOfBirth && <Form.Text className="text-danger">{cadetEditErrors.dateOfBirth}</Form.Text>}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={6}>

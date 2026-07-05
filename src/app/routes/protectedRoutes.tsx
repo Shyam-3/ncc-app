@@ -45,14 +45,6 @@ export const protectedRoutes = (
       }
     />
     <Route
-      path="/notifications/private"
-      element={
-        <ProtectedRoute>
-          <div className="container py-5"><h2>My Notifications</h2></div>
-        </ProtectedRoute>
-      }
-    />
-    <Route
       path="/attendance"
       element={
         <ProtectedRoute requiredRoles={['member']}>

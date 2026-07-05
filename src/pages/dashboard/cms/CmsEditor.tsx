@@ -2,6 +2,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { CmsDoc, CmsSection, fetchCms, saveCms } from '@/features/cms/service';
 import React, { useEffect, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 const defaultDoc: CmsDoc = {
   title: 'About Our NCC Unit',
@@ -15,6 +16,7 @@ const CmsEditor: React.FC = () => {
   const [doc, setDoc] = useState<CmsDoc>(defaultDoc);
   const [saving, setSaving] = useState(false);
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -45,17 +47,25 @@ const CmsEditor: React.FC = () => {
 
   return (
     <Container className="py-5">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2 className="mb-0">Edit About Page</h2>
-        <div>
-          <Button variant="outline-secondary" className="me-2" onClick={addSection}>
-            <i className="bi bi-plus-circle me-1" /> Add Section
-          </Button>
-          <Button variant="primary" onClick={onSave} disabled={saving}>
-            {saving ? 'Saving…' : 'Save Changes'}
-          </Button>
-        </div>
-      </div>
+      <Card className="shadow border-0">
+        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-file-text fs-4 me-2" />
+            <h3 className="mb-0">Edit About Page</h3>
+          </div>
+          <div>
+            <Button variant="light" size="sm" className="me-2" onClick={addSection}>
+              <i className="bi bi-plus-circle me-1" /> Add Section
+            </Button>
+            <Button variant="light" size="sm" className="me-2" onClick={onSave} disabled={saving}>
+              {saving ? 'Saving…' : <><i className="bi bi-check-lg me-1" /> Save</>}
+            </Button>
+            <Button variant="light" size="sm" onClick={() => navigate('/dashboard')}>
+              <i className="bi bi-arrow-left me-1"></i> Back
+            </Button>
+          </div>
+        </Card.Header>
+        <Card.Body className="bg-light">
 
       <Card className="border-0 shadow-sm mb-3">
         <Card.Body>
@@ -101,6 +111,8 @@ const CmsEditor: React.FC = () => {
           </Col>
         ))}
       </Row>
+        </Card.Body>
+      </Card>
     </Container>
   );
 };

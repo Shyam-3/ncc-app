@@ -350,13 +350,21 @@ const ReportsTemplateManager: React.FC = () => {
   }
 
   return (
-    <Container className="py-4">
-      <Row className="mb-3">
-        <Col>
-          <h2 className="mb-1">Reports Template</h2>
-          <p className="text-muted mb-0">Create and manage custom templates. On-Duty tab uses the On-Duty template and injects dynamic values into placeholders.</p>
-        </Col>
-      </Row>
+    <Container className="py-5">
+      <Card className="shadow border-0">
+        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-file-earmark-text fs-4 me-2" />
+            <div>
+              <h3 className="mb-0">Reports Template</h3>
+              <div className="small opacity-75">Create and manage custom templates. On-Duty tab uses the On-Duty template and injects dynamic values into placeholders.</div>
+            </div>
+          </div>
+          <Button variant="light" size="sm" onClick={() => navigate('/dashboard')}>
+            <i className="bi bi-arrow-left me-1"></i> Back
+          </Button>
+        </Card.Header>
+        <Card.Body className="bg-light">
 
       {loadError && (
         <Alert variant="warning" className="mb-3">{loadError}</Alert>
@@ -368,9 +376,6 @@ const ReportsTemplateManager: React.FC = () => {
             <Card className="shadow-sm mb-3">
               <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
                 <span>Add Template</span>
-                <Button variant="light" size="sm" onClick={() => navigate(-1)}>
-                  <i className="bi bi-arrow-left me-1"></i> Back
-                </Button>
               </Card.Header>
               <Card.Body>
                 <Row className="g-2 align-items-end">
@@ -653,6 +658,8 @@ const ReportsTemplateManager: React.FC = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+        </Card.Body>
+      </Card>
     </Container>
   );
 };
