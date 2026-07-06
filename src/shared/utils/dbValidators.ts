@@ -91,8 +91,8 @@ export const updateTakenNumberBatch = (
     batch.delete(doc(db, 'takenNumbers', oldDocId));
   }
 
-  // Set the new registration
-  if (newDocId) {
+  // Set the new registration ONLY if it's different from the old one
+  if (newDocId && oldDocId !== newDocId) {
     batch.set(doc(db, 'takenNumbers', newDocId), {
       type: field,
       uid,

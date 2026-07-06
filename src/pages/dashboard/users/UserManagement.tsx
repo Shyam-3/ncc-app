@@ -777,7 +777,7 @@ const UserManagement: React.FC = () => {
             User Management
           </h3>
           <div>
-            {isSuperAdmin() && (
+            {isAnoUser(userProfile) && (
               <Button variant="danger" size="sm" onClick={() => setShowAnoModal(true)} className="me-2">
                 <i className="bi bi-person-plus me-1"></i> Add ANO
               </Button>

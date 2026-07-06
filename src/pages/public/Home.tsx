@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Badge, Button, Card, Carousel, Col, Container, Row } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AnimatedSection } from '../../components';
-import { useAuth } from '@/features/auth/AuthContext';
 import { getActiveRecruitmentAnnouncements, listPublicAnnouncements } from '@/features/announcements/service';
 import type { Announcement } from '@/features/announcements/announcement.types';
 import { ANNOUNCEMENT_CATEGORY_LABELS, ANNOUNCEMENT_CATEGORY_COLORS } from '@/shared/config/constants';
@@ -10,8 +9,6 @@ import { formatISTDate } from '@/shared/utils/dateTime';
 import './Home.css';
 
 const Home: React.FC = () => {
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
   const [recruitmentAnnouncements, setRecruitmentAnnouncements] = useState<Announcement[]>([]);
   const [latestAnnouncements, setLatestAnnouncements] = useState<Announcement[]>([]);
 
@@ -44,12 +41,10 @@ const Home: React.FC = () => {
             <h1 className="fw-bold d-none d-md-block">NCC Army Wing</h1>
             <h3 className="fw-bold d-block d-md-none">NCC Army Wing</h3>
             <p className="lead mb-3 mb-md-4 d-none d-sm-block">Unity and Discipline — shaping future leaders.</p>
-            {!currentUser && (
-              <div>
-                <Button as={Link} to="/register" variant="light" size="md" className="me-2 mb-2 mb-sm-0">Join NCC</Button>
-                <Button as={Link} to="/about" variant="outline-light" size="md" className="d-none d-sm-inline-block">Learn More</Button>
-              </div>
-            )}
+            <div>
+              <Button as={Link} to="/register" variant="light" size="md" className="me-2 mb-2 mb-sm-0">Join NCC</Button>
+              <Button as={Link} to="/about" variant="outline-light" size="md" className="d-none d-sm-inline-block">Learn More</Button>
+            </div>
           </Carousel.Caption>
         </Carousel.Item>
         <Carousel.Item>
@@ -274,17 +269,15 @@ const Home: React.FC = () => {
       </AnimatedSection>
 
       {/* CTA Section */}
-      {!currentUser && (
-        <AnimatedSection as={Container} className="my-5 text-center" effect="slide" delay={0.05}>
-          <h2 className="mb-4">Ready to Join?</h2>
-          <p className="lead mb-4">
-            Become part of India's largest youth organization and develop leadership, discipline, and character.
-          </p>
-          <Button as={Link} to="/register" variant="primary" size="lg">
-            Register Now
-          </Button>
-        </AnimatedSection>
-      )}
+      <AnimatedSection as={Container} className="my-5 text-center" effect="slide" delay={0.05}>
+        <h2 className="mb-4">Ready to Join?</h2>
+        <p className="lead mb-4">
+          Become part of India's largest youth organization and develop leadership, discipline, and character.
+        </p>
+        <Button as={Link} to="/register" variant="primary" size="lg">
+          Register Now
+        </Button>
+      </AnimatedSection>
     </div>
   );
 };

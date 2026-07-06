@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -11,8 +11,20 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [googleLoading, setGoogleLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const { signIn, signInWithGoogle, fetchUserProfile } = useAuth();
+  const { signIn, signInWithGoogle, fetchUserProfile, currentUser, userProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (authLoading || !currentUser) {
+      return;
+    }
+
+    const landingPage = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+      ? '/admin/dashboard'
+      : '/dashboard';
+
+    navigate(landingPage, { replace: true });
+  }, [authLoading, currentUser, navigate, userProfile?.role]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

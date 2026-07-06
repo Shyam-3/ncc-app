@@ -1,9 +1,10 @@
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from 'firebase/auth';
 import { collection, doc, writeBatch } from 'firebase/firestore';
-import React, { ChangeEvent, FormEvent, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/features/auth/AuthContext';
 import { DEPARTMENT_DEFS } from '../../shared/config/constants';
 import { auth, db } from '../../shared/config/firebase';
 import { calculateAge, checkUniqueField } from '../../shared/utils/dbValidators';
@@ -66,6 +67,19 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { currentUser, userProfile, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (authLoading || !currentUser) {
+      return;
+    }
+
+    const landingPage = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+      ? '/admin/dashboard'
+      : '/dashboard';
+
+    navigate(landingPage, { replace: true });
+  }, [authLoading, currentUser, navigate, userProfile?.role]);
 
   // Calculate maximum allowed date (17 years ago today)
   const maxDobDate = new Date();
