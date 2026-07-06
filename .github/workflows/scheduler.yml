@@ -2,7 +2,7 @@ name: Automated Schedule Checker
 
 on:
   schedule:
-    - cron: '0 * * * *'    # Every hour (0th minute)
+    - cron: '0 0 * * *'    # Every day at midnight UTC
 
 permissions:
   actions: write
@@ -39,11 +39,5 @@ jobs:
         if: env.TRIGGER_ROLLOVER == 'true'
         run: |
           gh workflow run year-rollover.yml -f dry_run=false
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Delete Workflow Run (To avoid clutter)
-        if: env.TRIGGER_ROLLOVER == 'false'
-        run: gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }} -X DELETE
         env:
           GH_TOKEN: ${{ github.token }}
