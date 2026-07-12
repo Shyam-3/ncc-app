@@ -7,10 +7,10 @@ import AnnouncementsAdmin from '@/pages/dashboard/announcements/AnnouncementsAdm
 import AttendanceManagement from '@/pages/dashboard/attendance/AttendanceManagement';
 import AttendanceView from '@/pages/dashboard/attendance/AttendanceView';
 import CadetManagement from '@/pages/dashboard/users/CadetManagement';
-import CmsEditor from '@/pages/dashboard/cms/CmsEditor';
 import AnnualAttendanceReport from '@/pages/dashboard/reports/AnnualAttendanceReport';
 import NominalRollReport from '@/pages/dashboard/reports/NominalRollReport';
 import CatcCampReport from '@/pages/dashboard/reports/CatcCampReport';
+import ParadeStateReport from '@/pages/dashboard/reports/ParadeStateReport';
 import OnDutyLetterReport from '@/pages/dashboard/reports/OnDutyLetterReport';
 import ReportsTemplateManager from '@/pages/dashboard/reports/ReportsTemplateManager';
 import ReportsWorkspace from '@/pages/dashboard/reports/ReportsWorkspace';
@@ -150,6 +150,14 @@ export const protectedRoutes = (
       }
     />
     <Route
+      path="/admin/reports/generators/parade-state"
+      element={
+        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+          <ParadeStateReport />
+        </ProtectedRoute>
+      }
+    />
+    <Route
       path="/admin/announcements"
       element={
         <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
@@ -173,14 +181,7 @@ export const protectedRoutes = (
         </ProtectedRoute>
       }
     />
-    <Route
-      path="/admin/cms"
-      element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
-          <CmsEditor />
-        </ProtectedRoute>
-      }
-    />
+
   </>
 );
 

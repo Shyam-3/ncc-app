@@ -1,6 +1,6 @@
 // Attendance feature type definitions
 
-import type { Division, NccYear } from '../../../shared/config/constants';
+import type { Division, NccYear } from '@/shared/config/constants';
 
 // Session status
 export type SessionStatus = 'draft' | 'open' | 'locked';

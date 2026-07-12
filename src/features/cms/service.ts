@@ -9,6 +9,7 @@ export interface CmsSection {
 export interface CmsDoc {
   title: string;
   sections: CmsSection[];
+  anoUids?: string[];
   updatedAt?: string;
   updatedBy?: string;
   visibility?: 'public' | 'private';

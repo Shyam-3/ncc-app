@@ -1,23 +1,42 @@
 import { useAuth } from '@/features/auth/AuthContext';
 import { CmsDoc, listenCms } from '@/features/cms/service';
-import { formatISTDateTime } from '@/shared/utils/dateTime';
+import { db } from '@/shared/config/firebase';
+import { doc as firestoreDoc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { Badge, Button, Card, Col, Container, Row, Spinner } from 'react-bootstrap';
+import { Badge, Button, Card, Col, Container, Row, Spinner, Accordion } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import './About.css';
 
 const About: React.FC = () => {
   const [doc, setDoc] = useState<CmsDoc | null>(null);
   const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
+  const [anoProfiles, setAnoProfiles] = useState<any[]>([]);
+  const { isSuperAdmin } = useAuth();
 
   useEffect(() => {
-    const unsub = listenCms('about', (data) => {
+    const unsub = listenCms('about', async (data) => {
       setDoc(data);
+      if (data?.anoUids && data.anoUids.length > 0) {
+        try {
+          const profiles = await Promise.all(
+            data.anoUids.map((uid) => getDoc(firestoreDoc(db, 'users', uid)).then(snap => snap.exists() ? snap.data() : null))
+          );
+          setAnoProfiles(profiles.filter(p => p !== null));
+        } catch (err) {
+          console.error("Failed to fetch ANO profiles:", err);
+        }
+      } else {
+        setAnoProfiles([]);
+      }
       setLoading(false);
     });
     return () => unsub();
   }, []);
+
+  const getSectionBody = (heading: string) => {
+    const section = doc?.sections?.find(s => s.heading.toLowerCase() === heading.toLowerCase());
+    return section?.body || '';
+  };
 
   if (loading) {
     return (
@@ -29,46 +48,79 @@ const About: React.FC = () => {
 
   return (
     <Container className="py-5">
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 className="mb-0">{doc?.title || 'About Our NCC Unit'}</h2>
-          {doc?.updatedAt && (
-            <small className="text-muted">Last updated: {formatISTDateTime(doc.updatedAt)}</small>
-          )}
+          <h2 className="mb-0 text-primary">About NCC</h2>
         </div>
-        {isAdmin() && (
-          <Button as={Link} to="/admin/cms" variant="primary" size="sm">
-            <i className="bi bi-pencil-square me-2" /> Edit
+        {isSuperAdmin() && (
+          <Button as={Link} to="/admin/settings" variant="primary" size="sm">
+            <i className="bi bi-pencil-square me-2" /> Edit Settings
           </Button>
         )}
       </div>
 
-      {(!doc || !doc.sections || doc.sections.length === 0) && (
+      <div className="mb-4">
         <Card className="border-0 shadow-sm">
           <Card.Body>
-            <p className="text-muted mb-0">Content not published yet.</p>
-            {isAdmin() && (
-              <small className="text-muted">Use the CMS editor to add content.</small>
-            )}
+            <h4 className="mb-3 text-primary">About Our Unit</h4>
+            <div className="mb-0 text-muted about-section-body">
+              {getSectionBody('About Our Unit') || 'Information about our NCC unit will be displayed here.'}
+            </div>
           </Card.Body>
         </Card>
-      )}
+      </div>
 
-      <Row className="g-4">
-        {doc?.sections?.map((s, idx) => (
-          <Col xs={12} sm={12} md={6} lg={6} xl={6} key={idx}>
-            <Card className="border-0 shadow-sm h-100">
-              <Card.Body>
-                <h5 className="d-flex align-items-center">
-                  <Badge bg="secondary" className="me-2">{idx + 1}</Badge>
-                  {s.heading}
-                </h5>
-                <p className="mb-0 text-muted about-section-body">{s.body}</p>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      <Accordion defaultActiveKey="0" className="shadow-sm">
+        <Accordion.Item eventKey="0">
+          <Accordion.Header className="fw-bold">ANO/CTO & Staff</Accordion.Header>
+          <Accordion.Body>
+            {anoProfiles.map((profile, idx) => (
+              <Card key={idx} className="mb-4 border-light shadow-sm">
+                <Card.Body>
+                  <Row className="align-items-center">
+                    <Col xs="auto">
+                      <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow" style={{ width: '64px', height: '64px', fontSize: '24px' }}>
+                        <i className="bi bi-person-fill" />
+                      </div>
+                    </Col>
+                    <Col>
+                      <h5 className="mb-1 fw-bold">{profile.name}</h5>
+                      <Badge bg="secondary" className="mb-2">{profile.rank || 'ANO'}</Badge>
+                      <div className="text-muted small d-flex flex-column gap-1">
+                        <div><i className="bi bi-envelope me-2" />{profile.email}</div>
+                        {profile.phone && <div><i className="bi bi-telephone me-2" />{profile.phone}</div>}
+                        {profile.bloodGroup && <div><i className="bi bi-droplet-half me-2" />{profile.bloodGroup}</div>}
+                      </div>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+            ))}
+
+            <div className="mb-0 text-muted about-section-body">
+              {getSectionBody('ANO/CTO & Staff') || 'Details about the ANO/CTO and staff members.'}
+            </div>
+          </Accordion.Body>
+        </Accordion.Item>
+
+        <Accordion.Item eventKey="1">
+          <Accordion.Header className="fw-bold">NCC Motto & Song</Accordion.Header>
+          <Accordion.Body>
+            <div className="mb-0 text-muted about-section-body">
+              {getSectionBody('NCC Motto & Song') || 'Unity and Discipline. The NCC song details will be updated here.'}
+            </div>
+          </Accordion.Body>
+        </Accordion.Item>
+
+        <Accordion.Item eventKey="2">
+          <Accordion.Header className="fw-bold">Organizational Structure</Accordion.Header>
+          <Accordion.Body>
+            <div className="mb-0 text-muted about-section-body">
+              {getSectionBody('Organizational Structure') || 'The organizational structure of our unit.'}
+            </div>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     </Container>
   );
 };

@@ -109,16 +109,18 @@ const NotificationsPage: React.FC = () => {
           setAnnouncements(items);
           setReadIds(userReadIds);
 
-          // Fetch read counts in background
-          const counts: Record<string, number> = {};
-          await Promise.all(
-            items.map(async (a) => {
-              if (a.id) {
-                counts[a.id] = await getReadCount(a.id);
-              }
-            }),
-          );
-          if (!cancelled) setReadCounts(counts);
+          // Fetch read counts in background ONLY for admins/superadmins
+          if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+            const counts: Record<string, number> = {};
+            await Promise.all(
+              items.map(async (a) => {
+                if (a.id) {
+                  counts[a.id] = await getReadCount(a.id);
+                }
+              }),
+            );
+            if (!cancelled) setReadCounts(counts);
+          }
         } else {
           const items = await listPublicAnnouncements();
           if (cancelled) return;

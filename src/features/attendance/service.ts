@@ -486,3 +486,62 @@ export async function cleanupLegacySessionFields(): Promise<number> {
 
   return updatedCount;
 }
+
+// ============ PARADE STATE HELPERS ============
+
+export interface AnoUser {
+  uid: string;
+  name: string;
+  email: string;
+}
+
+/**
+ * Get all locked official parade sessions for a specific date.
+ * Returns sessions with their marks pre-loaded.
+ */
+export async function getLockedOfficialSessionsByDate(
+  date: string
+): Promise<
+  Array<{
+    session: AttendanceSession & { id: string };
+    marks: (AttendanceMark & { id: string })[];
+  }>
+> {
+  const q = query(
+    sessionsCol,
+    where('date', '==', date),
+    where('status', '==', 'locked'),
+    where('isOfficialParade', '==', true)
+  );
+  const snap = await getDocs(q);
+  const sessions = snap.docs.map((d) => ({ id: d.id, ...(d.data() as AttendanceSession) }));
+
+  const results = await Promise.all(
+    sessions.map(async (session) => {
+      const marks = await listMarks(session.id);
+      return { session, marks };
+    })
+  );
+
+  return results;
+}
+
+/**
+ * List all active ANO users from the users collection.
+ */
+export async function listAnoUsers(): Promise<AnoUser[]> {
+  const snap = await getDocs(collection(db, 'users'));
+  return snap.docs
+    .filter((d) => {
+      const data = d.data();
+      return data.userType === 'ano' && String(data.status || '').trim().toLowerCase() === 'active';
+    })
+    .map((d) => {
+      const data = d.data();
+      return {
+        uid: d.id,
+        name: data.name || '',
+        email: data.email || '',
+      };
+    });
+}

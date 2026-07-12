@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Badge, Button, Card, Carousel, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { AnimatedSection } from '../../components';
-import { getActiveRecruitmentAnnouncements, listPublicAnnouncements } from '@/features/announcements/service';
+import { getActiveRecruitmentAnnouncements, listPublicAnnouncements, listAnnouncementsForUser } from '@/features/announcements/service';
+import { useAuth } from '@/features/auth/AuthContext';
 import type { Announcement } from '@/features/announcements/announcement.types';
 import { ANNOUNCEMENT_CATEGORY_LABELS, ANNOUNCEMENT_CATEGORY_COLORS } from '@/shared/config/constants';
 import { formatISTDate } from '@/shared/utils/dateTime';
 import './Home.css';
 
 const Home: React.FC = () => {
+  const { currentUser } = useAuth();
   const [recruitmentAnnouncements, setRecruitmentAnnouncements] = useState<Announcement[]>([]);
   const [latestAnnouncements, setLatestAnnouncements] = useState<Announcement[]>([]);
 
@@ -17,13 +19,15 @@ const Home: React.FC = () => {
       .then(setRecruitmentAnnouncements)
       .catch(() => { });
 
-    listPublicAnnouncements()
+    const fetchAnnouncements = currentUser ? listAnnouncementsForUser() : listPublicAnnouncements();
+    
+    fetchAnnouncements
       .then((all) => {
         const nonRecruitment = all.filter((a) => a.category !== 'recruitment');
         setLatestAnnouncements(nonRecruitment.slice(0, 4));
       })
       .catch(() => { });
-  }, []);
+  }, [currentUser]);
 
   const recruitment = recruitmentAnnouncements[0];
 

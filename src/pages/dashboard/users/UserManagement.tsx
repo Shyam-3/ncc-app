@@ -34,7 +34,7 @@ import { triggerAuthCleanup } from '@/shared/utils/githubActions';
 import { TablePaginationFooter } from '@/components';
 import { ROMAN_YEAR_MAP } from '@/shared/config/constants';
 import { deleteTakenNumberBatch } from '@/shared/utils/dbValidators';
-import { createAlumniProfileFromCadet } from '@/features/alumni';
+
 import { isAnoUser, resolveUserType } from '@/shared/utils/userType';
 import './UserManagement.css';
 
@@ -125,8 +125,11 @@ const UserManagement: React.FC = () => {
     password: '',
     phone: '',
     bloodGroup: '',
+    rank: '',
   });
   const [anoErrors, setAnoErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState('users');
+  const [autoCheckDone, setAutoCheckDone] = useState(false);
 
   const isSelf = (uid: string) => uid === currentUser?.uid;
   const canDeleteUser = (target: UserData) => {
@@ -300,6 +303,58 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (activeTab === 'approvals' && !autoCheckDone && pending.length > 0) {
+      const unverified = pending.filter(c => !c.emailVerified && c.tempPassword);
+      if (unverified.length > 0) {
+        runAutoCheck(unverified);
+      }
+      setAutoCheckDone(true);
+    }
+  }, [activeTab, pending, autoCheckDone]);
+
+  const runAutoCheck = async (unverifiedCadets: PendingCadet[]) => {
+    let updatedCount = 0;
+    for (const candidate of unverifiedCadets) {
+      try {
+        const secondaryApp = initializeApp(FIREBASE_CONFIG, `SecondaryCheckAuto-${Date.now()}`);
+        const secondaryAuth = getAuth(secondaryApp);
+        
+        const userCredential = await signInWithEmailAndPassword(
+          secondaryAuth,
+          candidate.email,
+          candidate.tempPassword!
+        );
+        
+        await userCredential.user.reload();
+        const isVerified = userCredential.user.emailVerified;
+        
+        await signOut(secondaryAuth);
+        await deleteApp(secondaryApp);
+        
+        if (isVerified) {
+          const pendingDoc = doc(db, 'pendingCadets', candidate.id);
+          await setDoc(pendingDoc, { emailVerified: true }, { merge: true });
+          updatedCount++;
+        }
+      } catch (e: any) {
+        if (e.code === 'auth/invalid-credential') {
+          // Account might have been deleted, or password changed
+          // Since September 2023, user-not-found is merged into invalid-credential
+          console.warn(`Auto check skipped for ${candidate.email} (invalid-credential)`);
+        } else {
+          console.error('Auto check failed for', candidate.email, e);
+        }
+      }
+      
+      // Brief delay to prevent hitting Firebase Auth rate limits when checking multiple users
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    if (updatedCount > 0) {
+      fetchPending();
+    }
+  };
+
   // Filter and sort pending cadets
   const filteredPending = useMemo(() => {
     // First, filter out cadets whose emails are already in users collection (already approved)
@@ -464,6 +519,7 @@ const UserManagement: React.FC = () => {
     if (!anoForm.password || anoForm.password.length < 6) errors.password = 'Password must be at least 6 characters';
     if (!anoForm.phone.match(/^\d{10}$/)) errors.phone = 'Phone must be exactly 10 digits';
     if (!anoForm.bloodGroup) errors.bloodGroup = 'Blood group is required';
+    if (!anoForm.rank.trim()) errors.rank = 'Rank is required';
     setAnoErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -490,6 +546,7 @@ const UserManagement: React.FC = () => {
         email: anoForm.email.trim(),
         phone: anoForm.phone.trim(),
         bloodGroup: anoForm.bloodGroup,
+        rank: anoForm.rank.trim(),
         role: 'superadmin',
         userType: 'ano',
         status: 'active',
@@ -499,7 +556,7 @@ const UserManagement: React.FC = () => {
 
       toast.success('ANO account created successfully');
       setShowAnoModal(false);
-      setAnoForm({ name: '', email: '', password: '', phone: '', bloodGroup: '' });
+      setAnoForm({ name: '', email: '', password: '', phone: '', bloodGroup: '', rank: '' });
       setAnoErrors({});
       await fetchUsers();
     } catch (e: any) {
@@ -788,7 +845,7 @@ const UserManagement: React.FC = () => {
           </div>
         </Card.Header>
         <Card.Body>
-          <Tabs defaultActiveKey="users" id="user-mgmt-tabs" className="mb-3">
+          <Tabs activeKey={activeTab} onSelect={(k: string | null) => setActiveTab(k || 'users')} id="user-mgmt-tabs" className="mb-3">
             <Tab eventKey="users" title="Users">
               <div className="mb-3">
                 <Alert variant="info" className="mb-2">
@@ -875,7 +932,7 @@ const UserManagement: React.FC = () => {
               <Form.Label>Name *</Form.Label>
               <Form.Control
                 value={anoForm.name}
-                onChange={(e) => setAnoForm(f => ({ ...f, name: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnoForm(f => ({ ...f, name: e.target.value }))}
                 isInvalid={Boolean(anoErrors.name)}
               />
               {anoErrors.name && <Form.Text className="text-danger">{anoErrors.name}</Form.Text>}
@@ -885,7 +942,7 @@ const UserManagement: React.FC = () => {
               <Form.Control
                 type="email"
                 value={anoForm.email}
-                onChange={(e) => setAnoForm(f => ({ ...f, email: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnoForm(f => ({ ...f, email: e.target.value }))}
                 isInvalid={Boolean(anoErrors.email)}
               />
               {anoErrors.email && <Form.Text className="text-danger">{anoErrors.email}</Form.Text>}
@@ -895,7 +952,7 @@ const UserManagement: React.FC = () => {
               <Form.Control
                 type="password"
                 value={anoForm.password}
-                onChange={(e) => setAnoForm(f => ({ ...f, password: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnoForm(f => ({ ...f, password: e.target.value }))}
                 isInvalid={Boolean(anoErrors.password)}
               />
               {anoErrors.password && <Form.Text className="text-danger">{anoErrors.password}</Form.Text>}
@@ -904,7 +961,7 @@ const UserManagement: React.FC = () => {
               <Form.Label>Phone *</Form.Label>
               <Form.Control
                 value={anoForm.phone}
-                onChange={(e) => setAnoForm(f => ({ ...f, phone: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnoForm(f => ({ ...f, phone: e.target.value }))}
                 isInvalid={Boolean(anoErrors.phone)}
               />
               {anoErrors.phone && <Form.Text className="text-danger">{anoErrors.phone}</Form.Text>}
@@ -913,7 +970,7 @@ const UserManagement: React.FC = () => {
               <Form.Label>Blood Group *</Form.Label>
               <Form.Select
                 value={anoForm.bloodGroup}
-                onChange={(e) => setAnoForm(f => ({ ...f, bloodGroup: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAnoForm(f => ({ ...f, bloodGroup: e.target.value }))}
                 isInvalid={Boolean(anoErrors.bloodGroup)}
               >
                 <option value="">Select</option>
@@ -922,6 +979,16 @@ const UserManagement: React.FC = () => {
                 ))}
               </Form.Select>
               {anoErrors.bloodGroup && <Form.Text className="text-danger">{anoErrors.bloodGroup}</Form.Text>}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Rank *</Form.Label>
+              <Form.Control
+                value={anoForm.rank}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnoForm(f => ({ ...f, rank: e.target.value }))}
+                isInvalid={Boolean(anoErrors.rank)}
+                placeholder="e.g., Major, Captain"
+              />
+              {anoErrors.rank && <Form.Text className="text-danger">{anoErrors.rank}</Form.Text>}
             </Form.Group>
           </Form>
         </Modal.Body>

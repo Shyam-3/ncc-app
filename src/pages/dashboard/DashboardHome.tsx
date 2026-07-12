@@ -213,64 +213,54 @@ const Dashboard: React.FC = () => {
                 </Card.Body>
               </Card>
             </Col>
-
-            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-              <Card className="text-center h-100 shadow-sm hover-lift">
-                <Card.Body className="d-flex flex-column justify-content-between">
-                  <div>
-                    <i className="bi bi-pencil-square text-info dashboard-home-icon"></i>
-                    <h3 className="mt-3">CMS / About</h3>
-                    <p className="text-muted small">Edit pages</p>
-                  </div>
-                  <Button as={Link} to="/admin/cms" variant="info" className="mt-2">
-                    Edit
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Col>
           </>
         )}
 
         {(isAdmin || isSuperAdmin) && (
           <>
             {isSuperAdmin && (
-            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-              <Card className="text-center h-100 shadow-sm hover-lift">
-                <Card.Body className="d-flex flex-column justify-content-between">
-                  <div>
-                    <i className="bi bi-mortarboard text-primary dashboard-home-icon"></i>
-                    <h3 className="mt-3">
-                      Alumni
-                      {pendingAlumniCount > 0 && (
-                        <Badge bg="danger" className="ms-2 fs-6 align-middle">
-                          {pendingAlumniCount}
-                        </Badge>
-                      )}
-                    </h3>
-                    <p className="text-muted small">Manage alumni profiles</p>
-                  </div>
-                  <Button as={Link} to="/admin/alumni" variant="primary" className="mt-2">
-                    Manage
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Col>
+              <>
+
+
+                <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+                  <Card className="text-center h-100 shadow-sm hover-lift">
+                    <Card.Body className="d-flex flex-column justify-content-between">
+                      <div>
+                        <i className="bi bi-mortarboard text-primary dashboard-home-icon"></i>
+                        <h3 className="mt-3">
+                          Alumni
+                          {pendingAlumniCount > 0 && (
+                            <Badge bg="danger" className="ms-2 fs-6 align-middle">
+                              {pendingAlumniCount}
+                            </Badge>
+                          )}
+                        </h3>
+                        <p className="text-muted small">Manage alumni profiles</p>
+                      </div>
+                      <Button as={Link} to="/admin/alumni" variant="primary" className="mt-2">
+                        Manage
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+                <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+                  <Card className="text-center h-100 shadow-sm hover-lift">
+                    <Card.Body className="d-flex flex-column justify-content-between">
+                      <div>
+                        <i className="bi bi-gear text-secondary dashboard-home-icon"></i>
+                        <h3 className="mt-3">Settings</h3>
+                        <p className="text-muted small">App configuration</p>
+                      </div>
+                      <Button as={Link} to="/admin/settings" variant="secondary" className="mt-2">
+                        Configure
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </>
             )}
 
-            <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-              <Card className="text-center h-100 shadow-sm hover-lift">
-                <Card.Body className="d-flex flex-column justify-content-between">
-                  <div>
-                    <i className="bi bi-gear text-secondary dashboard-home-icon"></i>
-                    <h3 className="mt-3">Settings</h3>
-                    <p className="text-muted small">App configuration</p>
-                  </div>
-                  <Button as={Link} to="/admin/settings" variant="secondary" className="mt-2">
-                    Configure
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Col>
+
 
             <Col xs={12} sm={6} md={4} lg={3} xl={3}>
               <Card className="text-center h-100 shadow-sm hover-lift">

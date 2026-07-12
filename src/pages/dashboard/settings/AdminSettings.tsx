@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { triggerAuthCleanup } from '@/shared/utils/githubActions';
 import { buildAlumniProfileFromCadet } from '@/features/alumni';
+import AboutSettingsTab from './AboutSettingsTab';
 import './AdminSettings.css';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -745,7 +746,10 @@ const AdminSettings: React.FC = () => {
           </Button>
         </Card.Header>
         <Card.Body className="bg-light">
-          <Tabs defaultActiveKey="automation" id="admin-settings-tabs" className="mb-4">
+          <Tabs defaultActiveKey="about" id="admin-settings-tabs" className="mb-4">
+        <Tab eventKey="about" title="About Page">
+          <AboutSettingsTab />
+        </Tab>
         <Tab eventKey="automation" title="Automation">
           {/* ── Settings Section ──────────────────────────────────────────────── */}
           <div className="settings-section mt-3">

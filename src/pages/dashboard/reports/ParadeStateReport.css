@@ -1,0 +1,227 @@
+/* ===== Parade State Report — Print & Screen Styles ===== */
+
+/* ---- Preview Container ---- */
+.ps-preview-modal .modal-dialog {
+  max-width: 900px;
+}
+.ps-preview-body {
+  background: #e9ecef;
+  padding: 1.5rem;
+}
+
+/* ---- Page Sheet ---- */
+.ps-page {
+  background: #fff;
+  padding: 40px 48px;
+  margin: 0 auto 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  max-width: 816px; /* ~A4 width */
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 15px;
+  color: #000;
+}
+
+/* ---- Title ---- */
+.ps-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 20px;
+  text-decoration: underline;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+}
+
+/* ---- Meta Block ---- */
+.ps-meta {
+  margin-bottom: 14px;
+}
+.ps-meta-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 3px;
+}
+.ps-meta-label {
+  font-weight: bold;
+  min-width: 160px;
+  white-space: nowrap;
+}
+.ps-meta-value {
+  flex: 1;
+}
+
+/* ---- Count Table ---- */
+.ps-count-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.ps-count-table th,
+.ps-count-table td {
+  border: 1.5px solid #000;
+  padding: 4px 6px;
+  text-align: center;
+  vertical-align: middle;
+}
+.ps-count-table th {
+  font-weight: bold;
+  background: #f0f0f0;
+}
+.ps-count-table td.ps-cat-label {
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- Refreshment ---- */
+.ps-refreshment {
+  margin-top: 10px;
+  margin-bottom: 16px;
+}
+
+/* ---- Signatures ---- */
+.ps-signatures {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  gap: 16px;
+}
+.ps-sig-block {
+  text-align: center;
+  min-width: 180px;
+}
+.ps-sig-line {
+  border-top: 1px solid #000;
+  margin-top: 35px;
+  padding-top: 4px;
+  font-weight: bold;
+  font-size: 14px;
+}
+.ps-sig-subtitle {
+  font-size: 13px;
+  color: #333;
+}
+
+/* ---- Countersigned ---- */
+.ps-countersigned {
+  font-weight: bold;
+  text-align: center;
+  margin: 10px 0 5px;
+  font-size: 15px;
+}
+
+/* ---- Notes ---- */
+.ps-notes {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ps-notes ol {
+  padding-left: 18px;
+  margin: 0;
+}
+.ps-notes li {
+  margin-bottom: 2px;
+}
+
+/* ---- Absentee Table ---- */
+.ps-absentee-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 17px;
+  text-decoration: underline;
+  margin: 10px 0 5px;
+}
+.ps-absentee-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.ps-absentee-table th,
+.ps-absentee-table td {
+  border: 1.5px solid #000;
+  padding: 4px 6px;
+  text-align: center;
+  vertical-align: middle;
+}
+.ps-absentee-table th {
+  font-weight: bold;
+  background: #f0f0f0;
+}
+.ps-absentee-table td.ps-absentee-name {
+  text-align: left;
+}
+
+/* ---- Absentee Classification UI (screen only) ---- */
+.ps-absentee-classify {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* ---- Session Summary Cards ---- */
+.ps-session-badge {
+  font-size: 0.75rem;
+}
+
+/* ===== Print Styles ===== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 15mm;
+  }
+
+  /* Hide the main app content so it doesn't add blank pages or duplicate content */
+  #root {
+    display: none !important;
+  }
+
+  /* Hide modal backdrop */
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  /* Reset modal positioning to allow normal document flow pagination */
+  .modal {
+    position: static !important;
+    overflow: visible !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+  
+  .modal-dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .modal-content {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .ps-preview-body {
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .ps-page {
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+    page-break-after: auto;
+  }
+
+  .ps-page-break {
+    page-break-before: always;
+  }
+
+  /* Hide screen-only elements (like close/print buttons) */
+  .ps-no-print {
+    display: none !important;
+  }
+}
