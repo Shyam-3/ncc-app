@@ -1,7 +1,7 @@
 import { db, FIREBASE_CONFIG } from '@/shared/config/firebase';
 import { useAuth } from '@/features/auth/AuthContext';
 import { deleteApp, initializeApp } from 'firebase/app';
-import { createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth, signOut } from 'firebase/auth';
 import {
   collection,
   deleteDoc,
@@ -30,7 +30,7 @@ import {
   Tabs,
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
-import { triggerAuthCleanup } from '@/shared/utils/githubActions';
+import { triggerAuthCleanup, triggerVerificationSync } from '@/shared/utils/githubActions';
 import { TablePaginationFooter } from '@/components';
 import { ROMAN_YEAR_MAP } from '@/shared/config/constants';
 import { deleteTakenNumberBatch } from '@/shared/utils/dbValidators';
@@ -129,7 +129,7 @@ const UserManagement: React.FC = () => {
   });
   const [anoErrors, setAnoErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('users');
-  const [autoCheckDone, setAutoCheckDone] = useState(false);
+
 
   const isSelf = (uid: string) => uid === currentUser?.uid;
   const canDeleteUser = (target: UserData) => {
@@ -254,31 +254,22 @@ const UserManagement: React.FC = () => {
   const handleReject = async (candidate: PendingCadet) => {
     setSaving(true);
     try {
-      // Delete the Firebase Auth account if uid and tempPassword exist
-      if (candidate.uid && candidate.tempPassword) {
+      // Queue Auth account deletion via GitHub Actions (since we can't reliably sign in
+      // as the user — they may have changed their password via Forgot Password)
+      if (candidate.uid) {
         try {
-          // Use secondary app to sign in as the user and delete their Auth account
-          const secondaryApp = initializeApp(FIREBASE_CONFIG, 'SecondaryReject');
-          const secondaryAuth = getAuth(secondaryApp);
-          
-          const userCredential = await signInWithEmailAndPassword(
-            secondaryAuth,
-            candidate.email,
-            candidate.tempPassword
-          );
-          
-          // Delete the Firebase Auth account
-          await deleteUser(userCredential.user);
-          
-          // Clean up secondary app
-          await deleteApp(secondaryApp);
+          await setDoc(doc(db, 'pendingAuthDeletions', candidate.uid), {
+            email: candidate.email,
+            name: candidate.name,
+            reason: 'registration_rejected',
+            queuedAt: new Date().toISOString(),
+            queuedBy: currentUser?.uid || 'unknown',
+          });
+          // Trigger cleanup action
+          triggerAuthCleanup().catch(() => {});
         } catch (authError: any) {
-          console.error('Failed to delete pending Auth account:', authError);
-          // If the auth account was not found, we can still proceed to delete the pending document
-          if (authError.code !== 'auth/user-not-found') {
-            toast.error('Failed to delete user account: ' + authError.message);
-            return;
-          }
+          console.warn('Could not queue auth deletion:', authError);
+          // Non-fatal: we still want to delete the pending doc
         }
       }
 
@@ -304,57 +295,12 @@ const UserManagement: React.FC = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'approvals' && !autoCheckDone && pending.length > 0) {
-      const unverified = pending.filter(c => !c.emailVerified && c.tempPassword);
-      if (unverified.length > 0) {
-        runAutoCheck(unverified);
-      }
-      setAutoCheckDone(true);
+    if (activeTab === 'approvals' && pending.some(p => !p.emailVerified)) {
+      // Trigger the background sync script via GitHub Actions.
+      // This will use the Admin SDK to check their real Auth status without needing passwords.
+      triggerVerificationSync();
     }
-  }, [activeTab, pending, autoCheckDone]);
-
-  const runAutoCheck = async (unverifiedCadets: PendingCadet[]) => {
-    let updatedCount = 0;
-    for (const candidate of unverifiedCadets) {
-      try {
-        const secondaryApp = initializeApp(FIREBASE_CONFIG, `SecondaryCheckAuto-${Date.now()}`);
-        const secondaryAuth = getAuth(secondaryApp);
-        
-        const userCredential = await signInWithEmailAndPassword(
-          secondaryAuth,
-          candidate.email,
-          candidate.tempPassword!
-        );
-        
-        await userCredential.user.reload();
-        const isVerified = userCredential.user.emailVerified;
-        
-        await signOut(secondaryAuth);
-        await deleteApp(secondaryApp);
-        
-        if (isVerified) {
-          const pendingDoc = doc(db, 'pendingCadets', candidate.id);
-          await setDoc(pendingDoc, { emailVerified: true }, { merge: true });
-          updatedCount++;
-        }
-      } catch (e: any) {
-        if (e.code === 'auth/invalid-credential') {
-          // Account might have been deleted, or password changed
-          // Since September 2023, user-not-found is merged into invalid-credential
-          console.warn(`Auto check skipped for ${candidate.email} (invalid-credential)`);
-        } else {
-          console.error('Auto check failed for', candidate.email, e);
-        }
-      }
-      
-      // Brief delay to prevent hitting Firebase Auth rate limits when checking multiple users
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    if (updatedCount > 0) {
-      fetchPending();
-    }
-  };
-
+  }, [activeTab, pending]);
   // Filter and sort pending cadets
   const filteredPending = useMemo(() => {
     // First, filter out cadets whose emails are already in users collection (already approved)

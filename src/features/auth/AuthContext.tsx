@@ -297,7 +297,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const pendingQuery = query(collection(db, 'pendingCadets'), where('uid', '==', user.uid));
             const pendingSnap = await getDocs(pendingQuery);
             if (!pendingSnap.empty) {
-              finalName = pendingSnap.docs[0].data().name;
+              const pendingDoc = pendingSnap.docs[0];
+              finalName = pendingDoc.data().name;
+
+              // Auto-sync email verification status from Firebase Auth → Firestore
+              // This fixes the case where user verified email after session expired
+              if (user.emailVerified && !pendingDoc.data().emailVerified) {
+                try {
+                  await setDoc(pendingDoc.ref, { emailVerified: true }, { merge: true });
+                  console.log('Auto-synced email verification for pending cadet:', user.email);
+                } catch (syncErr) {
+                  console.warn('Failed to sync email verification status:', syncErr);
+                }
+              }
             }
           } catch (err) {
             console.warn('Failed to fetch pending cadet name', err);

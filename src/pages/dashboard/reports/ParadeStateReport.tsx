@@ -14,7 +14,7 @@ import {
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { NCC_RANKS, NCC_YEARS, DIVISIONS, DIVISION_LABELS } from '@/shared/config/constants';
+import { NCC_RANKS, DIVISIONS, DIVISION_LABELS } from '@/shared/config/constants';
 import type { Cadet } from '@/shared/types';
 import type { AttendanceMark, AttendanceSession } from '@/features/attendance/attendance.types';
 import {
@@ -317,11 +317,13 @@ const ParadeStateReport: React.FC = () => {
         return;
       }
 
-      // Validate: check for all 6 expected sessions (3 SD + 3 SW)
+      // Validate: check that for each year present, BOTH SD and SW are found
       const sessionKeys = new Set(results.map((r) => `${r.session.divisionId}-${r.session.nccYear}`));
+      const sessionYears = new Set(results.map((r) => r.session.nccYear));
       const missingKeys: string[] = [];
-      DIVISIONS.forEach((div) => {
-        NCC_YEARS.forEach((year) => {
+      
+      sessionYears.forEach((year) => {
+        DIVISIONS.forEach((div) => {
           const key = `${div}-${year}`;
           if (!sessionKeys.has(key)) {
             missingKeys.push(`${DIVISION_LABELS[div]} ${year}`);
@@ -331,7 +333,7 @@ const ParadeStateReport: React.FC = () => {
 
       if (missingKeys.length > 0) {
         toast.error(
-          `Missing locked official sessions for: ${missingKeys.join(', ')}. Need all 6 sessions (3 SD + 3 SW) to generate parade state.`,
+          `Missing locked official sessions for: ${missingKeys.join(', ')}. Need both SD and SW for each selected year.`,
           { duration: 6000 }
         );
       }
@@ -369,10 +371,17 @@ const ParadeStateReport: React.FC = () => {
   [sessionsData, selectedSessionIds]);
 
   const sessionValidation = useMemo(() => {
+    if (selectedSessions.length === 0) {
+      return { isValid: false, missingKeys: ['Select at least one session'], selectedCount: 0 };
+    }
+
     const selectedKeys = new Set(selectedSessions.map((s) => `${s.session.divisionId}-${s.session.nccYear}`));
+    const selectedYears = new Set(selectedSessions.map((s) => s.session.nccYear));
     const missingKeys: string[] = [];
-    DIVISIONS.forEach((div) => {
-      NCC_YEARS.forEach((year) => {
+
+    // For every year that was selected, make sure BOTH SD and SW are present
+    selectedYears.forEach((year) => {
+      DIVISIONS.forEach((div) => {
         const key = `${div}-${year}`;
         if (!selectedKeys.has(key)) {
           missingKeys.push(`${DIVISION_LABELS[div]} ${year}`);
@@ -380,7 +389,7 @@ const ParadeStateReport: React.FC = () => {
       });
     });
 
-    const isValid = missingKeys.length === 0 && selectedSessions.length === 6;
+    const isValid = missingKeys.length === 0;
     return { isValid, missingKeys, selectedCount: selectedSessions.length };
   }, [selectedSessions]);
 
@@ -632,7 +641,7 @@ const ParadeStateReport: React.FC = () => {
                     
                     {!sessionValidation.isValid && (
                       <Alert variant="danger" className="py-2 px-3 small">
-                        <strong>Session Constraint Error:</strong> You must select exactly 6 sessions (1 from each year, from each division).
+                        <strong>Session Constraint Error:</strong> For each selected NCC Year, you must select BOTH divisions (SD & SW).
                         <br />
                         <strong>Selected:</strong> {sessionValidation.selectedCount}
                         <br />
