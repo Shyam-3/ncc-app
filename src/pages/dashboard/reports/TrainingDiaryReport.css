@@ -1,0 +1,296 @@
+.training-diary-workspace {
+  margin-bottom: 2rem;
+}
+
+@media screen {
+  .training-diary-print-container {
+    display: none !important;
+  }
+}
+
+.document-preview-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #dee2e6;
+}
+
+/* UI Specific Styles */
+.subject-category-card {
+  border-left: 4px solid #fd7e14;
+  background-color: #fff9f5;
+  transition: all 0.2s ease;
+}
+
+.subject-category-card:hover {
+  box-shadow: 0 2px 4px rgba(253, 126, 20, 0.15);
+}
+
+.add-category-btn {
+  background-color: #fd7e14;
+  border-color: #fd7e14;
+  color: white;
+  font-weight: 500;
+}
+
+.add-category-btn:hover {
+  background-color: #e86e0c;
+  border-color: #e86e0c;
+  color: white;
+}
+
+/* =======================================
+   Print Styles (Matched to Template)
+======================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden;
+  }
+
+  /* Hide the main app content so it doesn't add blank pages */
+  #root {
+    display: none !important;
+  }
+
+  /* Hide modal backdrop */
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  /* Reset modal positioning to allow normal document flow */
+  .modal {
+    position: static !important;
+    overflow: visible !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+
+  .modal-dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+
+  .modal-content {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+  }
+
+  .td-preview-body {
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .td-page {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+  }
+
+  .td-no-print {
+    display: none !important;
+  }
+
+  .td-page-photos {
+    page-break-before: always;
+  }
+}
+
+/* =======================================
+   Document Styles (Used in Modal and Print)
+======================================== */
+
+  /* The actual document container */
+  .td-page {
+    display: block !important;
+    background: white;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 13pt; /* Increased size to match template */
+    color: black !important;
+    line-height: 1.6;
+    text-align: justify; /* Ensure justified alignment */
+  }
+
+  .td-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .td-header h4 {
+    font-size: 16pt;
+    font-weight: bold;
+    text-decoration: underline;
+    margin: 0 0 0.5rem 0;
+    font-family: 'Times New Roman', Times, serif;
+  }
+  
+  .td-header h5 {
+    font-size: 15pt;
+    font-weight: bold;
+    text-decoration: underline;
+    margin: 0;
+    font-family: 'Times New Roman', Times, serif;
+  }
+
+  .td-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+  }
+
+  .td-blank {
+    border-bottom: 1px solid black;
+    display: inline-block;
+    padding: 0 0.5rem;
+    min-width: 200px;
+    text-align: left;
+  }
+
+  .td-blank-sm {
+    min-width: 100px;
+  }
+  
+  .td-blank-md {
+    min-width: 150px;
+  }
+
+  .td-blank-lg {
+    min-width: 300px;
+  }
+
+  .td-table {
+    width: 96%;
+    margin: 1rem auto;
+    border-collapse: collapse;
+  }
+
+  .td-table th,
+  .td-table td {
+    border: 1px solid black;
+    padding: 6px 8px;
+    vertical-align: top;
+  }
+
+  .td-table th {
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .td-table th:first-child {
+    width: 8%;
+  }
+
+  .td-table th:nth-child(2) {
+    width: 22%;
+  }
+
+  .td-table th:nth-child(3) {
+    width: 34%;
+  }
+
+  .td-table th:nth-child(4) {
+    width: 18%;
+  }
+
+  .td-table th:nth-child(5) {
+    width: 18%;
+  }
+
+  .td-table td.col-sno {
+    text-align: center;
+  }
+
+  .td-subjects-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .td-subjects-list.last {
+    margin-bottom: 0;
+  }
+
+  .td-subject-header {
+    text-decoration: underline;
+    margin-bottom: 0.25rem;
+    font-weight: normal;
+  }
+
+  .td-subject-item {
+    display: flex;
+    margin-bottom: 0.25rem;
+  }
+
+  .td-subject-letter {
+    margin-right: 0.5rem;
+  }
+  
+  .td-footer-section {
+    margin-top: 1rem;
+    line-height: 1.6;
+  }
+  
+  .td-footer-row {
+    margin-bottom: 0.5rem;
+  }
+  
+  .td-signature-blocks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3.5rem;
+  }
+  
+  .td-signature-block {
+    text-align: center;
+    border-top: 1px solid black;
+    width: 250px;
+    padding-top: 0.5rem;
+  }
+
+  .td-note {
+    margin-top: 1.5rem;
+    font-size: 11pt;
+    font-weight: bold;
+    text-align: justify;
+  }
+
+  /* ---- Photo Page ---- */
+  .td-page-photos {
+    padding: 8mm 0;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  .td-photo-envelope {
+    width: 180mm;
+    height: 76mm;
+    margin: 0 auto 12mm auto;
+    background: #fff;
+  }
+
+  .td-photo-envelope:last-child {
+    margin-bottom: 0;
+  }
+
+  .td-photo-envelope img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }

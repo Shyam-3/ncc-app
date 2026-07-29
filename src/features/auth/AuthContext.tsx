@@ -202,22 +202,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Sign in with Google (only for existing approved users)
   const signInWithGoogle = async (): Promise<FirebaseUser> => {
     const provider = new GoogleAuthProvider();
+    // Always show the account picker so users can choose which Google account to use
+    provider.setCustomParameters({ prompt: 'select_account' });
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Check if user exists in the 'users' collection (approved users only)
-      const userDocRef = doc(db, 'users', user.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      // Check if user exists in the 'users' or 'alumni' collection (approved users only)
+      const userDocSnap = await getDoc(doc(db, 'users', user.uid));
+      const alumniDocSnap = await getDoc(doc(db, 'alumni', user.uid));
 
-      if (!userDocSnap.exists()) {
+      if (!userDocSnap.exists() && !alumniDocSnap.exists()) {
         // Also check by email in case UID differs (e.g., originally registered with email/password)
         const usersQuery = query(collection(db, 'users'), where('email', '==', user.email));
         const usersSnapshot = await getDocs(usersQuery);
+        
+        const alumniQuery = query(collection(db, 'alumni'), where('email', '==', user.email));
+        const alumniSnapshot = await getDocs(alumniQuery);
 
-        if (usersSnapshot.empty) {
-          // Not a registered user — delete the auto-created Google Auth account and sign out
-          await deleteUser(user);
+        if (usersSnapshot.empty && alumniSnapshot.empty) {
+          // Not a registered user — sign out FIRST to prevent brief dashboard flash,
+          // then delete the auto-created Google Auth account
+          await firebaseSignOut(auth);
+          setUserProfile(null);
+          try {
+            await deleteUser(user);
+          } catch (deleteErr) {
+            console.warn('Could not delete unregistered Google auth account:', deleteErr);
+          }
           toast.error('No approved account found. Please register first.');
           throw new Error('NOT_REGISTERED');
         }

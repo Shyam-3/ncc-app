@@ -1,13 +1,13 @@
 /* CSS Variables and Theme */
 
 :root {
-  /* Colors */
-  --primary-color: #1a56db;
-  --secondary-color: #7c3aed;
+  /* Colors — NCC Logo Theme */
+  --primary-color: #2D3092;   /* Lapis Lazuli (Dark Blue) */
+  --secondary-color: #3a3fa6; /* Lighter shade of primary */
   --success-color: #10b981;
   --warning-color: #f59e0b;
-  --danger-color: #ef4444;
-  --info-color: #3b82f6;
+  --danger-color: #EF1C25;    /* Funky Red */
+  --info-color: #00AEEF;      /* Vivid Cerulean (Light Blue) */
   
   --text-primary: #1f2937;
   --text-secondary: #6b7280;

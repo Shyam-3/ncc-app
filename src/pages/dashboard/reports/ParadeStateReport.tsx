@@ -131,9 +131,9 @@ function computeRankCounts(
   const anoWithLeave = Object.values(anoStatuses).filter(s => s === 'with_leave').length;
   const anoWithoutLeave = Object.values(anoStatuses).filter(s => s === 'without_leave').length;
 
-  onParade['Offr'] = anoPresent;
-  absentWithLeave['Offr'] = anoWithLeave;
-  absentWithoutLeave['Offr'] = anoWithoutLeave;
+  onParade['Offr'] = ((onParade['Offr'] as number) || 0) + anoPresent;
+  absentWithLeave['Offr'] = ((absentWithLeave['Offr'] as number) || 0) + anoWithLeave;
+  absentWithoutLeave['Offr'] = ((absentWithoutLeave['Offr'] as number) || 0) + anoWithoutLeave;
 
   // Count absent by leave type and rank
   absentees.forEach((ab) => {
@@ -279,6 +279,7 @@ const ParadeStateReport: React.FC = () => {
       setSessionsData([]);
       setSelectedSessionIds(new Set());
       setAbsenteeLeaveTypes({});
+      setAnoStatuses({});
       setDataFetched(false);
     }
   };
@@ -379,18 +380,31 @@ const ParadeStateReport: React.FC = () => {
     const selectedYears = new Set(selectedSessions.map((s) => s.session.nccYear));
     const missingKeys: string[] = [];
 
+    // Duplicate check
+    const duplicates = new Set<string>();
+    const seen = new Set<string>();
+    selectedSessions.forEach(s => {
+      const key = `${s.session.divisionId}-${s.session.nccYear}`;
+      if (seen.has(key)) duplicates.add(`${DIVISION_LABELS[s.session.divisionId as keyof typeof DIVISION_LABELS]} ${s.session.nccYear}`);
+      seen.add(key);
+    });
+
     // For every year that was selected, make sure BOTH SD and SW are present
     selectedYears.forEach((year) => {
       DIVISIONS.forEach((div) => {
         const key = `${div}-${year}`;
         if (!selectedKeys.has(key)) {
-          missingKeys.push(`${DIVISION_LABELS[div]} ${year}`);
+          missingKeys.push(`${DIVISION_LABELS[div as keyof typeof DIVISION_LABELS]} ${year}`);
         }
       });
     });
 
-    const isValid = missingKeys.length === 0;
-    return { isValid, missingKeys, selectedCount: selectedSessions.length };
+    const errors: string[] = [];
+    if (missingKeys.length > 0) errors.push(`Missing pairs: ${missingKeys.join(', ')}`);
+    if (duplicates.size > 0) errors.push(`Multiple sessions selected for: ${Array.from(duplicates).join(', ')}`);
+
+    const isValid = missingKeys.length === 0 && duplicates.size === 0;
+    return { isValid, missingKeys: errors, selectedCount: selectedSessions.length };
   }, [selectedSessions]);
 
   const absentees = useMemo(() => {
@@ -641,11 +655,11 @@ const ParadeStateReport: React.FC = () => {
                     
                     {!sessionValidation.isValid && (
                       <Alert variant="danger" className="py-2 px-3 small">
-                        <strong>Session Constraint Error:</strong> For each selected NCC Year, you must select BOTH divisions (SD & SW).
+                        <strong>Session Constraint Error:</strong>
                         <br />
-                        <strong>Selected:</strong> {sessionValidation.selectedCount}
-                        <br />
-                        <strong>Missing:</strong> {sessionValidation.missingKeys.length > 0 ? sessionValidation.missingKeys.join(', ') : 'None'}
+                        {sessionValidation.missingKeys.map((err, i) => (
+                          <div key={i}>{err}</div>
+                        ))}
                       </Alert>
                     )}
                     <div className="d-flex flex-wrap gap-2 mb-3">
@@ -942,11 +956,10 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
     const dateStr = formData.date ? formatDate(formData.date) : 'Unknown Date';
     document.title = `${dateStr} Parade State`;
 
-    window.print();
-
-    // Restore original title after print dialog opens
     setTimeout(() => {
+      window.print();
       document.title = originalTitle;
+      onHide();
     }, 100);
   };
 
@@ -1010,7 +1023,7 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
                     <td className="ps-cat-label">{label}</td>
                     {PARADE_RANK_COLUMNS.map(({ key: col }) => (
                       <td key={col}>
-                        {rankCounts[key as keyof typeof rankCounts][col] || (key === 'grand_total' ? 0 : 0)}
+                        {rankCounts[key as keyof typeof rankCounts][col] || 0}
                       </td>
                     ))}
                   </tr>
@@ -1088,13 +1101,7 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
                     </tr>
                   );
                 })}
-                {absentees.length === 0 && (
-                  <tr>
-                    <td>1</td>
-                    <td colSpan={3}>—</td>
-                    <td colSpan={3}>—</td>
-                  </tr>
-                )}
+
               </tbody>
             </table>
           </div>

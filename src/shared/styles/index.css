@@ -85,7 +85,7 @@ a:hover {
 .form-group textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+  box-shadow: 0 0 0 3px rgba(45, 48, 146, 0.1);
 }
 
 .form-group input:disabled,
@@ -104,7 +104,7 @@ a:hover {
 .form-group input.error:focus,
 .form-group select.error:focus,
 .form-group textarea.error:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px rgba(239, 28, 37, 0.1);
 }
 
 .error-message {
@@ -168,8 +168,8 @@ a:hover {
 }
 
 .alert-danger {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background-color: rgba(239, 28, 37, 0.1);
+  border: 1px solid rgba(239, 28, 37, 0.3);
   color: var(--danger-color);
 }
 
@@ -180,7 +180,7 @@ a:hover {
 }
 
 .alert-info {
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background-color: rgba(0, 174, 239, 0.1);
+  border: 1px solid rgba(0, 174, 239, 0.3);
   color: var(--info-color);
 }

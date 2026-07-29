@@ -1,8 +1,104 @@
-import React from 'react';
-import { Alert, Card, Col, Container, Row } from 'react-bootstrap';
+import { auth, db } from '@/shared/config/firebase';
+import { mapFirebaseAuthError } from '@/shared/utils/firebaseErrors';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { collection, getDocs, query, updateDoc, where, doc, getDoc } from 'firebase/firestore';
+import React, { FormEvent, useState } from 'react';
+import { Alert, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 const VerifyEmail: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [verified, setVerified] = useState<boolean | null>(null);
+  const [userStatus, setUserStatus] = useState<'authenticated' | 'pending' | 'unknown' | null>(null);
+  const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState<{email?: string; password?: string}>({});
+
+  const validateForm = (): boolean => {
+    const errors: {email?: string; password?: string} = {};
+    if (!email.trim()) {
+      errors.email = 'Email is required';
+    }
+    // Removed strict TCE domain validation here to support alumni/ANOs, 
+    // or rely on Firebase rules instead if needed.
+    
+    if (!password) {
+      errors.password = 'Password is required';
+    } else if (password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCheckVerification = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setError('');
+    setVerified(null);
+    setLoading(true);
+
+    try {
+      // Sign in to check email verification status
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Reload user to get latest emailVerified status from Firebase
+      await user.reload();
+      const isVerified = user.emailVerified;
+
+      let status: 'authenticated' | 'pending' | 'unknown' = 'unknown';
+
+      // Check if user is already fully authenticated
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const alumniDoc = await getDoc(doc(db, 'alumni', user.uid));
+      
+      if (userDoc.exists() || alumniDoc.exists()) {
+        status = 'authenticated';
+      } else {
+        // Check if user is in pendingCadets
+        const pendingRef = collection(db, 'pendingCadets');
+        const q = query(pendingRef, where('uid', '==', user.uid));
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+          status = 'pending';
+          
+          if (isVerified) {
+            // Update the pendingCadets document with emailVerified: true
+            try {
+              const pendingDoc = snapshot.docs[0];
+              await updateDoc(doc(db, 'pendingCadets', pendingDoc.id), {
+                emailVerified: true
+              });
+            } catch (firestoreError) {
+              console.warn('Could not update pendingCadets emailVerified status:', firestoreError);
+            }
+          }
+        }
+      }
+
+      setVerified(isVerified);
+      setUserStatus(status);
+
+      // Sign out immediately — user cannot access the app until admin approves
+      await signOut(auth);
+    } catch (err: any) {
+      console.error('Verification check error:', err);
+      // Specifically handle invalid-credential to provide helpful context for this flow
+      if (err?.code === 'auth/invalid-credential') {
+        setError('Invalid credentials. If you forgot your password or reset it, please use the Login page instead.');
+      } else {
+        setError(mapFirebaseAuthError(err?.code));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Container className="py-5">
       <Row className="justify-content-center">
@@ -31,17 +127,128 @@ const VerifyEmail: React.FC = () => {
                     </strong> — the email may land there
                   </li>
                   <li className="mt-1">Click the verification link in the email</li>
-                  <li className="mt-1">
-                    Come back and <strong><Link to="/login">Login</Link></strong> with your credentials
-                  </li>
+                  <li className="mt-1">Come back here and click <strong>"Check Verification Status"</strong></li>
                 </ol>
               </Alert>
 
-              <Alert variant="success" className="mb-4">
-                <i className="bi bi-info-circle-fill me-2"></i>
-                <strong>After verifying your email,</strong> simply log in with your email and password.
-                Your verification status will be updated automatically. Once verified, wait for admin approval to access the app.
-              </Alert>
+              {/* Result messages */}
+              {userStatus === 'authenticated' && (
+                <Alert variant="success" className="mb-4">
+                  <i className="bi bi-check-circle-fill me-2"></i>
+                  <strong>Already Registered!</strong>
+                  <p className="mb-0 mt-1">
+                    Your account is fully active and verified. You can head straight to the login page to access your dashboard.
+                  </p>
+                </Alert>
+              )}
+
+              {userStatus === 'pending' && verified === true && (
+                <Alert variant="success" className="mb-4">
+                  <i className="bi bi-check-circle-fill me-2"></i>
+                  <strong>Email Verified Successfully!</strong>
+                  <p className="mb-0 mt-1">
+                    Your email has been verified. Please wait for the admin to approve your registration. 
+                    You'll be able to login once approved.
+                  </p>
+                </Alert>
+              )}
+
+              {userStatus === 'pending' && verified === false && (
+                <Alert variant="warning" className="mb-4">
+                  <i className="bi bi-clock-fill me-2"></i>
+                  <strong>Email Not Yet Verified</strong>
+                  <p className="mb-0 mt-1">
+                    Your email hasn't been verified yet. Please click the verification link in the email 
+                    sent to <strong>{email}</strong>. Don't forget to check your <strong>Spam / Junk folder</strong>.
+                  </p>
+                </Alert>
+              )}
+
+              {userStatus === 'unknown' && (
+                <Alert variant="warning" className="mb-4">
+                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                  <strong>Account Not Found</strong>
+                  <p className="mb-0 mt-1">
+                    We couldn't find a valid registration record for this email. You may have been rejected by an admin, or your registration didn't complete. Please register again.
+                  </p>
+                </Alert>
+              )}
+
+              {error && (
+                <Alert variant="danger" className="mb-4">
+                  <i className="bi bi-x-circle me-2"></i>
+                  {error}
+                </Alert>
+              )}
+
+              {/* Verification check form */}
+              {verified !== true && (
+                <Form onSubmit={handleCheckVerification}>
+                  <Form.Group className="mb-3" controlId="verifyEmail">
+                    <Form.Label>Email Address</Form.Label>
+                    <Form.Control
+                      type="email"
+                      placeholder="Enter your registered email"
+                      value={email}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setEmail(e.target.value);
+                        if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
+                      }}
+                      isInvalid={!!formErrors.email}
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      {formErrors.email}
+                    </Form.Control.Feedback>
+                  </Form.Group>
+
+                  <Form.Group className="mb-3" controlId="verifyPassword">
+                    <Form.Label>Password</Form.Label>
+                    <div className="position-relative">
+                      <Form.Control
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setPassword(e.target.value);
+                          if (formErrors.password) setFormErrors({ ...formErrors, password: undefined });
+                        }}
+                        className="pe-5"
+                        isInvalid={!!formErrors.password}
+                      />
+                      <Button
+                        variant="link"
+                        type="button"
+                        onClick={() => setShowPassword(prev => !prev)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="position-absolute end-0 top-50 translate-middle-y text-muted p-0 me-2"
+                      >
+                        <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                      </Button>
+                    </div>
+                    {formErrors.password && <div className="invalid-feedback d-block">{formErrors.password}</div>}
+                  </Form.Group>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-100"
+                    size="lg"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Spinner animation="border" size="sm" className="me-2" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-arrow-repeat me-2"></i>
+                        Check Verification Status
+                      </>
+                    )}
+                  </Button>
+                </Form>
+              )}
 
               <hr className="my-4" />
 

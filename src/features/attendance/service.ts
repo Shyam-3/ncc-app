@@ -493,6 +493,7 @@ export interface AnoUser {
   uid: string;
   name: string;
   email: string;
+  rank?: string;
 }
 
 /**
@@ -534,7 +535,10 @@ export async function listAnoUsers(): Promise<AnoUser[]> {
   return snap.docs
     .filter((d) => {
       const data = d.data();
-      return data.userType === 'ano' && String(data.status || '').trim().toLowerCase() === 'active';
+      const type = String(data.userType || '').toLowerCase();
+      const role = String(data.role || '').toLowerCase();
+      const isAnoOrAdmin = type === 'ano' || type === 'super-admin' || role === 'super-admin';
+      return isAnoOrAdmin && String(data.status || '').trim().toLowerCase() === 'active';
     })
     .map((d) => {
       const data = d.data();
@@ -542,6 +546,7 @@ export async function listAnoUsers(): Promise<AnoUser[]> {
         uid: d.id,
         name: data.name || '',
         email: data.email || '',
+        rank: data.rank || '',
       };
     });
 }

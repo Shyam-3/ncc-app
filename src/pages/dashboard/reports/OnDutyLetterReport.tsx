@@ -789,6 +789,13 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, h
     templateValues.ToDate,
   );
 
+  const handlePrint = () => {
+    setTimeout(() => {
+      window.print();
+      onHide();
+    }, 100);
+  };
+
   return (
     <Modal show={show} onHide={onHide} size="xl" fullscreen="lg-down" className="od-preview-modal">
       <Modal.Header closeButton>
@@ -913,7 +920,7 @@ const OnDutyLetterPreview: React.FC<PreviewProps> = ({ show, onHide, formData, h
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>Close</Button>
-        <Button variant="primary" onClick={() => window.print()}>
+        <Button variant="primary" onClick={handlePrint}>
           <i className="bi bi-printer me-2" />Print / Save PDF
         </Button>
       </Modal.Footer>

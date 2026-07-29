@@ -1,10 +1,175 @@
 :root {
-  --primary-color: #0d6efd;
-  --secondary-color: #6c757d;
+  /* ===== NCC Logo Color Theme ===== */
+  /* Lapis Lazuli (Dark Blue) - Primary */
+  --primary-color: #2D3092;
+  /* Secondary - slightly lighter blue derived from primary */
+  --secondary-color: #3a3fa6;
+  /* Success - kept neutral green */
   --success-color: #198754;
-  --danger-color: #dc3545;
+  /* Funky Red - Danger / Accent */
+  --danger-color: #EF1C25;
+  /* Warning - kept amber */
   --warning-color: #ffc107;
-  --info-color: #0dcaf0;
+  /* Vivid Cerulean (Light Blue) - Info */
+  --info-color: #00AEEF;
+
+  /* ===== Bootstrap CSS Variable Overrides ===== */
+  /* These control bg-primary, btn-primary, text-primary, badge, etc. */
+  --bs-primary: #2D3092;
+  --bs-primary-rgb: 45, 48, 146;
+
+  --bs-danger: #EF1C25;
+  --bs-danger-rgb: 239, 28, 37;
+
+  --bs-info: #00AEEF;
+  --bs-info-rgb: 0, 174, 239;
+
+  /* Link color */
+  --bs-link-color: #2D3092;
+  --bs-link-color-rgb: 45, 48, 146;
+  --bs-link-hover-color: #232672;
+  --bs-link-hover-color-rgb: 35, 38, 114;
+}
+
+/* ===== Bootstrap Component Color Overrides ===== */
+/* Primary buttons */
+.btn-primary {
+  --bs-btn-bg: #2D3092;
+  --bs-btn-border-color: #2D3092;
+  --bs-btn-hover-bg: #232672;
+  --bs-btn-hover-border-color: #1e2163;
+  --bs-btn-active-bg: #1e2163;
+  --bs-btn-active-border-color: #1a1d56;
+  --bs-btn-disabled-bg: #2D3092;
+  --bs-btn-disabled-border-color: #2D3092;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #2D3092;
+  --bs-btn-border-color: #2D3092;
+  --bs-btn-hover-bg: #2D3092;
+  --bs-btn-hover-border-color: #2D3092;
+  --bs-btn-active-bg: #2D3092;
+  --bs-btn-active-border-color: #2D3092;
+}
+
+/* Danger buttons */
+.btn-danger {
+  --bs-btn-bg: #EF1C25;
+  --bs-btn-border-color: #EF1C25;
+  --bs-btn-hover-bg: #d4171f;
+  --bs-btn-hover-border-color: #c8151d;
+  --bs-btn-active-bg: #c8151d;
+  --bs-btn-active-border-color: #b8131a;
+  --bs-btn-disabled-bg: #EF1C25;
+  --bs-btn-disabled-border-color: #EF1C25;
+}
+
+.btn-outline-danger {
+  --bs-btn-color: #EF1C25;
+  --bs-btn-border-color: #EF1C25;
+  --bs-btn-hover-bg: #EF1C25;
+  --bs-btn-hover-border-color: #EF1C25;
+  --bs-btn-active-bg: #EF1C25;
+  --bs-btn-active-border-color: #EF1C25;
+}
+
+/* Info buttons */
+.btn-info {
+  --bs-btn-bg: #00AEEF;
+  --bs-btn-border-color: #00AEEF;
+  --bs-btn-hover-bg: #009ad4;
+  --bs-btn-hover-border-color: #008ec4;
+  --bs-btn-active-bg: #008ec4;
+  --bs-btn-active-border-color: #0082b5;
+  --bs-btn-disabled-bg: #00AEEF;
+  --bs-btn-disabled-border-color: #00AEEF;
+  --bs-btn-color: #fff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-color: #fff;
+}
+
+/* Background utilities */
+.bg-primary {
+  --bs-bg-opacity: 1;
+  background-color: rgba(45, 48, 146, var(--bs-bg-opacity)) !important;
+}
+
+.bg-danger {
+  --bs-bg-opacity: 1;
+  background-color: rgba(239, 28, 37, var(--bs-bg-opacity)) !important;
+}
+
+.bg-info {
+  --bs-bg-opacity: 1;
+  background-color: rgba(0, 174, 239, var(--bs-bg-opacity)) !important;
+}
+
+/* Text utilities */
+.text-primary { color: #2D3092 !important; }
+.text-danger { color: #EF1C25 !important; }
+.text-info { color: #00AEEF !important; }
+
+/* Missing utility class - used in Home.tsx */
+.text-purple { color: #7c3aed !important; }
+
+/* Badge overrides */
+.badge.bg-primary { background-color: #2D3092 !important; }
+.badge.bg-danger { background-color: #EF1C25 !important; }
+.badge.bg-info { background-color: #00AEEF !important; color: #fff !important; }
+
+/* Form focus ring */
+.form-control:focus,
+.form-select:focus {
+  border-color: #2D3092;
+  box-shadow: 0 0 0 0.25rem rgba(45, 48, 146, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: #2D3092;
+  border-color: #2D3092;
+}
+
+/* Nav tabs & pills */
+.nav-link.active,
+.nav-tabs .nav-link.active {
+  color: #2D3092;
+  border-bottom-color: #2D3092;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  color: #232672;
+}
+
+/* Pagination */
+.page-link {
+  color: #2D3092;
+}
+
+.page-item.active .page-link {
+  background-color: #2D3092;
+  border-color: #2D3092;
+}
+
+/* Progress bar */
+.progress-bar {
+  background-color: #2D3092;
+}
+
+/* Border utilities */
+.border-primary { border-color: #2D3092 !important; }
+.border-danger { border-color: #EF1C25 !important; }
+.border-info { border-color: #00AEEF !important; }
+
+/* Scrollbar - themed */
+::-webkit-scrollbar-thumb {
+  background: #2D3092;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #232672;
 }
 
 body {
@@ -387,12 +552,12 @@ footer {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #2D3092;
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #232672;
 }
 
 /* Responsive table */

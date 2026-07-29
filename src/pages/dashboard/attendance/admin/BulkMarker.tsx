@@ -116,6 +116,13 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
         markedBy: markerUid,
       });
 
+      if (session) {
+        await updateSessionParadeFlags(sessionId, {
+          paradeCount: session.paradeCount || 1,
+          isOfficialParade: !!session.isOfficialParade,
+        });
+      }
+
       if (lock) {
         await lockSession(sessionId, markerUid);
         toast.success('Attendance saved and session locked');
@@ -188,13 +195,10 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
               id={`marker-double-parade-${sessionId}`}
               label="Saturday Parade (Double)"
               checked={(session.paradeCount || 1) >= 2}
-              onChange={async (e: ChangeEvent<HTMLInputElement>) => {
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 const newCount = e.target.checked ? 2 : 1;
-                try {
-                  await updateSessionParadeFlags(sessionId, { paradeCount: newCount });
-                  setSession((prev) => prev ? { ...prev, paradeCount: newCount } : prev);
-                  toast.success(e.target.checked ? 'Marked as double parade' : 'Unmarked double parade');
-                } catch { toast.error('Failed to update'); }
+                setSession((prev) => prev ? { ...prev, paradeCount: newCount } : prev);
+                setHasChanges(true);
               }}
             />
             <Form.Check
@@ -202,13 +206,10 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
               id={`marker-official-parade-${sessionId}`}
               label="Official Parade"
               checked={session.isOfficialParade === true}
-              onChange={async (e: ChangeEvent<HTMLInputElement>) => {
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 const newVal = e.target.checked;
-                try {
-                  await updateSessionParadeFlags(sessionId, { isOfficialParade: newVal });
-                  setSession((prev) => prev ? { ...prev, isOfficialParade: newVal } : prev);
-                  toast.success(newVal ? 'Marked as official' : 'Unmarked official');
-                } catch { toast.error('Failed to update'); }
+                setSession((prev) => prev ? { ...prev, isOfficialParade: newVal } : prev);
+                setHasChanges(true);
               }}
             />
           </div>

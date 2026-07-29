@@ -11,6 +11,7 @@ import AnnualAttendanceReport from '@/pages/dashboard/reports/AnnualAttendanceRe
 import NominalRollReport from '@/pages/dashboard/reports/NominalRollReport';
 import CatcCampReport from '@/pages/dashboard/reports/CatcCampReport';
 import ParadeStateReport from '@/pages/dashboard/reports/ParadeStateReport';
+import TrainingDiaryReport from '@/pages/dashboard/reports/TrainingDiaryReport';
 import OnDutyLetterReport from '@/pages/dashboard/reports/OnDutyLetterReport';
 import ReportsTemplateManager from '@/pages/dashboard/reports/ReportsTemplateManager';
 import ReportsWorkspace from '@/pages/dashboard/reports/ReportsWorkspace';
@@ -154,6 +155,14 @@ export const protectedRoutes = (
       element={
         <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
           <ParadeStateReport />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/reports/generators/training-diary"
+      element={
+        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+          <TrainingDiaryReport />
         </ProtectedRoute>
       }
     />

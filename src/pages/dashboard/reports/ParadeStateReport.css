@@ -51,9 +51,9 @@
 
 /* ---- Count Table ---- */
 .ps-count-table {
-  width: 100%;
+  width: 96%;
+  margin: 0 auto 14px auto;
   border-collapse: collapse;
-  margin-bottom: 14px;
   font-size: 14px;
 }
 .ps-count-table th,
@@ -134,7 +134,8 @@
   margin: 10px 0 5px;
 }
 .ps-absentee-table {
-  width: 100%;
+  width: 96%;
+  margin: 0 auto;
   border-collapse: collapse;
   font-size: 14px;
 }
