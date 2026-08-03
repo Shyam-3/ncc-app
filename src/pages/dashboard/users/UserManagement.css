@@ -1,11 +1,16 @@
-.user-col-sno {
-  width: 60px;
+/* ── Excel-like table alignment ── */
+.user-mgmt-table th,
+.user-mgmt-table td {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.user-col-division {
-  width: 80px;
+.user-mgmt-table .col-left {
+  text-align: left;
 }
 
-.user-col-actions {
-  width: 180px;
+/* Year sub-header styling */
+.user-mgmt-table .year-header {
+  border-bottom: 0;
 }

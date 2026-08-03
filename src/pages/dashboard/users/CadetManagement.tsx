@@ -21,6 +21,7 @@ interface CadetUser {
   email: string;
   name: string;
   role: UserRole;
+  userType?: 'ano' | 'cadet';
   createdAt: string;
   status: string;
   regimentalNumber?: string;
@@ -106,7 +107,7 @@ const CadetManagement: React.FC = () => {
   };
 
   const cadetUsers = useMemo(() => {
-    let list = users.filter(u => u.role === 'member');
+    let list = users.filter(u => u.role === 'member' && (!u.userType || u.userType === 'cadet'));
 
     if (divisionFilter !== 'ALL') {
       list = list.filter(u => (u.division || '') === divisionFilter);
@@ -463,31 +464,31 @@ const CadetManagement: React.FC = () => {
               </Button>
             </Col>
           </Row>
-          <Table striped bordered hover responsive>
+          <Table striped bordered hover responsive className="cadet-mgmt-table">
             <thead>
               <tr>
-                <th className="cadet-col-sno">S.No</th>
+                <th>S.No</th>
                 <th>Name</th>
                 <th>Regimental Number</th>
-                <th className="cadet-col-division">SD/SW</th>
-                <th className="cadet-col-year">Year</th>
-                <th className="cadet-col-actions">Actions</th>
+                <th>SD/SW</th>
+                <th>Year</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedCadets.map((u, index) => (
                 <tr key={u.uid}>
-                  <td className="text-center">{startIndex + index + 1}</td>
-                  <td className="text-break" dir="ltr">{u.name || 'N/A'}</td>
+                  <td>{startIndex + index + 1}</td>
+                  <td className="col-left" dir="ltr">{u.name || 'N/A'}</td>
                   <td>{u.regimentalNumber || '-'}</td>
-                  <td className="text-center">
+                  <td>
                     {u.division ? (
                       <Badge bg={u.division === 'SD' ? 'info' : 'warning'}>{u.division}</Badge>
                     ) : (
                       <span className="text-muted">-</span>
                     )}
                   </td>
-                  <td className="text-center">{formatYear(u.nccYear || '1st Year')}</td>
+                  <td>{formatYear(u.nccYear || '1st Year')}</td>
                   <td>
                     <Button
                       size="sm"

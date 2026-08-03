@@ -27,6 +27,7 @@ const ROLE_LEVEL: Record<string, number> = {
   member: 1,
   admin: 2,
   superadmin: 3,
+  alumni: 0,
 };
 
 // NCC year sort priority (within same role)
@@ -98,17 +99,23 @@ const RoleManagement: React.FC = () => {
       );
     }
 
-    // Sort: nccYear first, then role (lowest→highest), then regimental number (ascending)
+    // Sort: regular users first, alumni second-to-last, ANO last
+    // Within regular: nccYear desc (3>2>1) → regimental number asc → role asc
     list.sort((a, b) => {
+      const groupA = isAnoUser(a) ? 2 : a.role === 'alumni' ? 1 : 0;
+      const groupB = isAnoUser(b) ? 2 : b.role === 'alumni' ? 1 : 0;
+      if (groupA !== groupB) return groupA - groupB;
+
       const yearA = NCC_YEAR_ORDER[a.nccYear || ''] ?? 0;
       const yearB = NCC_YEAR_ORDER[b.nccYear || ''] ?? 0;
-      if (yearA !== yearB) return yearA - yearB;
+      if (yearA !== yearB) return yearB - yearA;
+
+      const regCmp = (a.regimentalNumber || '').localeCompare(b.regimentalNumber || '', undefined, { numeric: true });
+      if (regCmp !== 0) return regCmp;
 
       const levelA = ROLE_LEVEL[a.role] ?? 0;
       const levelB = ROLE_LEVEL[b.role] ?? 0;
-      if (levelA !== levelB) return levelA - levelB;
-
-      return (a.regimentalNumber || '').localeCompare(b.regimentalNumber || '', undefined, { numeric: true });
+      return levelA - levelB;
     });
 
     return list;
@@ -280,26 +287,26 @@ const RoleManagement: React.FC = () => {
             </Col>
           </Row>
 
-          <Table striped bordered hover responsive>
+          <Table striped bordered hover responsive className="role-mgmt-table">
             <thead>
               <tr>
-                <th className="role-col-sno">S.No</th>
+                <th>S.No</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th className="role-col-role">Role</th>
-                <th className="role-col-change">Change Role</th>
+                <th>Role</th>
+                <th>Change Role</th>
               </tr>
             </thead>
             <tbody>
               {paginatedUsers.map((user, index) => (
                 <tr key={user.uid}>
-                  <td className="text-center">{startIndex + index + 1}</td>
-                  <td className="text-break" dir="ltr">
+                  <td>{startIndex + index + 1}</td>
+                  <td className="col-left" dir="ltr">
                     {user.name || 'N/A'}{' '}
                     {user.uid === currentUser?.uid && <Badge bg="success" className="ms-1">You</Badge>}
                   </td>
-                  <td className="text-break">{user.email}</td>
-                  <td className="text-center">
+                  <td className="col-left">{user.email}</td>
+                  <td>
                     <Badge bg={getRoleBadgeVariant(user.role)}>{user.role.toUpperCase()}</Badge>
                   </td>
                   <td>

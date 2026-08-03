@@ -32,7 +32,7 @@ import {
 import toast from 'react-hot-toast';
 import { triggerAuthCleanup, triggerVerificationSync } from '@/shared/utils/githubActions';
 import { TablePaginationFooter } from '@/components';
-import { ROMAN_YEAR_MAP } from '@/shared/config/constants';
+import { ROMAN_YEAR_MAP, NCC_YEARS } from '@/shared/config/constants';
 import { deleteTakenNumberBatch } from '@/shared/utils/dbValidators';
 
 import { isAnoUser, resolveUserType } from '@/shared/utils/userType';
@@ -112,6 +112,7 @@ const UserManagement: React.FC = () => {
   // Filter states for users tab
   const [divisionFilterUsers, setDivisionFilterUsers] = useState<'ALL' | 'SD' | 'SW'>('ALL');
   const [searchTermUsers, setSearchTermUsers] = useState('');
+  const [nccYearFilterUsers, setNccYearFilterUsers] = useState<'ALL' | string>('ALL');
   const [usersCurrentPage, setUsersCurrentPage] = useState(1);
   const [usersRowsPerPage, setUsersRowsPerPage] = useState(10);
   const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
@@ -155,7 +156,7 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     setUsersCurrentPage(1);
-  }, [divisionFilterUsers, searchTermUsers, usersRowsPerPage]);
+  }, [divisionFilterUsers, searchTermUsers, nccYearFilterUsers, usersRowsPerPage]);
 
   useEffect(() => {
     setPendingCurrentPage(1);
@@ -350,6 +351,10 @@ const UserManagement: React.FC = () => {
       list = list.filter(u => (u.division || 'ALL') === divisionFilterUsers);
     }
 
+    if (nccYearFilterUsers !== 'ALL') {
+      list = list.filter(u => (u.nccYear || '') === nccYearFilterUsers);
+    }
+
     if (searchTermUsers.trim()) {
       const term = searchTermUsers.toLowerCase();
       list = list.filter(u =>
@@ -358,27 +363,28 @@ const UserManagement: React.FC = () => {
       );
     }
 
+    const NCC_YEAR_VAL: Record<string, number> = { '1st Year': 1, '2nd Year': 2, '3rd Year': 3 };
+    const ROLE_VAL: Record<string, number> = { member: 1, admin: 2, superadmin: 3, alumni: 0 };
+
     list.sort((a, b) => {
-      const getRank = (u: UserData) => {
-        if (u.role === 'alumni') {
-          const yrMatch = (u.year || '').match(/(\d+)/);
-          return 10 + (yrMatch ? parseInt(yrMatch[1]) : 0);
-        } else {
-          const yrMatch = (u.nccYear || '').match(/(\d+)/);
-          return yrMatch ? parseInt(yrMatch[1]) : 0;
-        }
-      };
+      const groupA = isAnoUser(a) ? 2 : a.role === 'alumni' ? 1 : 0;
+      const groupB = isAnoUser(b) ? 2 : b.role === 'alumni' ? 1 : 0;
+      if (groupA !== groupB) return groupA - groupB;
 
-      const rankA = getRank(a);
-      const rankB = getRank(b);
+      const yearA = NCC_YEAR_VAL[a.nccYear || ''] ?? 0;
+      const yearB = NCC_YEAR_VAL[b.nccYear || ''] ?? 0;
+      if (yearA !== yearB) return yearA - yearB;
 
-      if (rankA !== rankB) return rankA - rankB;
+      const regCmp = (a.regimentalNumber || '').localeCompare(b.regimentalNumber || '', undefined, { numeric: true });
+      if (regCmp !== 0) return regCmp;
 
-      return (a.regimentalNumber || '').localeCompare(b.regimentalNumber || '', undefined, { numeric: true });
+      const roleA = ROLE_VAL[a.role] ?? 0;
+      const roleB = ROLE_VAL[b.role] ?? 0;
+      return roleA - roleB;
     });
 
     return list;
-  }, [users, divisionFilterUsers, searchTermUsers]);
+  }, [users, divisionFilterUsers, searchTermUsers, nccYearFilterUsers]);
 
   const usersTotalPages = Math.max(1, Math.ceil(filteredUsers.length / usersRowsPerPage));
   const usersSafePage = Math.min(usersCurrentPage, usersTotalPages);
@@ -395,6 +401,7 @@ const UserManagement: React.FC = () => {
   const clearUsersFilters = () => {
     setDivisionFilterUsers('ALL');
     setSearchTermUsers('');
+    setNccYearFilterUsers('ALL');
   };
 
   const handleDeleteUser = async (u: UserData) => {
@@ -679,7 +686,19 @@ const UserManagement: React.FC = () => {
             <label className="btn btn-outline-primary" htmlFor="division-users-sw">SW</label>
           </div>
         </Col>
-        <Col xs={12} md={4}>
+        <Col xs={12} md={2}>
+          <Form.Label className="small fw-semibold">NCC Year</Form.Label>
+          <Form.Select
+            value={nccYearFilterUsers}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNccYearFilterUsers(e.target.value)}
+          >
+            <option value="ALL">All Years</option>
+            {NCC_YEARS.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </Form.Select>
+        </Col>
+        <Col xs={12} md={3}>
           <Form.Label className="small fw-semibold">Search</Form.Label>
           <Form.Control
             type="text"
@@ -696,29 +715,33 @@ const UserManagement: React.FC = () => {
         </Col>
       </Row>
 
-      <Table striped bordered hover responsive>
+      <Table striped bordered hover responsive className="user-mgmt-table">
         <thead>
           <tr>
-            <th className="user-col-sno">S.No</th>
-            <th>Name</th>
-            <th className="user-col-division">SD/SW</th>
-            <th>Regimental Number</th>
-            <th>Academic Year</th>
-            <th>Email</th>
-            <th className="user-col-actions">Actions</th>
+            <th rowSpan={2}>S.No</th>
+            <th rowSpan={2}>Name</th>
+            <th rowSpan={2}>SD/SW</th>
+            <th rowSpan={2}>Regimental Number</th>
+            <th colSpan={2} className="year-header">Year</th>
+            <th rowSpan={2}>Email</th>
+            <th rowSpan={2}>Actions</th>
+          </tr>
+          <tr>
+            <th>NCC</th>
+            <th>Academic</th>
           </tr>
         </thead>
         <tbody>
           {paginatedUsers.map((u, index) => (
             <tr key={u.uid}>
-              <td className="text-center">{usersStartIndex + index + 1}</td>
-              <td className="text-break" dir="ltr">
-                {u.name || 'N/A'} 
+              <td>{usersStartIndex + index + 1}</td>
+              <td className="col-left" dir="ltr">
+                {u.name || 'N/A'}{' '}
                 {isSelf(u.uid) && <Badge bg="success" className="ms-1">You</Badge>}
                 {u.role === 'alumni' && <Badge bg="secondary" className="ms-1">Alumni</Badge>}
                 {isAnoUser(u) && <Badge bg="dark" className="ms-1">ANO</Badge>}
               </td>
-              <td className="text-center">
+              <td>
                 {u.division ? (
                   <Badge bg={u.division === 'SD' ? 'info' : 'warning'}>{u.division}</Badge>
                 ) : (
@@ -726,8 +749,9 @@ const UserManagement: React.FC = () => {
                 )}
               </td>
               <td>{u.regimentalNumber || '-'}</td>
+              <td>{u.nccYear || '-'}</td>
               <td>{formatAcademicYear(u.year)}</td>
-              <td>{u.email}</td>
+              <td className="col-left">{u.email}</td>
               <td className="d-flex gap-2">
                 {!isSelf(u.uid) ? (
                   <>
@@ -744,7 +768,7 @@ const UserManagement: React.FC = () => {
             </tr>
           ))}
           {filteredUsers.length === 0 && (
-            <tr><td colSpan={7} className="text-center text-muted">No users match filters</td></tr>
+            <tr><td colSpan={8} className="text-center text-muted">No users match filters</td></tr>
           )}
         </tbody>
       </Table>
@@ -759,7 +783,7 @@ const UserManagement: React.FC = () => {
         onLastPage={() => setUsersCurrentPage(usersTotalPages)}
       />
     </>
-  ), [filteredUsers, paginatedUsers, usersSafePage, usersRowsPerPage, usersStartIndex, usersTotalPages, userProfile?.role]);
+  ), [filteredUsers, paginatedUsers, usersSafePage, usersRowsPerPage, usersStartIndex, usersTotalPages, userProfile?.role, nccYearFilterUsers, divisionFilterUsers, searchTermUsers]);
 
 
   if (loading) {

@@ -6,6 +6,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
   getDocs,
   setDoc,
   query,
@@ -115,7 +116,7 @@ export async function listAnnouncementsForUser(): Promise<Announcement[]> {
 
 // ─── Read Tracking ────────────────────────────────────────────────────────────
 
-/** Mark an announcement as read by a user (dual-write) */
+/** Mark an announcement as read by a user (dual-write, skip if already read) */
 export async function markAsRead(
   announcementId: string,
   user: { uid: string; name: string; nccYear?: string; role: string },
@@ -128,11 +129,21 @@ export async function markAsRead(
     readAt: serverTimestamp(),
   };
 
+  // Check if already marked as read before writing — Firestore rules disallow updates,
+  // so setDoc on an existing doc would fail with a permission error.
+  const userReadRef = doc(db, 'users', user.uid, 'readAnnouncements', announcementId);
+  const existingRead = await getDoc(userReadRef);
+  
+  if (existingRead.exists()) {
+    // Already read — nothing to do
+    return;
+  }
+
   // Write 1: announcements/{id}/reads/{uid} (for admin analytics)
   await setDoc(doc(db, 'announcements', announcementId, 'reads', user.uid), readData);
 
   // Write 2: users/{uid}/readAnnouncements/{announcementId} (for user's unread count)
-  await setDoc(doc(db, 'users', user.uid, 'readAnnouncements', announcementId), {
+  await setDoc(userReadRef, {
     announcementId,
     readAt: serverTimestamp(),
   });

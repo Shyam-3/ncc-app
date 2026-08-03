@@ -1,13 +1,13 @@
-.role-col-sno {
-  width: 60px;
+/* ── Excel-like table alignment ── */
+.role-mgmt-table th,
+.role-mgmt-table td {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.role-col-role {
-  width: 120px;
-}
-
-.role-col-change {
-  width: 180px;
+.role-mgmt-table .col-left {
+  text-align: left;
 }
 
 /* ── Material Design table footer pagination ── */

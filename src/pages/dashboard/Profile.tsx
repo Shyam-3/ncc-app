@@ -287,6 +287,9 @@ const Profile: React.FC = () => {
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
         };
+        if (isAnoProfile) {
+          updatePayload.rank = editForm.rank;
+        }
         if (!isAnoProfile) {
           updatePayload.fatherName = editForm.fatherName || '';
           updatePayload.residentialStatus = editForm.residentialStatus;
@@ -299,7 +302,7 @@ const Profile: React.FC = () => {
           name: editForm.name,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
-          ...(isAnoProfile ? {} : {
+          ...(isAnoProfile ? { rank: editForm.rank } : {
             fatherName: editForm.fatherName || '',
             residentialStatus: editForm.residentialStatus,
             address: editForm.address || '',
@@ -415,6 +418,12 @@ const Profile: React.FC = () => {
                     {isAnoProfile && <Badge bg="dark" className="ms-2">ANO</Badge>}
                   </div>
                 </Col>
+                {isAnoProfile && profile.rank && (
+                  <Col xs={12} md={6}>
+                    <Form.Label className="fw-bold text-muted small">Rank / Designation</Form.Label>
+                    <p className="mb-0">{profile.rank}</p>
+                  </Col>
+                )}
                 {!isAnoProfile && (
                   <Col xs={12} md={6}>
                     <Form.Label className="fw-bold text-muted small">Account Status</Form.Label>
@@ -716,6 +725,18 @@ const Profile: React.FC = () => {
               {editErrors.bloodGroup && <Form.Text className="text-danger d-block mt-1">{editErrors.bloodGroup}</Form.Text>}
             </Form.Group>
 
+            {isAnoProfile && (
+            <Form.Group className="mb-3" controlId="editAnoRank">
+              <Form.Label>Rank / Designation</Form.Label>
+              <Form.Control
+                type="text"
+                value={editForm.rank}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('rank', e.target.value)}
+                placeholder="e.g., Major, Captain, Lieutenant"
+              />
+            </Form.Group>
+            )}
+
             {!isAnoProfile && (
             <Form.Group className="mb-3" controlId="editResidentialStatus">
               <Form.Label>Residential Status</Form.Label>
@@ -760,7 +781,7 @@ const Profile: React.FC = () => {
             <Alert variant="warning" className="small">
               <i className="bi bi-exclamation-triangle me-2"></i>
               {isAnoProfile
-                ? 'ANO profiles can update name, phone, and blood group only.'
+                ? 'ANO profiles can update name, rank, phone, and blood group.'
                 : 'Only name, residential status, and additional details can be modified by cadets.'}
             </Alert>
           </Form>

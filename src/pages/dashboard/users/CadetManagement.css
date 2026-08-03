@@ -1,15 +1,11 @@
-.cadet-col-sno {
-  width: 60px;
+/* ── Excel-like table alignment ── */
+.cadet-mgmt-table th,
+.cadet-mgmt-table td {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.cadet-col-division {
-  width: 80px;
-}
-
-.cadet-col-year {
-  width: 90px;
-}
-
-.cadet-col-actions {
-  width: 120px;
+.cadet-mgmt-table .col-left {
+  text-align: left;
 }
