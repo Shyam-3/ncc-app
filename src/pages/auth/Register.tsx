@@ -70,16 +70,16 @@ const Register: React.FC = () => {
   const { currentUser, userProfile, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (authLoading || !currentUser) {
+    if (authLoading || !currentUser || !userProfile) {
       return;
     }
 
-    const landingPage = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+    const landingPage = userProfile.role === 'admin' || userProfile.role === 'superadmin'
       ? '/admin/dashboard'
       : '/dashboard';
 
     navigate(landingPage, { replace: true });
-  }, [authLoading, currentUser, navigate, userProfile?.role]);
+  }, [authLoading, currentUser, navigate, userProfile]);
 
   // Calculate maximum allowed date (17 years ago today)
   const maxDobDate = new Date();
@@ -402,6 +402,7 @@ const Register: React.FC = () => {
                         onChange={handleChange}
                         className={getFieldClass('name')}
                         placeholder="Enter your full name with initials at the end"
+                        autoComplete="name"
                       />
                       {errors.name && <Form.Text className="text-danger d-block mt-1">{errors.name}</Form.Text>}
                     </Form.Group>
@@ -433,6 +434,7 @@ const Register: React.FC = () => {
                         onChange={handleChange}
                         className={getFieldClass('email')}
                         placeholder="Use your student email"
+                        autoComplete="email"
                       />
                       {errors.email && <Form.Text className="text-danger d-block mt-1">{errors.email}</Form.Text>}
                       <Form.Text className="text-muted">TCE email id (@student.tce.edu)</Form.Text>
@@ -452,6 +454,7 @@ const Register: React.FC = () => {
                           onChange={handleChange}
                           className={`${getFieldClass('password')} pe-5`}
                           placeholder="At least 6 characters"
+                          autoComplete="new-password"
                         />
                         <Button
                           variant="link"
@@ -477,6 +480,7 @@ const Register: React.FC = () => {
                           onChange={handleChange}
                           className={`${getFieldClass('confirmPassword')} pe-5`}
                           placeholder="Re-enter password"
+                          autoComplete="new-password"
                         />
                         <Button
                           variant="link"

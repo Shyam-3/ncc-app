@@ -15,16 +15,16 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (authLoading || !currentUser) {
+    if (authLoading || !currentUser || loading || googleLoading || !userProfile) {
       return;
     }
 
-    const landingPage = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+    const landingPage = userProfile.role === 'admin' || userProfile.role === 'superadmin'
       ? '/admin/dashboard'
       : '/dashboard';
 
     navigate(landingPage, { replace: true });
-  }, [authLoading, currentUser, navigate, userProfile?.role]);
+  }, [authLoading, currentUser, googleLoading, loading, navigate, userProfile]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

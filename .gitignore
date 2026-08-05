@@ -20,9 +20,6 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# Firebase Service Accounts
-*-firebase-adminsdk-*.json
-
 # Environment variables
 .env
 .env.local
@@ -38,3 +35,5 @@ ui-debug.log
 *.njsproj
 *.sln
 *.sw?
+
+BLAZE_PLAN.md
