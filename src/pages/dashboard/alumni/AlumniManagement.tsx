@@ -225,9 +225,9 @@ const AlumniManagement: React.FC = () => {
         rawData.cloudinaryPublicId = null;
       }
       
-      const data = photoRemoved
-        ? rawData // keep nulls so Firestore deletes the fields
-        : Object.fromEntries(Object.entries(rawData).filter(([_, v]) => v !== undefined));
+      const data = Object.fromEntries(
+        Object.entries(rawData).filter(([_, v]) => v !== undefined)
+      );
 
       if (editingId) {
         await updateDoc(doc(db, 'alumniProfiles', editingId), data);
