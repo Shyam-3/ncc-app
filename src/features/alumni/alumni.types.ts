@@ -8,13 +8,16 @@ export interface AlumniProfile {
   bloodGroup?: string;
   division?: 'SD' | 'SW';
   department?: string;
-  passOutYear?: string;
   batchYears?: string;
+  academicYear?: string;
+  nccTenure?: string;
   rank?: string;
   achievements?: string;
   regimentalNumber?: string;
   nccYear?: string;
   year?: string;
+  photoURL?: string;
+  cloudinaryPublicId?: string;
   status: AlumniProfileStatus;
   visible: boolean;
   source: AlumniProfileSource;

@@ -30,7 +30,7 @@ const SocialService: React.FC = () => {
     <Container className="py-5">
       <h1 className="mb-4">Social Service</h1>
       {loading ? (
-        <div className="d-flex align-items-center"><Spinner size="sm" animation="border" className="me-2"/> Loading…</div>
+        <div className="d-flex align-items-center"><Spinner as="span" size="sm" animation="border" className="me-2" /> Loading…</div>
       ) : content ? (
         <Markdown content={content} />
       ) : (

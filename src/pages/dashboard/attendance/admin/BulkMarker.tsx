@@ -147,7 +147,7 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
   if (loading) {
     return (
       <div className="text-center py-5">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-2">Loading session...</p>
       </div>
     );

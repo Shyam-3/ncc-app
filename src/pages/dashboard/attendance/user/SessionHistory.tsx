@@ -1,6 +1,5 @@
-import { Table, Badge, Form, Card, Button } from 'react-bootstrap';
+import { Table, Badge, Form, Card } from 'react-bootstrap';
 import { useState, useMemo, type ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { AttendanceSession, AttendanceMark } from '@/features/attendance/attendance.types';
 import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/attendance.types';
 
@@ -14,7 +13,6 @@ interface SessionHistoryProps {
 }
 
 export function SessionHistory({ history }: SessionHistoryProps) {
-  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('');
 
   const filteredHistory = useMemo(() => {
@@ -61,8 +59,8 @@ export function SessionHistory({ history }: SessionHistoryProps) {
                   <td>{item.session.date}</td>
                   <td>{item.session.title}</td>
                   <td>
-                    <Badge bg={ATTENDANCE_STATUS_COLORS[item.mark.status]}>
-                      {ATTENDANCE_STATUS_LABELS[item.mark.status]}
+                    <Badge bg={item.mark ? ATTENDANCE_STATUS_COLORS[item.mark.status] : 'secondary'}>
+                      {item.mark ? ATTENDANCE_STATUS_LABELS[item.mark.status] : 'N/A'}
                     </Badge>
                   </td>
                 </tr>

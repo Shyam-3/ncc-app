@@ -492,7 +492,7 @@ const ParadeStateReport: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-3">Loading data...</p>
       </Container>
     );
@@ -612,7 +612,6 @@ const ParadeStateReport: React.FC = () => {
                     >
                       {fetching ? (
                         <>
-                          <Spinner animation="border" size="sm" className="me-2" />
                           Fetching...
                         </>
                       ) : (

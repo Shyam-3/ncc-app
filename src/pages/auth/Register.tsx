@@ -5,7 +5,10 @@ import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap'
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
-import { DEPARTMENT_DEFS } from '../../shared/config/constants';
+import { uploadCadetPhoto } from '@/shared/utils/cloudinary';
+import { validatePassword } from '@/shared/utils/passwordPolicy';
+import PasswordStrength from '@/components/common/PasswordStrength';
+import { DEPARTMENT_DEFS, BLOOD_GROUPS } from '../../shared/config/constants';
 import { auth, db } from '../../shared/config/firebase';
 import { calculateAge, checkUniqueField } from '../../shared/utils/dbValidators';
 import './Register.css';
@@ -64,6 +67,8 @@ const Register: React.FC = () => {
   
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -111,8 +116,11 @@ const Register: React.FC = () => {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else {
+      const pwdResult = validatePassword(formData.password);
+      if (!pwdResult.isValid) {
+        newErrors.password = pwdResult.errors[0];
+      }
     }
     
     if (formData.password !== formData.confirmPassword) {
@@ -222,6 +230,25 @@ const Register: React.FC = () => {
     }));
   };
 
+  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      if (!file.type.match('image/(jpeg|jpg|png|webp)')) {
+        toast.error('Please upload a valid image file (JPG, PNG, WEBP)');
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Photo must be less than 5MB');
+        return;
+      }
+
+      setProfilePhoto(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleResidentialStatusChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value as 'Day Scholar' | 'Hosteller';
     if (errors.residentialStatus) {
@@ -288,6 +315,26 @@ const Register: React.FC = () => {
       // Step 2: Send verification email
       await sendEmailVerification(user);
 
+      let photoURL: string | null = null;
+      let cloudinaryPublicId: string | null = null;
+
+      if (profilePhoto && formData.division && formData.dateOfEnrollment) {
+        try {
+          const result = await uploadCadetPhoto(
+            profilePhoto,
+            formData.name,
+            formData.dateOfEnrollment,
+            formData.division as 'SD' | 'SW'
+          );
+          photoURL = result.secure_url;
+          cloudinaryPublicId = result.public_id;
+        } catch (uploadErr) {
+          console.error('Photo upload failed:', uploadErr);
+          // Don't block registration if photo upload fails
+          toast.error('Photo upload failed, you can add it later from your profile.');
+        }
+      }
+
       // Step 3: Submit to pendingCadets and takenNumbers using a Batch Write
       const batch = writeBatch(db);
       const pendingRef = doc(collection(db, 'pendingCadets'));
@@ -322,6 +369,8 @@ const Register: React.FC = () => {
         bloodGroup: formData.bloodGroup,
         fatherName: formData.fatherName,
         address: formData.address,
+        photoURL: photoURL || null,
+        cloudinaryPublicId: cloudinaryPublicId || null,
         
         // System fields
         userType: 'cadet',
@@ -407,6 +456,43 @@ const Register: React.FC = () => {
                       {errors.name && <Form.Text className="text-danger d-block mt-1">{errors.name}</Form.Text>}
                     </Form.Group>
                   </Col>
+                  <Col xs={12}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Profile Photo <span className="text-muted">(Optional)</span></Form.Label>
+                      <div className="d-flex align-items-center gap-3">
+                        <div 
+                          className="rounded-circle bg-light d-flex align-items-center justify-content-center overflow-hidden border"
+                          style={{ width: '100px', height: '100px', cursor: 'pointer' }}
+                          onClick={() => document.getElementById('profilePhotoInput')?.click()}
+                        >
+                          {photoPreview ? (
+                            <img src={photoPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <i className="bi bi-camera text-secondary fs-1"></i>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            type="file"
+                            id="profilePhotoInput"
+                            accept=".jpg,.jpeg,.png,.webp"
+                            className="d-none"
+                            onChange={handlePhotoChange}
+                          />
+                          <Button 
+                            variant="outline-secondary" 
+                            size="sm"
+                            onClick={() => document.getElementById('profilePhotoInput')?.click()}
+                          >
+                            Choose Photo
+                          </Button>
+                          <Form.Text className="d-block mt-1 text-muted">
+                            Max 5MB. JPG, PNG, or WEBP.
+                          </Form.Text>
+                        </div>
+                      </div>
+                    </Form.Group>
+                  </Col>
                   <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="dateOfBirth">
                       <Form.Label>Date of Birth <span className="text-danger">*</span></Form.Label>
@@ -453,7 +539,7 @@ const Register: React.FC = () => {
                           value={formData.password}
                           onChange={handleChange}
                           className={`${getFieldClass('password')} pe-5`}
-                          placeholder="At least 6 characters"
+                          placeholder="Min 8 chars, A-z, 0-9, special"
                           autoComplete="new-password"
                         />
                         <Button
@@ -466,6 +552,7 @@ const Register: React.FC = () => {
                           <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                         </Button>
                       </div>
+                      <PasswordStrength password={formData.password} />
                       {errors.password && <Form.Text className="text-danger d-block mt-1">{errors.password}</Form.Text>}
                     </Form.Group>
                   </Col>
@@ -687,14 +774,7 @@ const Register: React.FC = () => {
                         className={getFieldClass('bloodGroup')}
                       >
                         <option value="" disabled>Select Blood Group</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
+                        {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
                       </Form.Select>
                       {errors.bloodGroup && <Form.Text className="text-danger d-block mt-1">{errors.bloodGroup}</Form.Text>}
                     </Form.Group>

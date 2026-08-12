@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Badge, Button, Card, Carousel, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { AnimatedSection } from '../../components';
-import { getActiveRecruitmentAnnouncements, listPublicAnnouncements, listAnnouncementsForUser } from '@/features/announcements/service';
+import { listPublicAnnouncements, listAnnouncementsForUser } from '@/features/announcements/service';
 import { useAuth } from '@/features/auth/AuthContext';
 import type { Announcement } from '@/features/announcements/announcement.types';
 import { ANNOUNCEMENT_CATEGORY_LABELS, ANNOUNCEMENT_CATEGORY_COLORS } from '@/shared/config/constants';
@@ -11,25 +11,23 @@ import './Home.css';
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
-  const [recruitmentAnnouncements, setRecruitmentAnnouncements] = useState<Announcement[]>([]);
+  const [importantAnnouncements, setImportantAnnouncements] = useState<Announcement[]>([]);
   const [latestAnnouncements, setLatestAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
-    getActiveRecruitmentAnnouncements()
-      .then(setRecruitmentAnnouncements)
-      .catch(() => { });
-
     const fetchAnnouncements = currentUser ? listAnnouncementsForUser() : listPublicAnnouncements();
     
     fetchAnnouncements
       .then((all) => {
-        const nonRecruitment = all.filter((a) => a.category !== 'recruitment');
-        setLatestAnnouncements(nonRecruitment.slice(0, 4));
+        const important = all.filter((a) => ['recruitment', 'celebrations'].includes(a.category));
+        const classic = all.filter((a) => !['recruitment', 'celebrations'].includes(a.category));
+        setImportantAnnouncements(important);
+        setLatestAnnouncements(classic.slice(0, 4));
       })
       .catch(() => { });
   }, [currentUser]);
 
-  const recruitment = recruitmentAnnouncements[0];
+
 
   return (
     <div>
@@ -79,46 +77,62 @@ const Home: React.FC = () => {
         </Carousel.Item>
       </Carousel>
 
-      {/* Recruitment Banner */}
-      {recruitment && (
-        <AnimatedSection effect="fade" delay={0.05}>
-          <div className="home-recruitment-banner">
-            <Container>
-              <Row className="align-items-center justify-content-center text-center text-md-start">
-                <Col md={8} lg={7}>
-                  <h2 className="home-recruitment-title">
-                    📢 {recruitment.title}
-                  </h2>
-                  <p className="home-recruitment-body">
-                    {recruitment.body}
-                  </p>
-                  {recruitment.expiresAt && (
-                    <p className="home-recruitment-expiry">
-                      <i className="bi bi-clock me-1" />
-                      Application closes on {' '}
-                      {formatISTDate(recruitment.expiresAt, {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
-                    </p>
-                  )}
-                </Col>
-                <Col md={4} lg={3} className="mt-3 mt-md-0 text-center">
-                  <Link
-                    to="/recruitment"
-                    className="btn btn-light btn-lg home-recruitment-cta"
-                  >
-                    Apply Now <i className="bi bi-arrow-right ms-1" />
-                  </Link>
-                </Col>
-              </Row>
-            </Container>
-          </div>
-        </AnimatedSection>
+      {/* Important Announcements Banners */}
+      {importantAnnouncements.length > 0 && (
+        <div className="d-flex flex-column">
+          {importantAnnouncements.map((ann, idx) => {
+            const isRecruitment = ann.category === 'recruitment';
+            const isCelebration = ann.category === 'celebrations';
+            const ctaLink = isRecruitment ? '/recruitment' : '/notifications';
+            const ctaText = isRecruitment ? 'Apply Now' : 'View Details';
+            
+            let bannerClass = 'home-recruitment-banner';
+            if (isCelebration) {
+              bannerClass = ann.theme === 'ncc' ? 'home-celebration-ncc-banner' : 'home-celebration-tricolor-banner';
+            }
+            
+            return (
+              <AnimatedSection effect="fade" delay={0.05 * (idx + 1)} key={ann.id || idx}>
+                <div className={bannerClass}>
+                  <Container>
+                    <Row className="align-items-center justify-content-center text-center text-md-start">
+                      <Col md={8} lg={7}>
+                        <h2 className="home-recruitment-title">
+                          {ann.title}
+                        </h2>
+                        <p className="home-recruitment-body">
+                          {ann.body}
+                        </p>
+                        {isRecruitment && ann.expiresAt && (
+                          <p className="home-recruitment-expiry">
+                            <i className="bi bi-clock me-1" />
+                            Application closes on {' '}
+                            {formatISTDate(ann.expiresAt, {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </p>
+                        )}
+                      </Col>
+                      <Col md={4} lg={3} className="mt-3 mt-md-0 text-center">
+                        <Link
+                          to={ctaLink}
+                          className="btn btn-light btn-lg home-recruitment-cta"
+                        >
+                          {ctaText} <i className="bi bi-arrow-right ms-1" />
+                        </Link>
+                      </Col>
+                    </Row>
+                  </Container>
+                </div>
+              </AnimatedSection>
+            );
+          })}
+        </div>
       )}
 
       {/* Features Section */}

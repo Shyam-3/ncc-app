@@ -110,7 +110,6 @@ export async function listAnnouncementsForUser(): Promise<Announcement[]> {
   const q = query(announcementsCol, orderBy('createdAt', 'desc'));
   const snap = await getDocs(q);
   let items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Announcement));
-  items = items.filter((a) => a.category !== 'recruitment');
   return filterExpired(items);
 }
 

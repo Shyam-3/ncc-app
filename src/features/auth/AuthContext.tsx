@@ -357,7 +357,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     hasRole,
     isAdmin,
     isSuperAdmin,
-
+    isAlumni,
     isMember,
     isCadet,
     fetchUserProfile,

@@ -32,6 +32,8 @@ const CATEGORY_FILTERS: { value: AnnouncementCategory | 'all'; label: string }[]
   { value: 'camps', label: '⛺ Camps' },
   { value: 'activities', label: '🌳 Activities' },
   { value: 'parades', label: '🎖️ Parades' },
+  { value: 'celebrations', label: '?? Celebrations' },
+  
 ];
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -247,7 +249,7 @@ const NotificationsPage: React.FC = () => {
       {/* Loading */}
       {loading && (
         <div className="text-center py-5">
-          <Spinner animation="border" variant="primary" />
+          <Spinner as="span" animation="border" variant="primary"  size="sm" />
           <p className="text-muted mt-2">Loading announcements…</p>
         </div>
       )}
@@ -395,7 +397,7 @@ const NotificationsPage: React.FC = () => {
 
           {analyticsModal.loading ? (
             <div className="text-center py-4">
-              <Spinner animation="border" size="sm" />
+              <Spinner as="span" animation="border" size="sm"  />
               <span className="ms-2">Loading analytics…</span>
             </div>
           ) : analyticsModal.groups.length === 0 ? (

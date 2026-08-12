@@ -133,7 +133,7 @@ const NominalRollReport: React.FC = () => {
 
           {loadingPreview && (
             <div className="text-center py-4">
-              <Spinner animation="border" size="sm" className="me-2" />
+              <Spinner as="span" animation="border" size="sm" className="me-2"  />
               Loading data...
             </div>
           )}
@@ -179,7 +179,7 @@ const NominalRollReport: React.FC = () => {
           >
             {generating ? (
               <>
-                <Spinner animation="border" size="sm" className="me-2" />
+                <Spinner as="span" animation="border" size="sm" className="me-2"  />
                 Generating...
               </>
             ) : (

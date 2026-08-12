@@ -89,3 +89,78 @@
   overflow: hidden;
 }
 
+
+/* -- Celebration Banner (IDC / RDC) ----------------------------------------- */
+.home-celebration-tricolor-banner {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255,153,51,0.85) 0%, rgba(255,255,255,0.95) 50%, rgba(19,136,8,0.85) 100%);
+  color: #111;
+  padding: 3rem 0;
+  overflow: hidden;
+}
+
+.home-celebration-tricolor-banner .home-recruitment-title {
+  color: #000;
+  font-weight: 800;
+}
+
+.home-celebration-tricolor-banner .home-recruitment-body {
+  color: #222;
+  font-weight: 500;
+}
+
+.home-celebration-tricolor-banner .home-recruitment-expiry {
+  color: #333;
+  font-weight: 600;
+}
+
+.home-celebration-tricolor-banner .home-recruitment-cta {
+  background-color: #111;
+  color: #fff;
+  border: none;
+}
+
+.home-celebration-tricolor-banner .home-recruitment-cta:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.home-celebration-ncc-banner {
+  position: relative;
+  background: linear-gradient(135deg, 
+    rgba(239, 28, 37, 0.9) 0%, 
+    rgba(15, 15, 20, 0.95) 25%, 
+    rgba(45, 48, 146, 0.95) 55%, 
+    rgba(0, 174, 239, 0.9) 100%
+  );
+  color: #fff;
+  padding: 3rem 0;
+  overflow: hidden;
+}
+
+.home-celebration-ncc-banner .home-recruitment-title {
+  color: #fff;
+  font-weight: 800;
+}
+
+.home-celebration-ncc-banner .home-recruitment-body {
+  color: #eaeaea;
+  font-weight: 500;
+}
+
+.home-celebration-ncc-banner .home-recruitment-expiry {
+  color: #dcdcdc;
+  font-weight: 600;
+}
+
+.home-celebration-ncc-banner .home-recruitment-cta {
+  background-color: #fff;
+  color: #003366;
+  border: none;
+}
+
+.home-celebration-ncc-banner .home-recruitment-cta:hover {
+  background-color: #f0f0f0;
+  color: #002244;
+}
+

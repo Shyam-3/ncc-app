@@ -12,6 +12,7 @@ export interface Announcement {
   isPinned?: boolean;
   createdAt: any;            // Firestore Timestamp
   expiresAt?: string;        // ISO datetime string (required for recruitment, optional for others)
+  theme?: 'tricolor' | 'ncc';// Celebration color theme
   createdBy: string;         // UID of admin who created
   createdByName?: string;    // Display name of creator
 }

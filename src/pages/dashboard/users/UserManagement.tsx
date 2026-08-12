@@ -32,10 +32,12 @@ import {
 import toast from 'react-hot-toast';
 import { triggerAuthCleanup, triggerVerificationSync } from '@/shared/utils/githubActions';
 import { TablePaginationFooter } from '@/components';
-import { ROMAN_YEAR_MAP, NCC_YEARS } from '@/shared/config/constants';
+import { ROMAN_YEAR_MAP, NCC_YEARS, BLOOD_GROUPS } from '@/shared/config/constants';
 import { deleteTakenNumberBatch } from '@/shared/utils/dbValidators';
 
 import { isAnoUser, resolveUserType } from '@/shared/utils/userType';
+import { validatePassword } from '@/shared/utils/passwordPolicy';
+import PasswordStrength from '@/components/common/PasswordStrength';
 import './UserManagement.css';
 
 type UserRole = 'member' | 'admin' | 'superadmin' | 'alumni';
@@ -88,6 +90,8 @@ interface PendingCadet {
   address?: string;
   rank: string;
   createdAt: string;
+  photoURL?: string;
+  cloudinaryPublicId?: string;
 }
 
 const formatAcademicYear = (value?: string) => {
@@ -104,6 +108,7 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState<{action: 'approve'|'reject'|'delete'; payload: any} | null>(null);
+  const [viewCadet, setViewCadet] = useState<PendingCadet | null>(null);
 
   // Filter states for pending approvals
   const [divisionFilter, setDivisionFilter] = useState<'ALL' | 'SD' | 'SW'>('ALL');
@@ -236,6 +241,8 @@ const UserManagement: React.FC = () => {
         bloodGroup: candidate.bloodGroup,
         fatherName: candidate.fatherName || '',
         address: candidate.address || '',
+        photoURL: candidate.photoURL || null,
+        cloudinaryPublicId: candidate.cloudinaryPublicId || null,
       });
 
       // Delete from pending collection
@@ -469,7 +476,14 @@ const UserManagement: React.FC = () => {
     if (!anoForm.name.trim()) errors.name = 'Name is required';
     if (!anoForm.email.trim()) errors.email = 'Email is required';
     else if (!anoForm.email.includes('@')) errors.email = 'Valid email is required';
-    if (!anoForm.password || anoForm.password.length < 6) errors.password = 'Password must be at least 6 characters';
+    if (!anoForm.password) {
+      errors.password = 'Password is required';
+    } else {
+      const pwdResult = validatePassword(anoForm.password);
+      if (!pwdResult.isValid) {
+        errors.password = pwdResult.errors[0];
+      }
+    }
     if (!anoForm.phone.match(/^\d{10}$/)) errors.phone = 'Phone must be exactly 10 digits';
     if (!anoForm.bloodGroup) errors.bloodGroup = 'Blood group is required';
     if (!anoForm.rank.trim()) errors.rank = 'Rank is required';
@@ -615,6 +629,14 @@ const UserManagement: React.FC = () => {
               </td>
               <td>{new Date(c.createdAt).toLocaleString()}</td>
               <td className="d-flex gap-2">
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => setViewCadet(c)}
+                  title="View full registration details"
+                >
+                  <i className="bi bi-eye-fill"></i>
+                </Button>
                 <Button 
                   variant="success" 
                   size="sm" 
@@ -647,6 +669,17 @@ const UserManagement: React.FC = () => {
       />
     </>
   ), [filteredPending, pendingSafePage, pendingRowsPerPage, pendingStartIndex, pendingTotalPages]);
+
+  // Helper to render a detail row in the view modal
+  const DetailRow = ({ label, value, icon }: { label: string; value?: string | null; icon?: string }) => (
+    <Row className="mb-2 align-items-start">
+      <Col xs={5} className="text-muted small fw-semibold">
+        {icon && <i className={`bi bi-${icon} me-2`}></i>}
+        {label}
+      </Col>
+      <Col xs={7} className="small">{value || <span className="text-muted fst-italic">Not provided</span>}</Col>
+    </Row>
+  );
 
   const UsersTable = useMemo(() => (
     <>
@@ -789,7 +822,7 @@ const UserManagement: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-3">Loading user management...</p>
       </Container>
     );
@@ -891,6 +924,129 @@ const UserManagement: React.FC = () => {
         </Modal.Footer>
       </Modal>
 
+      {/* Pending Cadet Detail View Modal */}
+      <Modal show={!!viewCadet} onHide={() => setViewCadet(null)} centered size="lg">
+        <Modal.Header closeButton className="bg-primary text-white">
+          <Modal.Title>
+            <i className="bi bi-person-badge me-2"></i>
+            Registration Details
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {viewCadet && (
+            <>
+              {/* Profile Photo & Name Header */}
+              <div className="text-center mb-4">
+                {viewCadet.photoURL ? (
+                  <img
+                    src={viewCadet.photoURL}
+                    alt={`${viewCadet.name}'s photo`}
+                    style={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '3px solid #dee2e6',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: '50%',
+                      backgroundColor: '#E8EAF6',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '3px solid #dee2e6',
+                    }}
+                  >
+                    <i className="bi bi-person-fill" style={{ fontSize: 48, color: '#9FA8DA' }}></i>
+                  </div>
+                )}
+                <h5 className="mt-3 mb-1 fw-bold">{viewCadet.name}</h5>
+                <div className="d-flex justify-content-center gap-2">
+                  <Badge bg={viewCadet.division === 'SD' ? 'info' : 'warning'}>{viewCadet.division}</Badge>
+                  <Badge bg="secondary">{viewCadet.rank || 'CDT'}</Badge>
+                  {viewCadet.emailVerified ? (
+                    <Badge bg="success"><i className="bi bi-check-circle me-1"></i>Email Verified</Badge>
+                  ) : (
+                    <Badge bg="danger"><i className="bi bi-exclamation-circle me-1"></i>Email Not Verified</Badge>
+                  )}
+                </div>
+              </div>
+
+              <hr />
+
+              <Row>
+                {/* Left column: Personal & Contact */}
+                <Col md={6}>
+                  <h6 className="text-primary fw-bold mb-3">
+                    <i className="bi bi-person me-2"></i>Personal Details
+                  </h6>
+                  <DetailRow label="Date of Birth" value={viewCadet.dateOfBirth} icon="calendar-date" />
+                  <DetailRow label="Father's Name" value={viewCadet.fatherName} icon="person-heart" />
+                  <DetailRow label="Blood Group" value={viewCadet.bloodGroup} icon="droplet-fill" />
+                  <DetailRow label="Phone" value={viewCadet.phone} icon="telephone" />
+                  <DetailRow label="Email" value={viewCadet.email} icon="envelope" />
+                  <DetailRow label="Address" value={viewCadet.address} icon="geo-alt" />
+                </Col>
+
+                {/* Right column: NCC & Academic */}
+                <Col md={6}>
+                  <h6 className="text-primary fw-bold mb-3">
+                    <i className="bi bi-shield me-2"></i>NCC Details
+                  </h6>
+                  <DetailRow label="Regimental No." value={viewCadet.regimentalNumber} icon="hash" />
+                  <DetailRow label="Date of Enrollment" value={viewCadet.dateOfEnrollment} icon="calendar-check" />
+                  <DetailRow label="NCC Year" value={viewCadet.nccYear || '1st Year'} icon="mortarboard" />
+
+                  <h6 className="text-primary fw-bold mb-3 mt-4">
+                    <i className="bi bi-book me-2"></i>Academic Details
+                  </h6>
+                  <DetailRow label="Academic Year" value={formatAcademicYear(viewCadet.year)} icon="calendar3" />
+                  <DetailRow label="Department" value={viewCadet.department} icon="building" />
+                  <DetailRow label="Roll No." value={viewCadet.rollNo} icon="123" />
+                  <DetailRow label="Register No." value={viewCadet.registerNumber} icon="card-text" />
+                  <DetailRow label="Residential" value={viewCadet.residentialStatus} icon="house" />
+                </Col>
+              </Row>
+
+              <hr />
+              <div className="text-muted small text-end">
+                <i className="bi bi-clock me-1"></i>
+                Registered on: {new Date(viewCadet.createdAt).toLocaleString()}
+              </div>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setViewCadet(null)}>Close</Button>
+          <Button
+            variant="outline-danger"
+            onClick={() => {
+              setViewCadet(null);
+              if (viewCadet) setConfirm({ action: 'reject', payload: viewCadet });
+            }}
+          >
+            <i className="bi bi-x-circle me-1"></i>Reject
+          </Button>
+          <Button
+            variant="success"
+            disabled={!viewCadet?.emailVerified}
+            title={!viewCadet?.emailVerified ? 'Email not yet verified' : 'Approve this registration'}
+            onClick={() => {
+              setViewCadet(null);
+              if (viewCadet) setConfirm({ action: 'approve', payload: viewCadet });
+            }}
+          >
+            <i className="bi bi-check-circle me-1"></i>Accept
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* ANO Creation Modal */}
       <Modal show={showAnoModal} onHide={() => setShowAnoModal(false)} centered>
         <Modal.Header closeButton>
@@ -924,7 +1080,9 @@ const UserManagement: React.FC = () => {
                 value={anoForm.password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnoForm(f => ({ ...f, password: e.target.value }))}
                 isInvalid={Boolean(anoErrors.password)}
+                placeholder="Min 8 chars, A-z, 0-9, special"
               />
+              <PasswordStrength password={anoForm.password} />
               {anoErrors.password && <Form.Text className="text-danger">{anoErrors.password}</Form.Text>}
             </Form.Group>
             <Form.Group className="mb-3">
@@ -944,7 +1102,7 @@ const UserManagement: React.FC = () => {
                 isInvalid={Boolean(anoErrors.bloodGroup)}
               >
                 <option value="">Select</option>
-                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                {BLOOD_GROUPS.map(bg => (
                   <option key={bg} value={bg}>{bg}</option>
                 ))}
               </Form.Select>

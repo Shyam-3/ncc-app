@@ -36,7 +36,7 @@ const Resources: React.FC = () => {
       <h1 className="mb-4">Resources</h1>
       {loading ? (
         <div className="d-flex align-items-center">
-          <Spinner animation="border" size="sm" className="me-2" />
+          <Spinner as="span" animation="border" size="sm" className="me-2"  />
           <span>Loading resources…</span>
         </div>
       ) : (

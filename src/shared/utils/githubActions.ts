@@ -3,7 +3,7 @@ import { db } from '@/shared/config/firebase';
 
 interface GithubSettings {
   token: string;
-  repo: string; // e.g. "Shyam-3/ncc-app"
+  repo: string; // e.g. "ncc-app/ncc-app"
 }
 
 /**
@@ -26,7 +26,7 @@ export async function triggerAuthCleanup(): Promise<void> {
       return;
     }
 
-    // Sanitize repo string in case user pasted full URL (e.g., https://github.com/Shyam-3/ncc-app/)
+    // Sanitize repo string in case user pasted full URL (e.g., https://github.com/ncc-app/ncc-app/)
     let cleanRepo = repo.trim();
     const match = cleanRepo.match(/github\.com\/([^/]+\/[^/]+)/);
     if (match) {

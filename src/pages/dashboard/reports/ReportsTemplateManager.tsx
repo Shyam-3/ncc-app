@@ -343,7 +343,7 @@ const ReportsTemplateManager: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-3">Loading templates...</p>
       </Container>
     );
@@ -506,7 +506,7 @@ const ReportsTemplateManager: React.FC = () => {
                             <Form.Control
                               type="text"
                               value={catcTemplate.institution}
-                              onChange={(e) => updateCatcTemplate((prev) => ({ ...prev, institution: e.target.value }))}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => updateCatcTemplate((prev) => ({ ...prev, institution: e.target.value }))}
                             />
                           </Form.Group>
                         </Col>
@@ -516,7 +516,7 @@ const ReportsTemplateManager: React.FC = () => {
                             <Form.Control
                               type="text"
                               value={catcTemplate.unit}
-                              onChange={(e) => updateCatcTemplate((prev) => ({ ...prev, unit: e.target.value }))}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => updateCatcTemplate((prev) => ({ ...prev, unit: e.target.value }))}
                             />
                           </Form.Group>
                         </Col>
@@ -526,7 +526,7 @@ const ReportsTemplateManager: React.FC = () => {
                             <Form.Control
                               type="text"
                               value={catcTemplate.countersignStation}
-                              onChange={(e) => updateCatcTemplate((prev) => ({ ...prev, countersignStation: e.target.value }))}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => updateCatcTemplate((prev) => ({ ...prev, countersignStation: e.target.value }))}
                             />
                           </Form.Group>
                         </Col>
@@ -536,13 +536,13 @@ const ReportsTemplateManager: React.FC = () => {
                             <Form.Control
                               type="text"
                               value={catcTemplate.defaultCampLocation}
-                              onChange={(e) => updateCatcTemplate((prev) => ({ ...prev, defaultCampLocation: e.target.value }))}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => updateCatcTemplate((prev) => ({ ...prev, defaultCampLocation: e.target.value }))}
                             />
                           </Form.Group>
                         </Col>
                       </Row>
 
-                      <Tab.Container activeKey={activeCatcPage} onSelect={(key) => setActiveCatcPage((key as CatcPageKey) || 'page1')}>
+                      <Tab.Container activeKey={activeCatcPage} onSelect={(key: string | null) => setActiveCatcPage((key as CatcPageKey) || 'page1')}>
                         <Nav variant="tabs" className="mb-3">
                           {CATC_PAGE_KEYS.map((pageKey) => (
                             <Nav.Item key={pageKey}>
@@ -560,7 +560,7 @@ const ReportsTemplateManager: React.FC = () => {
                                     as="textarea"
                                     rows={sectionKey === 'bondParagraph' ? 10 : 4}
                                     value={sectionValue}
-                                    onChange={(e) => updateCatcSection(pageKey, sectionKey, e.target.value)}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateCatcSection(pageKey, sectionKey, e.target.value)}
                                   />
                                 </Form.Group>
                               ))}

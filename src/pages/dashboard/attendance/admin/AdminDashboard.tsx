@@ -153,7 +153,7 @@ export function AdminDashboard({ sessions, cadets, loading = false }: AdminDashb
   if (loading) {
     return (
       <div className="text-center py-5">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-2">Loading dashboard...</p>
       </div>
     );

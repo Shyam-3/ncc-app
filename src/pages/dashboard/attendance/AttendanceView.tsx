@@ -98,6 +98,7 @@ const AttendanceView: React.FC = () => {
       {};
 
     history.forEach(({ session, mark }) => {
+      if (!mark) return;
       switch (mark.status) {
         case 'P':
           present++;
@@ -137,7 +138,7 @@ const AttendanceView: React.FC = () => {
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center py-5">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
       </div>
     );
   }

@@ -354,7 +354,7 @@ const AttendanceManagement: React.FC = () => {
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center py-5">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
       </div>
     );
   }
@@ -729,7 +729,7 @@ const AttendanceManagement: React.FC = () => {
                     onClick={exportPdf}
                     className="flex-grow-1"
                   >
-                    {exportingPdf ? <Spinner size="sm" /> : 'PDF'}
+                    {exportingPdf ? <Spinner as="span" size="sm"  /> : 'PDF'}
                   </Button>
                   <Button
                     variant="primary"
@@ -737,7 +737,7 @@ const AttendanceManagement: React.FC = () => {
                     onClick={exportExcel}
                     className="flex-grow-1"
                   >
-                    {exportingExcel ? <Spinner size="sm" /> : 'Excel'}
+                    {exportingExcel ? <Spinner as="span" size="sm"  /> : 'Excel'}
                   </Button>
                 </Col>
               </Row>

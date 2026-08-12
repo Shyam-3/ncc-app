@@ -73,7 +73,7 @@ export const DEPARTMENT_DEFS = [
   { code: 'AMCS', name: 'Data Science', courseTenure: 5 },
   { code: 'CSE AIML', name: 'Computer Science and Engineering (AI & ML)', courseTenure: 4 },
   { code: 'MECH', name: 'Mechanical Engineering', courseTenure: 4 },
-  { code: 'MECT', name: 'Mechatronics Engineering', courseTenure: 4 },
+  { code: 'MECT', name: 'Mechatronics', courseTenure: 4 },
   { code: 'CIVIL', name: 'Civil Engineering', courseTenure: 4 },
   { code: 'CSBS', name: 'Computer Science and Business Systems', courseTenure: 4 },
   { code: 'ARCH', name: 'Architecture', courseTenure: 5 }
@@ -201,29 +201,32 @@ export const ATTENDANCE_THRESHOLDS = {
 
 // Announcement categories
 export const ANNOUNCEMENT_CATEGORIES = {
-  CELEBRATIONS: 'celebrations',
+  GENERAL: 'general',
   CAMPS: 'camps',
   ACTIVITIES: 'activities',
   PARADES: 'parades',
   RECRUITMENT: 'recruitment',
+  CELEBRATIONS: 'celebrations',
 } as const;
 
 export type AnnouncementCategory = typeof ANNOUNCEMENT_CATEGORIES[keyof typeof ANNOUNCEMENT_CATEGORIES];
 
 export const ANNOUNCEMENT_CATEGORY_LABELS: Record<AnnouncementCategory, string> = {
-  celebrations: '🎉 Celebrations',
+  general: '📢 General',
   camps: '⛺ Camps',
   activities: '🌳 Activities',
   parades: '🎖️ Parades',
   recruitment: '📢 Recruitment',
+  celebrations: '🎊 Celebrations',
 };
 
 export const ANNOUNCEMENT_CATEGORY_COLORS: Record<AnnouncementCategory, string> = {
-  celebrations: 'warning',
+  general: 'secondary',
   camps: 'success',
   activities: 'info',
   parades: 'primary',
   recruitment: 'danger',
+  celebrations: 'success',
 };
 
 // Announcement visibility
@@ -235,6 +238,10 @@ export const ANNOUNCEMENT_VISIBILITY = {
 export type AnnouncementVisibility = typeof ANNOUNCEMENT_VISIBILITY[keyof typeof ANNOUNCEMENT_VISIBILITY];
 
 export const ANNOUNCEMENT_VISIBILITY_LABELS: Record<AnnouncementVisibility, string> = {
-  public: '🌐 All Users (Public)',
-  auth_only: '🔒 Cadets & ANOs Only',
+  public: 'Public',
+  auth_only: 'Cadets & ANOs',
 };
+
+// Common blood group options used across forms
+export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'A1B+', 'A1B-'] as const;
+export type BloodGroup = typeof BLOOD_GROUPS[number];

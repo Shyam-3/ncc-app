@@ -1,6 +1,6 @@
 import { calculateAge, checkUniqueField, updateTakenNumberBatch } from '@/shared/utils/dbValidators';
 import { formatISTDate } from '@/shared/utils/dateTime';
-import { DEPARTMENT_DEFS, ACADEMIC_YEARS, ROMAN_YEAR_MAP, NCC_RANKS, NCC_YEARS } from '@/shared/config/constants';
+import { DEPARTMENT_DEFS, ACADEMIC_YEARS, ROMAN_YEAR_MAP, NCC_RANKS, NCC_YEARS, BLOOD_GROUPS } from '@/shared/config/constants';
 import { db } from '@/shared/config/firebase';
 import { collection, doc, getDocs, orderBy, query, writeBatch } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -378,7 +378,7 @@ const CadetManagement: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-3">Loading cadet management...</p>
       </Container>
     );
@@ -838,14 +838,7 @@ const CadetManagement: React.FC = () => {
                       isInvalid={Boolean(cadetEditErrors.bloodGroup)}
                     >
                       <option value="">Select Blood Group</option>
-                      <option value="A+">A+</option>
-                      <option value="A-">A-</option>
-                      <option value="B+">B+</option>
-                      <option value="B-">B-</option>
-                      <option value="AB+">AB+</option>
-                      <option value="AB-">AB-</option>
-                      <option value="O+">O+</option>
-                      <option value="O-">O-</option>
+                      {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
                     </Form.Select>
                     {cadetEditErrors.bloodGroup && <Form.Text className="text-danger">{cadetEditErrors.bloodGroup}</Form.Text>}
                   </Form.Group>

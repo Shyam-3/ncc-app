@@ -114,7 +114,7 @@ const AboutSettingsTab: React.FC = () => {
     }
   };
 
-  if (loading) return <Spinner animation="border" className="m-4" />;
+  if (loading) return <Spinner as="span" animation="border" className="m-4"  size="sm" />;
 
   return (
     <div className="mt-4">

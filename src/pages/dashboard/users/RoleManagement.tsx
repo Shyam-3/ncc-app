@@ -224,7 +224,7 @@ const RoleManagement: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" variant="primary" />
+        <Spinner as="span" animation="border" variant="primary"  size="sm" />
         <p className="mt-3">Loading roles...</p>
       </Container>
     );

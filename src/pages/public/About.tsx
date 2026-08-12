@@ -4,6 +4,7 @@ import { db } from '@/shared/config/firebase';
 import { doc as firestoreDoc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Badge, Button, Card, Col, Container, Row, Spinner, Accordion } from 'react-bootstrap';
+import ProfilePhoto from '@/components/ProfilePhoto';
 import { Link } from 'react-router-dom';
 import './About.css';
 
@@ -41,7 +42,7 @@ const About: React.FC = () => {
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
       </div>
     );
   }
@@ -79,9 +80,11 @@ const About: React.FC = () => {
                 <Card.Body>
                   <Row className="align-items-center">
                     <Col xs="auto">
-                      <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow" style={{ width: '64px', height: '64px', fontSize: '24px' }}>
-                        <i className="bi bi-person-fill" />
-                      </div>
+                      <ProfilePhoto 
+                        photoURL={profile.photoURL} 
+                        size={64} 
+                        editable={false} 
+                      />
                     </Col>
                     <Col>
                       <h5 className="mb-1 fw-bold">{profile.name}</h5>

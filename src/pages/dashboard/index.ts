@@ -4,5 +4,4 @@ export * from './users';
 export * from './attendance';
 export * from './reports';
 export * from './announcements';
-export * from './cms';
 export * from './settings';

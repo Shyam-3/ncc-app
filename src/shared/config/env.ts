@@ -12,6 +12,10 @@ interface EnvConfig {
     messagingSenderId: string;
     appId: string;
   };
+  cloudinaryConfig: {
+    cloudName: string;
+    uploadPreset: string;
+  };
 }
 
 export const envConfig: EnvConfig = {
@@ -26,4 +30,9 @@ export const envConfig: EnvConfig = {
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
     appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
   },
+  cloudinaryConfig: {
+    cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '',
+    uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '',
+  },
 };
+

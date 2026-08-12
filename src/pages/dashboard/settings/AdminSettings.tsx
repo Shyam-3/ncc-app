@@ -724,7 +724,7 @@ const AdminSettings: React.FC = () => {
   if (configLoading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-2 text-muted">Loading settings...</p>
       </Container>
     );
@@ -794,7 +794,7 @@ const AdminSettings: React.FC = () => {
             </Row>
             <div className="mt-3">
               <Button size="sm" variant="success" onClick={handleSaveClick} disabled={savingConfig}>
-                {savingConfig ? <Spinner animation="border" size="sm" className="me-1" /> : <i className="bi bi-check-lg me-1" />}
+                {savingConfig ? <Spinner as="span" animation="border" size="sm" className="me-1"  /> : <i className="bi bi-check-lg me-1" />}
                 Save Settings
               </Button>
             </div>
@@ -813,7 +813,7 @@ const AdminSettings: React.FC = () => {
             </p>
             <Row className="g-3">
               <Col md={6}>
-                <Form.Label className="small fw-semibold">GitHub Repo (e.g. Shyam-3/ncc-app)</Form.Label>
+                <Form.Label className="small fw-semibold">GitHub Repo</Form.Label>
                 <Form.Control
                   type="text"
                   size="sm"
@@ -843,7 +843,7 @@ const AdminSettings: React.FC = () => {
                 </Button>
               ) : (
                 <Button size="sm" variant="dark" onClick={handleSaveGithubClick} disabled={savingGithubConfig}>
-                  {savingGithubConfig ? <Spinner animation="border" size="sm" className="me-1" /> : <i className="bi bi-check-lg me-1" />}
+                  {savingGithubConfig ? <Spinner as="span" animation="border" size="sm" className="me-1"  /> : <i className="bi bi-check-lg me-1" />}
                   Save GitHub Settings
                 </Button>
               )}
@@ -920,7 +920,7 @@ const AdminSettings: React.FC = () => {
                 disabled={planning || executing}
               >
                 {planning ? (
-                  <><Spinner animation="border" size="sm" className="me-1" /> Analyzing...</>
+                  <><Spinner as="span" animation="border" size="sm" className="me-1"  /> Analyzing...</>
                 ) : (
                   <><i className="bi bi-search me-1" /> Preview Rollover (Dry Run)</>
                 )}
@@ -933,7 +933,7 @@ const AdminSettings: React.FC = () => {
                   disabled={executing}
                 >
                   {executing ? (
-                    <><Spinner animation="border" size="sm" className="me-1" /> Applying...</>
+                    <><Spinner as="span" animation="border" size="sm" className="me-1"  /> Applying...</>
                   ) : (
                     <><i className="bi bi-play-fill me-1" /> Apply Rollover</>
                   )}
@@ -1068,7 +1068,7 @@ const AdminSettings: React.FC = () => {
                   onClick={() => setShowRollbackModal(true)}
                 >
                   {rollingBack ? (
-                    <><Spinner animation="border" size="sm" className="me-1" /> Rolling back...</>
+                    <><Spinner as="span" animation="border" size="sm" className="me-1"  /> Rolling back...</>
                   ) : (
                     <><i className="bi bi-arrow-counterclockwise me-1" /> Rollback to Selected Snapshot</>
                   )}
@@ -1172,7 +1172,7 @@ const AdminSettings: React.FC = () => {
                       disabled={savingRecruitment}
                     >
                       {savingRecruitment ? (
-                        <Spinner animation="border" size="sm" className="me-1" />
+                        <Spinner as="span" animation="border" size="sm" className="me-1"  />
                       ) : (
                         <i className="bi bi-check-lg me-1" />
                       )}

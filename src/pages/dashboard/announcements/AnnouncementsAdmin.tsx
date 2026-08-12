@@ -98,6 +98,7 @@ const AnnouncementsAdmin: React.FC = () => {
   const [isPinned, setIsPinned] = useState(false);
   const [hasExpiration, setHasExpiration] = useState(false);
   const [expiresAt, setExpiresAt] = useState('');
+  const [theme, setTheme] = useState<'tricolor' | 'ncc'>('tricolor');
   const [submitting, setSubmitting] = useState(false);
 
   // ── Modal state ──
@@ -107,8 +108,8 @@ const AnnouncementsAdmin: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [showFormModal, setShowFormModal] = useState(false);
 
-  // Recruitment forces expiration on
-  const isRecruitment = category === 'recruitment';
+  // Recruitment, IDC, RDC force expiration on
+  const isStrictExpiry = ['recruitment', 'celebrations'].includes(category);
 
   // ── Data loading ──
 
@@ -181,6 +182,7 @@ const AnnouncementsAdmin: React.FC = () => {
     setIsPinned(false);
     setHasExpiration(false);
     setExpiresAt('');
+    setTheme('tricolor');
     setShowFormModal(false);
   };
 
@@ -191,6 +193,7 @@ const AnnouncementsAdmin: React.FC = () => {
     setCategory(a.category);
     setVisibility(a.visibility);
     setIsPinned(a.isPinned ?? false);
+    setTheme(a.theme ?? 'tricolor');
     if (a.expiresAt) {
       setHasExpiration(true);
       // Convert ISO to datetime-local value
@@ -206,7 +209,7 @@ const AnnouncementsAdmin: React.FC = () => {
 
   const isFormValid = (): boolean => {
     if (!title.trim() || !body.trim()) return false;
-    if (isRecruitment && !expiresAt) return false;
+    if (isStrictExpiry && !expiresAt) return false;
     if (hasExpiration && !expiresAt) return false;
     if (hasExpiration && expiresAt) {
       const exp = new Date(expiresAt);
@@ -222,7 +225,7 @@ const AnnouncementsAdmin: React.FC = () => {
     setSubmitting(true);
 
     let finalExpiresAt: string;
-    if ((isRecruitment || hasExpiration) && expiresAt) {
+    if ((isStrictExpiry || hasExpiration) && expiresAt) {
       finalExpiresAt = new Date(expiresAt).toISOString();
     } else {
       // Auto-set to 1 year from now
@@ -237,6 +240,7 @@ const AnnouncementsAdmin: React.FC = () => {
       category,
       visibility,
       isPinned,
+      theme: category === 'celebrations' ? theme : undefined,
       createdBy: userProfile?.uid ?? '',
       createdByName: userProfile?.name ?? 'Admin',
       expiresAt: finalExpiresAt,
@@ -363,52 +367,83 @@ const AnnouncementsAdmin: React.FC = () => {
               />
             </Form.Group>
 
-            <Row>
-              <Col md={6}>
-                {/* Category */}
-                <Form.Group className="mb-3" controlId="ann-category">
-                  <Form.Label>Category</Form.Label>
-                  <Form.Select
-                    value={category}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                      const val = e.target.value as AnnouncementCategory;
-                      setCategory(val);
-                      if (val === 'recruitment') {
-                        setHasExpiration(true);
-                        setVisibility('public');
-                      }
-                    }}
-                  >
-                    {ALL_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {ANNOUNCEMENT_CATEGORY_LABELS[cat]}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                {/* Visibility */}
-                <Form.Group className="mb-3">
-                  <Form.Label>Visibility</Form.Label>
-                  <div>
-                    {ALL_VISIBILITIES.map((vis) => (
-                      <Form.Check
-                        key={vis}
-                        inline
-                        type="radio"
-                        id={`vis-${vis}`}
-                        name="visibility"
-                        label={ANNOUNCEMENT_VISIBILITY_LABELS[vis]}
-                        checked={visibility === vis}
-                        disabled={isRecruitment}
-                        onChange={() => setVisibility(vis)}
-                      />
-                    ))}
-                  </div>
-                </Form.Group>
-              </Col>
-            </Row>
+              <Row>
+                <Col md={6}>
+                  {/* Category */}
+                  <Form.Group className="mb-3" controlId="ann-category">
+                    <Form.Label>Category</Form.Label>
+                    <Form.Select
+                      value={category}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const val = e.target.value as AnnouncementCategory;
+                        setCategory(val);
+                        if (['recruitment', 'celebrations'].includes(val)) {
+                          setHasExpiration(true);
+                          setVisibility('public');
+                        }
+                      }}
+                    >
+                      {ALL_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {ANNOUNCEMENT_CATEGORY_LABELS[cat]}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                <Col md={6}>
+                  {/* Visibility */}
+                  <Form.Group className="mb-3">
+                    <Form.Label>Visibility</Form.Label>
+                    <div>
+                      {ALL_VISIBILITIES.map((vis) => (
+                        <Form.Check
+                          key={vis}
+                          inline
+                          type="radio"
+                          id={`vis-${vis}`}
+                          name="visibility"
+                          label={ANNOUNCEMENT_VISIBILITY_LABELS[vis]}
+                          checked={visibility === vis}
+                          disabled={isStrictExpiry}
+                          onChange={() => setVisibility(vis)}
+                        />
+                      ))}
+                    </div>
+                  </Form.Group>
+                </Col>
+              </Row>
+              
+              {category === 'celebrations' && (
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Celebration Theme</Form.Label>
+                      <div>
+                        <Form.Check
+                          inline
+                          type="radio"
+                          id="theme-tricolor"
+                          name="theme"
+                          label="Tricolor (IDC / RDC)"
+                          checked={theme === 'tricolor'}
+                          onChange={() => setTheme('tricolor')}
+                        />
+                        <Form.Check
+                          inline
+                          type="radio"
+                          id="theme-ncc"
+                          name="theme"
+                          label="NCC Colors (NCC Day)"
+                          checked={theme === 'ncc'}
+                          onChange={() => setTheme('ncc')}
+                        />
+                      </div>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              )}
 
             <Row>
               <Col md={6}>
@@ -418,22 +453,22 @@ const AnnouncementsAdmin: React.FC = () => {
                     type="switch"
                     id="ann-expiry-toggle"
                     label="Set Expiration"
-                    checked={isRecruitment || hasExpiration}
-                    disabled={isRecruitment}
+                    checked={isStrictExpiry || hasExpiration}
+                    disabled={isStrictExpiry}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       setHasExpiration(e.target.checked);
                       if (!e.target.checked) setExpiresAt('');
                     }}
                   />
-                  {isRecruitment && (
+                  {isStrictExpiry && (
                     <Form.Text className="text-muted">
-                      Recruitment announcements require an expiration date.
+                      This category requires an expiration date.
                     </Form.Text>
                   )}
                 </Form.Group>
               </Col>
               <Col md={6}>
-                {(isRecruitment || hasExpiration) && (
+                {(isStrictExpiry || hasExpiration) && (
                   <Form.Group className="mb-3" controlId="ann-expires">
                     <Form.Label>Expires At</Form.Label>
                     <Form.Control
@@ -477,7 +512,7 @@ const AnnouncementsAdmin: React.FC = () => {
               >
                 {submitting ? (
                   <>
-                    <Spinner animation="border" size="sm" className="me-2" />
+                    <Spinner as="span" animation="border" size="sm" className="me-2"  />
                     {editingId ? 'Updating…' : 'Creating…'}
                   </>
                 ) : editingId ? (
@@ -551,7 +586,7 @@ const AnnouncementsAdmin: React.FC = () => {
           {/* List */}
           {loading ? (
             <div className="text-center py-5">
-              <Spinner animation="border" />
+              <Spinner as="span" animation="border"  size="sm" />
               <p className="mt-2 text-muted">Loading announcements…</p>
             </div>
           ) : filteredItems.length === 0 ? (
@@ -687,7 +722,7 @@ const AnnouncementsAdmin: React.FC = () => {
         <Modal.Body>
           {analyticsLoading ? (
             <div className="text-center py-4">
-              <Spinner animation="border" />
+              <Spinner as="span" animation="border"  size="sm" />
               <p className="mt-2 text-muted">Loading analytics…</p>
             </div>
           ) : readAnalytics.length === 0 ? (
@@ -752,7 +787,7 @@ const AnnouncementsAdmin: React.FC = () => {
           <Button variant="danger" onClick={handleDelete} disabled={deleting}>
             {deleting ? (
               <>
-                <Spinner animation="border" size="sm" className="me-2" />
+                <Spinner as="span" animation="border" size="sm" className="me-2"  />
                 Deleting…
               </>
             ) : (

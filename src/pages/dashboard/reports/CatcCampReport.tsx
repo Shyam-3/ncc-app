@@ -233,7 +233,7 @@ const CatcCampReport: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-3">Loading cadets...</p>
       </Container>
     );
@@ -447,7 +447,7 @@ const CatcCampReport: React.FC = () => {
               >
                 {generating ? (
                   <>
-                    <Spinner animation="border" size="sm" className="me-2" />
+                    <Spinner as="span" animation="border" size="sm" className="me-2"  />
                     Generating...
                   </>
                 ) : (
@@ -466,7 +466,7 @@ const CatcCampReport: React.FC = () => {
       {generating && (
         <div className="catc-progress-overlay">
           <div className="catc-progress-card">
-            <Spinner animation="border" variant="info" className="mb-3" />
+            <Spinner as="span" animation="border" variant="info" className="mb-3"  size="sm" />
             <h5>Generating CATC Documents</h5>
             <p className="text-muted mb-2">
               Processing {progress.current} of {progress.total} cadet{progress.total !== 1 ? 's' : ''}...

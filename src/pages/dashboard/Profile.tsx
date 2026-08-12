@@ -1,4 +1,4 @@
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -10,17 +10,22 @@ import {
   NCC_RANKS,
   NCC_YEARS,
   ROMAN_YEAR_MAP,
+  BLOOD_GROUPS,
 } from '../../shared/config/constants';
 import { db } from '../../shared/config/firebase';
 import { checkUniqueField, updateTakenNumberBatch } from '../../shared/utils/dbValidators';
 import { useAuth } from '@/features/auth/AuthContext';
 import { isAnoUser } from '@/shared/utils/userType';
 import { writeBatch } from 'firebase/firestore';
+import ProfilePhoto from '@/components/ProfilePhoto';
+import { uploadCadetPhoto, uploadAnoPhoto } from '@/shared/utils/cloudinary';
 
 interface UserProfile {
   name: string;
   email: string;
   role: string;
+  photoURL?: string | null;
+  cloudinaryPublicId?: string | null;
   userType?: 'ano' | 'cadet';
   status?: 'pending' | 'active' | 'inactive' | 'rejected';
   dateOfBirth?: string;
@@ -48,6 +53,7 @@ const Profile: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [confirmSave, setConfirmSave] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   
   const [editForm, setEditForm] = useState({
     name: '',
@@ -75,6 +81,91 @@ const Profile: React.FC = () => {
   const academicYearOptions = fiveYearDepartments.has(editForm.department)
     ? ACADEMIC_YEARS
     : ACADEMIC_YEARS.filter(y => y !== '5th Year');
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!currentUser || !profile) return;
+    setPhotoUploading(true);
+    try {
+      let result;
+      if (isAnoUser(profile)) {
+        result = await uploadAnoPhoto(file, profile.name);
+      } else {
+        if (!profile.dateOfEnrollment || !profile.division) {
+          toast.error('Missing enrollment date or division. Contact admin.');
+          return;
+        }
+        result = await uploadCadetPhoto(
+          file,
+          profile.name,
+          profile.dateOfEnrollment,
+          profile.division as 'SD' | 'SW'
+        );
+      }
+      
+      const batch = writeBatch(db);
+      const userRef = doc(db, 'users', currentUser.uid);
+      
+      // Update user document
+      batch.update(userRef, {
+        photoURL: result.secure_url,
+        cloudinaryPublicId: result.public_id,
+      });
+      
+      // If they had an old photo, queue it for deletion
+      if (profile.cloudinaryPublicId) {
+        batch.set(doc(collection(db, 'cloudinary_cleanup')), {
+          publicId: profile.cloudinaryPublicId,
+          reason: 'photo_updated',
+          createdAt: new Date().toISOString(),
+        });
+      }
+      
+      await batch.commit();
+
+      setProfile(prev => prev ? { ...prev, photoURL: result.secure_url, cloudinaryPublicId: result.public_id } : prev);
+      toast.success('Profile photo updated!');
+    } catch (err) {
+      console.error('Photo upload failed:', err);
+      toast.error('Failed to upload photo. Please try again.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const handlePhotoRemove = async () => {
+    if (!currentUser || !profile) return;
+    setPhotoUploading(true);
+    try {
+      const batch = writeBatch(db);
+      const userRef = doc(db, 'users', currentUser.uid);
+
+      // Clear photo fields from user document
+      batch.update(userRef, {
+        photoURL: null,
+        cloudinaryPublicId: null,
+      });
+
+      // Queue old photo for cleanup if it existed
+      if (profile.cloudinaryPublicId) {
+        batch.set(doc(collection(db, 'cloudinary_cleanup')), {
+          publicId: profile.cloudinaryPublicId,
+          reason: 'photo_removed',
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      await batch.commit();
+
+      setProfile(prev => prev ? { ...prev, photoURL: undefined, cloudinaryPublicId: undefined } : prev);
+      toast.success('Profile photo removed');
+    } catch (err) {
+      console.error('Photo removal failed:', err);
+      toast.error('Failed to remove photo. Please try again.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!currentUser) return;
@@ -329,7 +420,7 @@ const Profile: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" />
+        <Spinner as="span" animation="border"  size="sm" />
         <p className="mt-3">Loading profile...</p>
       </Container>
     );
@@ -362,6 +453,12 @@ const Profile: React.FC = () => {
 
   const getNccYear = (value?: string) => formatYear(value || '1st Year');
 
+  const getDepartmentFullName = (code?: string) => {
+    if (!code) return '-';
+    const dept = DEPARTMENT_DEFS.find(d => d.code === code);
+    return dept ? dept.name : code;
+  };
+
   return (
     <Container className="py-5">
       <Row className="justify-content-center">
@@ -383,6 +480,19 @@ const Profile: React.FC = () => {
               </div>
             </Card.Header>
             <Card.Body className="p-4">
+              <div className="text-center mb-4">
+                <ProfilePhoto
+                  photoURL={profile.photoURL}
+                  size={150}
+                  editable={true}
+                  onPhotoSelected={handlePhotoUpload}
+                  onPhotoRemoved={handlePhotoRemove}
+                  uploading={photoUploading}
+                />
+                <h4 className="mt-2 mb-0">{profile.name}</h4>
+                <small className="text-muted">{profile.email}</small>
+              </div>
+              <hr />
               <h5 className="mb-3 text-primary">
                 <i className="bi bi-person-fill me-2"></i>
                 Personal
@@ -404,6 +514,12 @@ const Profile: React.FC = () => {
                   <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
                   <p className="mb-0">{profile.bloodGroup || '-'}</p>
                 </Col>
+                {!isAnoProfile && (
+                  <Col xs={12} md={6}>
+                    <Form.Label className="fw-bold text-muted small">Date of Birth</Form.Label>
+                    <p className="mb-0">{formatDate(profile.dateOfBirth)}</p>
+                  </Col>
+                )}
                 <Col xs={12} md={6}>
                   <Form.Label className="fw-bold text-muted small">Role</Form.Label>
                   <div>
@@ -424,33 +540,10 @@ const Profile: React.FC = () => {
                     <p className="mb-0">{profile.rank}</p>
                   </Col>
                 )}
-                {!isAnoProfile && (
-                  <Col xs={12} md={6}>
-                    <Form.Label className="fw-bold text-muted small">Account Status</Form.Label>
-                    <div>
-                      <Badge bg={profile.status === 'active' ? 'success' : profile.status === 'pending' ? 'warning' : 'secondary'}>
-                        {(profile.status || 'unknown').toString().toUpperCase()}
-                      </Badge>
-                    </div>
-                  </Col>
-                )}
               </Row>
 
               {!isAnoProfile && (
                 <>
-              <hr />
-
-              <h5 className="mb-3 text-primary">
-                <i className="bi bi-person-fill me-2"></i>
-                Personal Details
-              </h5>
-              <Row className="mb-4 g-3">
-                <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Date of Birth</Form.Label>
-                  <p className="mb-0">{formatDate(profile.dateOfBirth)}</p>
-                </Col>
-              </Row>
-
               <hr />
 
               <h5 className="mb-3 text-primary">
@@ -495,21 +588,19 @@ const Profile: React.FC = () => {
                 Academic
               </h5>
               <Row className="mb-4 g-3">
-                <Col xs={12} md={3}>
+                <Col xs={12} md={6}>
                   <Form.Label className="fw-bold text-muted small">Year</Form.Label>
                   <p className="mb-0">{formatYear(profile.year || '1st Year')}</p>
                 </Col>
-                <Col xs={12} md={3}>
+                <Col xs={12} md={6}>
                   <Form.Label className="fw-bold text-muted small">Department</Form.Label>
-                  <p className="mb-0">{profile.department || '-'}</p>
+                  <p className="mb-0">{getDepartmentFullName(profile.department)}</p>
                 </Col>
-                <Col xs={12} md={3}>
+                <Col xs={12} md={6}>
                   <Form.Label className="fw-bold text-muted small">Roll Number</Form.Label>
                   <p className="mb-0">{profile.rollNo || '-'}</p>
                 </Col>
-              </Row>
-              <Row className="mb-4 g-3">
-                <Col xs={12} md={3}>
+                <Col xs={12} md={6}>
                   <Form.Label className="fw-bold text-muted small">Register Number</Form.Label>
                   <p className="mb-0">{profile.registerNumber || '-'}</p>
                 </Col>
@@ -713,14 +804,7 @@ const Profile: React.FC = () => {
                 isInvalid={Boolean(editErrors.bloodGroup)}
               >
                 <option value="" disabled>Select Blood Group</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
+                {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
               </Form.Select>
               {editErrors.bloodGroup && <Form.Text className="text-danger d-block mt-1">{editErrors.bloodGroup}</Form.Text>}
             </Form.Group>

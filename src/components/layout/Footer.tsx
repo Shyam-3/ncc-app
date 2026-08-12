@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
           <Col xs={12} className="mb-3">
             <h5>
               <i className="bi bi-shield-fill me-2"></i>
-              NCC Army Wing
+              TCE NCC Army
             </h5>
             <p className="text-white-50 mb-0">
               Unity and Discipline
@@ -37,11 +37,15 @@ const Footer: React.FC = () => {
             </p>
             <p className="text-light mb-1">
               <i className="bi bi-envelope me-2"></i>
-              ncc@tce.edu
+              <a href="mailto:tce.nccarmywing@gmail.com" className="text-light text-decoration-none">
+                tce.nccarmywing@gmail.com
+              </a>
             </p>
             <p className="text-light">
               <i className="bi bi-phone me-2"></i>
-              +91 XXXXX XXXXX
+              <a href="tel:+91XXXXXXXXXX" className="text-light text-decoration-none">
+                +91 XXXXX XXXXX
+              </a>
             </p>
           </Col>
         </Row>
@@ -49,7 +53,7 @@ const Footer: React.FC = () => {
         <Row>
           <Col className="text-center text-white-50">
             <small>
-              &copy; {currentYear} TCE NCC Army . All rights reserved.
+              &copy; {currentYear} TCE NCC Army. All rights reserved.
             </small>
           </Col>
         </Row>

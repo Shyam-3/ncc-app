@@ -237,7 +237,7 @@ const VerifyEmail: React.FC = () => {
                   >
                     {loading ? (
                       <>
-                        <Spinner animation="border" size="sm" className="me-2" />
+                        <Spinner as="span" animation="border" size="sm" className="me-2"  />
                         Checking...
                       </>
                     ) : (

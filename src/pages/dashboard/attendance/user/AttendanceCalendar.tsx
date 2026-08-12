@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Card, Button, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
 import {
   format,
   startOfMonth,
@@ -29,7 +28,6 @@ interface AttendanceCalendarProps {
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarProps) {
-  const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Build entries map for quick lookup

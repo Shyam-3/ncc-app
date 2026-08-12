@@ -15,7 +15,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">
-        <Spinner animation="border" variant="primary" />
+        <Spinner as="span" animation="border" variant="primary"  size="sm" />
       </div>
     );
   }

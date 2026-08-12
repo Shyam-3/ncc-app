@@ -45,7 +45,7 @@ const Recruitment: React.FC = () => {
   if (loading) {
     return (
       <Container className="text-center py-5">
-        <Spinner animation="border" variant="primary" />
+        <Spinner as="span" animation="border" variant="primary"  size="sm" />
         <p className="mt-3 text-muted">Loading recruitment details…</p>
       </Container>
     );

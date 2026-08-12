@@ -9,7 +9,6 @@ import {
   Form,
   Modal,
   Row,
-  Spinner,
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -531,7 +530,6 @@ const TrainingDiaryReport: React.FC = () => {
                     >
                       {fetching ? (
                         <>
-                          <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
                           Fetching...
                         </>
                       ) : (
