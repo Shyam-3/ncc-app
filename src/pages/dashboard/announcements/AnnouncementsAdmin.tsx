@@ -240,7 +240,7 @@ const AnnouncementsAdmin: React.FC = () => {
       category,
       visibility,
       isPinned,
-      theme: category === 'celebrations' ? theme : undefined,
+      ...(category === 'celebrations' ? { theme } : {}),
       createdBy: userProfile?.uid ?? '',
       createdByName: userProfile?.name ?? 'Admin',
       expiresAt: finalExpiresAt,

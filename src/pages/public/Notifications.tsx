@@ -32,8 +32,6 @@ const CATEGORY_FILTERS: { value: AnnouncementCategory | 'all'; label: string }[]
   { value: 'camps', label: '⛺ Camps' },
   { value: 'activities', label: '🌳 Activities' },
   { value: 'parades', label: '🎖️ Parades' },
-  { value: 'celebrations', label: '?? Celebrations' },
-  
 ];
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
