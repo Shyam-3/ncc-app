@@ -14,6 +14,7 @@ on:
 
 jobs:
   rollover:
+    if: github.repository == 'ncc-app/ncc-app'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
