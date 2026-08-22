@@ -322,7 +322,7 @@ const AlumniManagement: React.FC = () => {
   return (
     <Container className="py-5">
       <Card className="shadow">
-        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+        <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
           <h3 className="mb-0"><i className="bi bi-mortarboard me-2"></i>Alumni Management</h3>
           <div className="d-flex gap-2">
             <Button variant="light" size="sm" onClick={openAdd}>
@@ -570,7 +570,11 @@ const AlumniManagement: React.FC = () => {
               <div className="text-center mb-4">
                 {viewProfile.photoURL ? (
                   <img
-                    src={viewProfile.photoURL}
+                    src={
+                      viewProfile.photoURL?.includes('cloudinary.com') && viewProfile.photoURL.includes('/upload/')
+                        ? viewProfile.photoURL.replace('/upload/', '/upload/c_fill,g_face,w_400,h_400,q_auto,f_auto/')
+                        : viewProfile.photoURL
+                    }
                     alt={`${viewProfile.name}'s photo`}
                     style={{
                       width: 120,

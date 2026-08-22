@@ -161,7 +161,7 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
 
   return (
     <Card>
-      <Card.Header className="d-flex justify-content-between align-items-center">
+      <Card.Header className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
         <div>
           <h5 className="mb-0">
             {session.title}
@@ -224,7 +224,7 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
         />
       </Card.Body>
       {!isLocked && (
-        <Card.Footer className="d-flex justify-content-between align-items-center">
+        <Card.Footer className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
           <div>
             {hasChanges && (
               <span className="text-warning">

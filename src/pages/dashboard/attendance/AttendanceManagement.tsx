@@ -386,7 +386,7 @@ const AttendanceManagement: React.FC = () => {
             <Row className="g-4 align-items-start mb-4">
               <Col lg={6}>
                 <Card className="h-100">
-                  <Card.Header className="d-flex justify-content-between align-items-center">
+                  <Card.Header className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
                     <h5 className="mb-0">Create New Session</h5>
                     <div className="d-flex align-items-center gap-3">
                       <small className="text-muted">

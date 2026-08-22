@@ -137,6 +137,14 @@ const OnDutyLetterReport: React.FC = () => {
     setCurrentPage(1);
   }, [divisionFilter, yearFilter, departmentFilter, residentialFilter, searchTerm, rowsPerPage]);
 
+  const clearFilters = () => {
+    setDivisionFilter('ALL');
+    setYearFilter('ALL');
+    setDepartmentFilter('ALL');
+    setResidentialFilter('ALL');
+    setSearchTerm('');
+  };
+
   const [formData, setFormData] = useState<OnDutyLetterForm>({
     letterDate: toISTDateInputValue(),
     letterTemplateId: ON_DUTY_TEMPLATE_DOC_ID,
@@ -578,11 +586,14 @@ const OnDutyLetterReport: React.FC = () => {
             <Card.Body>
               <Row className="g-2 mb-3">
                 <Col xs={12} sm={6} md={3}>
-                  <Form.Select size="sm" value={divisionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDivisionFilter(e.target.value as any)}>
-                    <option value="ALL">All Divisions</option>
-                    <option value="SD">SD</option>
-                    <option value="SW">SW</option>
-                  </Form.Select>
+                  <div className="btn-group w-100" role="group" aria-label="Division filter">
+                    <input type="radio" className="btn-check" name="od-division-filter" id="od-division-all" checked={divisionFilter === 'ALL'} onChange={() => setDivisionFilter('ALL')} />
+                    <label className="btn btn-outline-primary btn-sm" htmlFor="od-division-all">Both</label>
+                    <input type="radio" className="btn-check" name="od-division-filter" id="od-division-sd" checked={divisionFilter === 'SD'} onChange={() => setDivisionFilter('SD')} />
+                    <label className="btn btn-outline-primary btn-sm" htmlFor="od-division-sd">SD</label>
+                    <input type="radio" className="btn-check" name="od-division-filter" id="od-division-sw" checked={divisionFilter === 'SW'} onChange={() => setDivisionFilter('SW')} />
+                    <label className="btn btn-outline-primary btn-sm" htmlFor="od-division-sw">SW</label>
+                  </div>
                 </Col>
                 <Col xs={12} sm={6} md={3}>
                   <Form.Select size="sm" value={departmentFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDepartmentFilter(e.target.value)}>
@@ -605,13 +616,22 @@ const OnDutyLetterReport: React.FC = () => {
                 </Col>
               </Row>
 
-              <Form.Control
-                className="mb-3"
-                type="text"
-                placeholder="Search by name or register number"
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              />
+              <Row className="g-2 mb-3 align-items-center">
+                <Col>
+                  <Form.Control
+                    type="text"
+                    placeholder="Search by name or register number"
+                    value={searchTerm}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                  />
+                </Col>
+                <Col xs="auto">
+                  <Button variant="outline-secondary" onClick={clearFilters}>
+                    <i className="bi bi-x-circle me-1"></i>
+                    Clear Filters
+                  </Button>
+                </Col>
+              </Row>
 
               <div className="table-responsive od-cadet-table-wrap">
                 <Table striped hover size="sm" className="mb-0">
@@ -635,12 +655,17 @@ const OnDutyLetterReport: React.FC = () => {
                   <tbody>
                     {paginatedCadets.map((cadet, index) => {
                       return (
-                        <tr key={cadet.uid}>
+                        <tr 
+                          key={cadet.uid} 
+                          onClick={() => toggleCadetSelection(cadet.uid)}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <td>
                             <Form.Check
                               type="checkbox"
                               checked={selectedCadets.has(cadet.uid)}
                               onChange={() => toggleCadetSelection(cadet.uid)}
+                              onClick={(e) => e.stopPropagation()}
                               aria-label={`Select ${cadet.name || cadet.uid}`}
                             />
                           </td>
@@ -672,10 +697,19 @@ const OnDutyLetterReport: React.FC = () => {
               />
             </Card.Body>
             <Card.Footer className="d-flex justify-content-between align-items-center">
-              <small className="text-muted">Selected: {selectedCadets.size} / {filteredCadets.length}</small>
-              <Button variant="primary" onClick={handlePreview} disabled={selectedCadets.size === 0}>
-                <i className="bi bi-eye me-1" />Preview
-              </Button>
+              <small className="text-muted">
+                Total Selected: {selectedCadets.size} &nbsp;|&nbsp; Filtered: {filteredCadets.length}
+              </small>
+              <div>
+                {selectedCadets.size > 0 && (
+                  <Button variant="outline-secondary" size="sm" onClick={() => setSelectedCadets(new Set())} className="me-2">
+                    <i className="bi bi-x-circle me-1" />Clear Selection
+                  </Button>
+                )}
+                <Button variant="primary" size="sm" onClick={handlePreview} disabled={selectedCadets.size === 0}>
+                  <i className="bi bi-eye me-1" />Preview
+                </Button>
+              </div>
             </Card.Footer>
           </Card>
         </Col>

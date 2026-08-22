@@ -118,7 +118,7 @@ const AboutSettingsTab: React.FC = () => {
 
   return (
     <div className="mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-4">
         <div>
           <h4 className="mb-1">About Page Layout</h4>
           <p className="text-muted small mb-0">Configure the content shown on the public About page.</p>

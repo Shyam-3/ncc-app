@@ -352,7 +352,7 @@ const ReportsTemplateManager: React.FC = () => {
   return (
     <Container className="py-5">
       <Card className="shadow border-0">
-        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+        <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
           <div className="d-flex align-items-center">
             <i className="bi bi-file-earmark-text fs-4 me-2" />
             <div>
@@ -440,7 +440,7 @@ const ReportsTemplateManager: React.FC = () => {
         <Row className="g-3">
           <Col lg={12}>
             <Card className="shadow-sm">
-              <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+              <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
                 <span>Template Editor</span>
                 <Button size="sm" variant="light" onClick={() => setView('list')}>
                   Back to Templates

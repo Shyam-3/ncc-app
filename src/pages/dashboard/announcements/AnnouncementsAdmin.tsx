@@ -314,7 +314,7 @@ const AnnouncementsAdmin: React.FC = () => {
   return (
     <Container className="py-5 announcements-admin">
       <Card className="shadow">
-        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+        <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
           <h3 className="mb-0">
             <i className="bi bi-megaphone-fill me-2" />
             Manage Announcements

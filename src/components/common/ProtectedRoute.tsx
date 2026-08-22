@@ -24,7 +24,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRoles.length > 0 && userProfile) {
+  // If the user has not been approved yet, they won't have a userProfile (or it will be inactive)
+  if (!userProfile || userProfile.status !== 'active') {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (requiredRoles.length > 0) {
     const hasRequiredRole = requiredRoles.includes(userProfile.role);
     if (!hasRequiredRole) {
       return <Navigate to="/unauthorized" replace />;

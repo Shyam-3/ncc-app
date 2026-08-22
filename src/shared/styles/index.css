@@ -121,6 +121,32 @@ a:hover {
   padding: 0 var(--spacing-lg);
 }
 
+@media (max-width: 767.98px) {
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  h1 { font-size: var(--font-size-2xl); }
+  h2 { font-size: var(--font-size-xl); }
+  h3 { font-size: var(--font-size-lg); }
+}
+
+@media (max-width: 575.98px) {
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+
+  h1 { font-size: var(--font-size-xl); }
+  h2 { font-size: var(--font-size-lg); }
+  h3 { font-size: var(--font-size-base); }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px;
+  }
+}
+
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-left { text-align: left; }

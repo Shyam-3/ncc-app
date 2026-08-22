@@ -92,6 +92,9 @@ async function main() {
       // Delete from alumni if they were moved there
       batch.delete(db.doc(`alumni/${userId}`));
       
+      // Delete from alumniProfiles if they were moved there
+      batch.delete(db.doc(`alumniProfiles/${userId}`));
+      
       // Remove from pending auth deletions if queued
       batch.delete(db.doc(`pendingAuthDeletions/${userId}`));
     }

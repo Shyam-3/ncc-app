@@ -261,7 +261,7 @@ const Profile: React.FC = () => {
 
     if (!editForm.bloodGroup.trim()) {
       nextErrors.bloodGroup = 'Blood group is required';
-    } else if (!editForm.bloodGroup.match(/^(A\+|A-|B\+|B-|AB\+|AB-|O\+|O-)$/)) {
+    } else if (!BLOOD_GROUPS.includes(editForm.bloodGroup)) {
       nextErrors.bloodGroup = 'Invalid blood group';
     }
 
@@ -464,7 +464,7 @@ const Profile: React.FC = () => {
       <Row className="justify-content-center">
         <Col xs={12} md={10} lg={8}>
           <Card className="shadow">
-            <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+            <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
               <h3 className="mb-0">
                 <i className="bi bi-person-circle me-2"></i>
                 Profile

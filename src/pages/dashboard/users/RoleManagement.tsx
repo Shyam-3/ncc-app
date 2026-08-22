@@ -139,6 +139,8 @@ const RoleManagement: React.FC = () => {
     if (isAnoUser(targetUser) && targetUser.role === 'superadmin') return false;
     // Can never change own role
     if (targetUser.uid === currentUser?.uid) return false;
+    // Alumni role is permanent and unchangeable
+    if (targetUser.role === 'alumni') return false;
     // Superadmins can modify anyone
     if (isSuperAdmin()) return true;
     // Admins can modify admins and members, but NOT superadmins
@@ -216,6 +218,7 @@ const RoleManagement: React.FC = () => {
     switch (role) {
       case 'superadmin': return 'danger';
       case 'admin': return 'primary';
+      case 'alumni': return 'dark';
       case 'member': return 'secondary';
       default: return 'light';
     }
@@ -233,7 +236,7 @@ const RoleManagement: React.FC = () => {
   return (
     <Container className="py-5">
       <Card className="shadow">
-        <Card.Header className="bg-danger text-white d-flex justify-content-between align-items-center">
+        <Card.Header className="bg-danger text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
           <h3 className="mb-0">
             <i className="bi bi-person-gear me-2"></i>
             Role Management

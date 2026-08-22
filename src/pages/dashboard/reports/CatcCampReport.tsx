@@ -140,14 +140,16 @@ const CatcCampReport: React.FC = () => {
   };
 
   const toggleSelectAllFiltered = () => {
-    setSelectedCadets((prev) => {
+    setSelectedCadets(prev => {
       const next = new Set(prev);
-      const allSelected = filteredCadets.length > 0 && filteredCadets.every((c) => next.has(c.uid));
+      const allSelected = filteredCadets.length > 0 && filteredCadets.every(c => next.has(c.uid));
+
       if (allSelected) {
-        filteredCadets.forEach((c) => next.delete(c.uid));
+        filteredCadets.forEach(c => next.delete(c.uid));
       } else {
-        filteredCadets.forEach((c) => next.add(c.uid));
+        filteredCadets.forEach(c => next.add(c.uid));
       }
+
       return next;
     });
   };
@@ -337,15 +339,14 @@ const CatcCampReport: React.FC = () => {
               {/* Filters */}
               <Row className="g-2 mb-3">
                 <Col xs={12} sm={6} md={3}>
-                  <Form.Select
-                    size="sm"
-                    value={divisionFilter}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDivisionFilter(e.target.value as 'ALL' | 'SD' | 'SW')}
-                  >
-                    <option value="ALL">All Divisions</option>
-                    <option value="SD">SD</option>
-                    <option value="SW">SW</option>
-                  </Form.Select>
+                  <div className="btn-group w-100" role="group" aria-label="Division filter">
+                    <input type="radio" className="btn-check" name="catc-division-filter" id="catc-division-all" checked={divisionFilter === 'ALL'} onChange={() => setDivisionFilter('ALL')} />
+                    <label className="btn btn-outline-primary btn-sm" htmlFor="catc-division-all">Both</label>
+                    <input type="radio" className="btn-check" name="catc-division-filter" id="catc-division-sd" checked={divisionFilter === 'SD'} onChange={() => setDivisionFilter('SD')} />
+                    <label className="btn btn-outline-primary btn-sm" htmlFor="catc-division-sd">SD</label>
+                    <input type="radio" className="btn-check" name="catc-division-filter" id="catc-division-sw" checked={divisionFilter === 'SW'} onChange={() => setDivisionFilter('SW')} />
+                    <label className="btn btn-outline-primary btn-sm" htmlFor="catc-division-sw">SW</label>
+                  </div>
                 </Col>
                 <Col xs={12} sm={6} md={3}>
                   <Form.Select
@@ -368,14 +369,13 @@ const CatcCampReport: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   />
                 </Col>
+                <Col xs="auto">
+                  <Button variant="outline-secondary" size="sm" onClick={clearFilters} className="mt-md-0 mt-2">
+                    <i className="bi bi-x-circle me-1"></i>
+                    Clear Filters
+                  </Button>
+                </Col>
               </Row>
-
-              <div className="d-flex justify-content-end mb-3">
-                <Button variant="outline-secondary" size="sm" onClick={clearFilters}>
-                  <i className="bi bi-x-circle me-1"></i>
-                  Clear Filters
-                </Button>
-              </div>
 
               {/* Cadet table */}
               <div className="table-responsive catc-cadet-table-wrap">
@@ -385,7 +385,7 @@ const CatcCampReport: React.FC = () => {
                       <th className="catc-select-col">
                         <Form.Check
                           type="checkbox"
-                          checked={filteredCadets.length > 0 && filteredCadets.every((c) => selectedCadets.has(c.uid))}
+                          checked={filteredCadets.length > 0 && filteredCadets.every(c => selectedCadets.has(c.uid))}
                           onChange={toggleSelectAllFiltered}
                           aria-label="Select all filtered cadets"
                         />
@@ -398,12 +398,17 @@ const CatcCampReport: React.FC = () => {
                   </thead>
                   <tbody>
                     {paginatedCadets.map((cadet, index) => (
-                      <tr key={cadet.uid}>
+                      <tr 
+                        key={cadet.uid}
+                        onClick={() => toggleCadetSelection(cadet.uid)}
+                        style={{ cursor: 'pointer' }}
+                      >
                         <td>
                           <Form.Check
                             type="checkbox"
                             checked={selectedCadets.has(cadet.uid)}
                             onChange={() => toggleCadetSelection(cadet.uid)}
+                            onClick={(e) => e.stopPropagation()}
                             aria-label={`Select ${cadet.name || cadet.uid}`}
                           />
                         </td>
@@ -438,25 +443,32 @@ const CatcCampReport: React.FC = () => {
             </Card.Body>
             <Card.Footer className="d-flex justify-content-between align-items-center">
               <small className="text-muted">
-                Selected: {selectedCadets.size} / {filteredCadets.length}
+                Total Selected: {selectedCadets.size} &nbsp;|&nbsp; Filtered: {filteredCadets.length}
               </small>
-              <Button
-                variant="info"
-                onClick={handleGenerate}
-                disabled={selectedCadets.size === 0 || generating}
-              >
-                {generating ? (
-                  <>
-                    <Spinner as="span" animation="border" size="sm" className="me-2"  />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-file-earmark-zip me-1" />
-                    Generate & Download ZIP
-                  </>
+              <div>
+                {selectedCadets.size > 0 && (
+                  <Button variant="outline-secondary" size="sm" onClick={() => setSelectedCadets(new Set())} className="me-2">
+                    <i className="bi bi-x-circle me-1" />Clear Selection
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  variant="info"
+                  onClick={handleGenerate}
+                  disabled={selectedCadets.size === 0 || generating}
+                >
+                  {generating ? (
+                    <>
+                      <Spinner as="span" animation="border" size="sm" className="me-2" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-file-earmark-zip me-1" />
+                      Generate & Download ZIP
+                    </>
+                  )}
+                </Button>
+              </div>
             </Card.Footer>
           </Card>
         </Col>

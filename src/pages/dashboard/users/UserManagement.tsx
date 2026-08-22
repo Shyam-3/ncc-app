@@ -100,6 +100,15 @@ const formatAcademicYear = (value?: string) => {
   return ROMAN_YEAR_MAP[cleaned] || cleaned;
 };
 
+const formatDateDDMMYYYY = (dateString?: string) => {
+  if (!dateString) return '-';
+  const parts = dateString.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateString;
+};
+
 const UserManagement: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile, isAdmin, isSuperAdmin } = useAuth();
@@ -831,7 +840,7 @@ const UserManagement: React.FC = () => {
   return (
     <Container className="py-5">
       <Card className="shadow">
-        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+        <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
           <h3 className="mb-0">
             <i className="bi bi-people-fill me-2"></i>
             User Management
@@ -939,7 +948,11 @@ const UserManagement: React.FC = () => {
               <div className="text-center mb-4">
                 {viewCadet.photoURL ? (
                   <img
-                    src={viewCadet.photoURL}
+                    src={
+                      viewCadet.photoURL?.includes('cloudinary.com') && viewCadet.photoURL.includes('/upload/')
+                        ? viewCadet.photoURL.replace('/upload/', '/upload/c_fill,g_face,w_400,h_400,q_auto,f_auto/')
+                        : viewCadet.photoURL
+                    }
                     alt={`${viewCadet.name}'s photo`}
                     style={{
                       width: 120,
@@ -981,12 +994,12 @@ const UserManagement: React.FC = () => {
               <hr />
 
               <Row>
-                {/* Left column: Personal & Contact */}
+                {/* Left column: Personal Details */}
                 <Col md={6}>
                   <h6 className="text-primary fw-bold mb-3">
                     <i className="bi bi-person me-2"></i>Personal Details
                   </h6>
-                  <DetailRow label="Date of Birth" value={viewCadet.dateOfBirth} icon="calendar-date" />
+                  <DetailRow label="Date of Birth" value={formatDateDDMMYYYY(viewCadet.dateOfBirth)} icon="calendar-date" />
                   <DetailRow label="Father's Name" value={viewCadet.fatherName} icon="person-heart" />
                   <DetailRow label="Blood Group" value={viewCadet.bloodGroup} icon="droplet-fill" />
                   <DetailRow label="Phone" value={viewCadet.phone} icon="telephone" />
@@ -994,16 +1007,9 @@ const UserManagement: React.FC = () => {
                   <DetailRow label="Address" value={viewCadet.address} icon="geo-alt" />
                 </Col>
 
-                {/* Right column: NCC & Academic */}
+                {/* Right column: Academic Details */}
                 <Col md={6}>
                   <h6 className="text-primary fw-bold mb-3">
-                    <i className="bi bi-shield me-2"></i>NCC Details
-                  </h6>
-                  <DetailRow label="Regimental No." value={viewCadet.regimentalNumber} icon="hash" />
-                  <DetailRow label="Date of Enrollment" value={viewCadet.dateOfEnrollment} icon="calendar-check" />
-                  <DetailRow label="NCC Year" value={viewCadet.nccYear || '1st Year'} icon="mortarboard" />
-
-                  <h6 className="text-primary fw-bold mb-3 mt-4">
                     <i className="bi bi-book me-2"></i>Academic Details
                   </h6>
                   <DetailRow label="Academic Year" value={formatAcademicYear(viewCadet.year)} icon="calendar3" />
@@ -1014,10 +1020,26 @@ const UserManagement: React.FC = () => {
                 </Col>
               </Row>
 
+              <hr className="my-4" />
+
+              <Row>
+                <Col xs={12}>
+                  <h6 className="text-primary fw-bold mb-3">
+                    <i className="bi bi-shield me-2"></i>NCC Details
+                  </h6>
+                </Col>
+                <Col md={6}>
+                  <DetailRow label="Regimental No." value={viewCadet.regimentalNumber} icon="hash" />
+                </Col>
+                <Col md={6}>
+                  <DetailRow label="Date of Enrollment" value={formatDateDDMMYYYY(viewCadet.dateOfEnrollment)} icon="calendar-check" />
+                </Col>
+              </Row>
+
               <hr />
               <div className="text-muted small text-end">
                 <i className="bi bi-clock me-1"></i>
-                Registered on: {new Date(viewCadet.createdAt).toLocaleString()}
+                Registered on: {new Date(viewCadet.createdAt).toLocaleDateString('en-GB')}, {new Date(viewCadet.createdAt).toLocaleTimeString()}
               </div>
             </>
           )}

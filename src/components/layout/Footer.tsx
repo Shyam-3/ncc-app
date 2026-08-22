@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
           </Col>
         </Row>
         <Row>
-          <Col xs={6} sm={6} md={4}>
+          <Col xs={12} sm={6} md={4}>
             <h6>Quick Links</h6>
             <ul className="list-unstyled">
               <li><Link to="/" className="text-light text-decoration-none">Home</Link></li>
@@ -29,7 +29,7 @@ const Footer: React.FC = () => {
               <li><Link to="/gallery/photos" className="text-light text-decoration-none">Gallery</Link></li>
             </ul>
           </Col>
-          <Col xs={6} sm={6} md={4}>
+          <Col xs={12} sm={6} md={4}>
             <h6>Contact Info</h6>
             <p className="text-light mb-1">
               <i className="bi bi-geo-alt me-2"></i>
@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
             </p>
             <p className="text-light mb-1">
               <i className="bi bi-envelope me-2"></i>
-              <a href="mailto:tce.nccarmywing@gmail.com" className="text-light text-decoration-none">
+              <a href="mailto:tce.nccarmywing@gmail.com" className="text-light text-decoration-none text-break">
                 tce.nccarmywing@gmail.com
               </a>
             </p>

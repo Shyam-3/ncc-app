@@ -45,7 +45,7 @@ const AppNavbar: React.FC = () => {
     <Navbar 
       bg="dark" 
       variant="dark" 
-      expand="md" 
+      expand="lg" 
       sticky="top" 
       expanded={expanded}
       onToggle={(isExpanded: boolean) => setExpanded(isExpanded)}

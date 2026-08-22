@@ -260,26 +260,21 @@ code {
 }
 
 /* Desktop: Right-align nav items */
-@media (min-width: 768px) {
+@media (min-width: 992px) {
   .navbar-collapse {
     justify-content: flex-end;
   }
-  
-  .navbar-nav {
-    align-items: center;
-    justify-content: flex-end;
-  }
-  
-  /* When items wrap to next line, align them from the right */
+
   .navbar-nav {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
     justify-content: flex-end;
   }
 }
 
-/* Mobile: Sidebar nav with backdrop blur */
-@media (max-width: 767px) {
+/* Mobile / tablet: Sidebar nav with backdrop blur */
+@media (max-width: 991.98px) {
   /* Create backdrop blur when navbar is open */
   .navbar-collapse.show::before,
   .navbar-collapse.collapsing::before {
@@ -343,11 +338,10 @@ code {
     border-radius: 4px;
   }
   
-  /* Sidebar dropdown inherits transparent + blur and fills sidebar width */
-  .navbar-nav .dropdown-menu {
+  /* In-drawer accordion: stay in document flow, but let Bootstrap toggle .show */
+  .navbar-collapse.show .navbar-nav .dropdown-menu {
     position: static;
     float: none;
-    display: block; /* ensure full width inside sidebar flow */
     width: 100%;
     margin: 0;
     background: transparent !important;
@@ -357,14 +351,21 @@ code {
     box-shadow: none;
     padding: 0.25rem 0;
   }
-  
+
   .navbar-nav .dropdown-item {
     color: rgba(255, 255, 255, 0.9) !important;
     padding: 0.5rem 1rem;
   }
-  
-  .navbar-nav .dropdown-item:hover {
+
+  .navbar-nav .dropdown-item:active,
+  .navbar-nav .dropdown-item.active {
     background: rgba(255, 255, 255, 0.15);
+  }
+
+  @media (hover: hover) {
+    .navbar-nav .dropdown-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
   }
 }
 
@@ -496,12 +497,13 @@ code {
   white-space: nowrap;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 575.98px) {
   .btn {
+    white-space: normal;
     font-size: 0.875rem;
     padding: 0.375rem 0.75rem;
   }
-  
+
   .btn-sm {
     font-size: 0.8rem;
     padding: 0.25rem 0.5rem;
@@ -510,7 +512,7 @@ code {
 
 /* Ensure navbar items don't overflow */
 .navbar-nav {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .navbar-nav .nav-link {
@@ -590,15 +592,17 @@ footer {
   }
 }
 
-/* Ensure single-word titles don't break */
-.card h3,
-.card h4,
-.card h5 {
-  word-break: keep-all;
-  overflow-wrap: normal;
-  hyphens: none;
-  -webkit-hyphens: none;
-  -moz-hyphens: none;
+/* Keep short titles intact on desktop; allow wrapping on mobile */
+@media (min-width: 768px) {
+  .card h3,
+  .card h4,
+  .card h5 {
+    word-break: keep-all;
+    overflow-wrap: normal;
+    hyphens: none;
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+  }
 }
 
 /* Only allow breaking for very long compound words or multiple words */
@@ -674,14 +678,6 @@ footer {
 .row.g-4 > [class*="col-"],
 .row.g-3 > [class*="col-"] {
   margin-bottom: 1rem;
-}
-
-/* Ensure cards always take full width on extra small screens */
-@media (max-width: 575.98px) {
-  .row > [class*="col-xs-12"] {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
 }
 
 /* Footer responsive styling */

@@ -1,4 +1,6 @@
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
+import ProfilePhoto from '@/components/ProfilePhoto';
 import { collection, doc, writeBatch } from 'firebase/firestore';
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
@@ -68,7 +70,6 @@ const Register: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -230,25 +231,6 @@ const Register: React.FC = () => {
     }));
   };
 
-  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      if (!file.type.match('image/(jpeg|jpg|png|webp)')) {
-        toast.error('Please upload a valid image file (JPG, PNG, WEBP)');
-        return;
-      }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Photo must be less than 5MB');
-        return;
-      }
-
-      setProfilePhoto(file);
-      setPhotoPreview(URL.createObjectURL(file));
-    }
-  };
-
   const handleResidentialStatusChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value as 'Day Scholar' | 'Hosteller';
     if (errors.residentialStatus) {
@@ -403,15 +385,20 @@ const Register: React.FC = () => {
 
       toast.success('Registration submitted! Please check your email to verify.');
       navigate('/verify-email');
-    } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
-        setErrors(prev => ({ ...prev, email: 'This email is already registered' }));
-        toast.error('Email is already registered. Please login instead.');
-        setTimeout(() => {
-          document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
+    } catch (err: unknown) {
+      if (err instanceof FirebaseError) {
+        if (err.code === 'auth/email-already-in-use') {
+          setErrors(prev => ({ ...prev, email: 'This email is already registered' }));
+          toast.error('Email is already registered. Please login instead.');
+          setTimeout(() => {
+            document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        } else {
+          toast.error('Failed to submit registration. ' + err.message);
+        }
       } else {
-        toast.error('Failed to submit registration. ' + err.message);
+        const message = err instanceof Error ? err.message : 'Unknown error occurred';
+        toast.error('Failed to submit registration. ' + message);
       }
     } finally {
       setLoading(false);
@@ -435,6 +422,20 @@ const Register: React.FC = () => {
               </div>
 
               <Form onSubmit={handleSubmit} noValidate>
+                <div className="text-center mb-4">
+                  <ProfilePhoto
+                    photoURL={null}
+                    size={100}
+                    editable={true}
+                    onPhotoSelected={(file) => setProfilePhoto(file)}
+                    onPhotoRemoved={() => setProfilePhoto(null)}
+                    uploading={false}
+                  />
+                  <Form.Text className="text-muted d-block mt-1">
+                    Profile Photo (Optional)
+                  </Form.Text>
+                </div>
+
                 {/* PERSONAL DETAILS SECTION */}
                 <h5 className="mb-3 text-primary">
                   <i className="bi bi-person me-2"></i>Personal Details
@@ -456,43 +457,7 @@ const Register: React.FC = () => {
                       {errors.name && <Form.Text className="text-danger d-block mt-1">{errors.name}</Form.Text>}
                     </Form.Group>
                   </Col>
-                  <Col xs={12}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Profile Photo <span className="text-muted">(Optional)</span></Form.Label>
-                      <div className="d-flex align-items-center gap-3">
-                        <div 
-                          className="rounded-circle bg-light d-flex align-items-center justify-content-center overflow-hidden border"
-                          style={{ width: '100px', height: '100px', cursor: 'pointer' }}
-                          onClick={() => document.getElementById('profilePhotoInput')?.click()}
-                        >
-                          {photoPreview ? (
-                            <img src={photoPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <i className="bi bi-camera text-secondary fs-1"></i>
-                          )}
-                        </div>
-                        <div>
-                          <input
-                            type="file"
-                            id="profilePhotoInput"
-                            accept=".jpg,.jpeg,.png,.webp"
-                            className="d-none"
-                            onChange={handlePhotoChange}
-                          />
-                          <Button 
-                            variant="outline-secondary" 
-                            size="sm"
-                            onClick={() => document.getElementById('profilePhotoInput')?.click()}
-                          >
-                            Choose Photo
-                          </Button>
-                          <Form.Text className="d-block mt-1 text-muted">
-                            Max 5MB. JPG, PNG, or WEBP.
-                          </Form.Text>
-                        </div>
-                      </div>
-                    </Form.Group>
-                  </Col>
+
                   <Col xs={12} md={6}>
                     <Form.Group className="mb-3" controlId="dateOfBirth">
                       <Form.Label>Date of Birth <span className="text-danger">*</span></Form.Label>
@@ -502,6 +467,7 @@ const Register: React.FC = () => {
                         value={formData.dateOfBirth}
                         onChange={handleChange}
                         className={getFieldClass('dateOfBirth')}
+                        placeholder="DD/MM/YYYY"
                         max={maxDobString}
                       />
                       {errors.dateOfBirth && <Form.Text className="text-danger d-block mt-1">{errors.dateOfBirth}</Form.Text>}
@@ -632,7 +598,7 @@ const Register: React.FC = () => {
                         value={formData.regimentalNumber}
                         onChange={handleChange}
                         className={getFieldClass('regimentalNumber')}
-                        placeholder="TN20XX(SD/SW)AXXXXXX"
+                        placeholder="TN20XXS(D/W)IAXXXXXX"
                       />
                       {errors.regimentalNumber && <Form.Text className="text-danger d-block mt-1">{errors.regimentalNumber}</Form.Text>}
                     </Form.Group>
@@ -717,7 +683,7 @@ const Register: React.FC = () => {
                         value={formData.rollNo}
                         onChange={handleChange}
                         className={getFieldClass('rollNo')}
-                        placeholder="eg 670123"
+                        placeholder="eg 660123"
                       />
                       {errors.rollNo && <Form.Text className="text-danger d-block mt-1">{errors.rollNo}</Form.Text>}
                     </Form.Group>
@@ -732,7 +698,7 @@ const Register: React.FC = () => {
                         onChange={handleChange}
                         className={getFieldClass('registerNumber')}
                         placeholder="16-digit number"
-                        min="0"
+                        min="2303917710321001"
                       />
                       {errors.registerNumber && <Form.Text className="text-danger d-block mt-1">{errors.registerNumber}</Form.Text>}
                       <Form.Text className="text-muted">Exactly 16 digits</Form.Text>
@@ -758,7 +724,8 @@ const Register: React.FC = () => {
                         onChange={handleChange}
                         className={getFieldClass('phone')}
                         placeholder="10-digit mobile number"
-                        min="0"
+                        min="6000000000"
+                        max="9999999999"
                       />
                       {errors.phone && <Form.Text className="text-danger d-block mt-1">{errors.phone}</Form.Text>}
                       <Form.Text className="text-muted">Exactly 10 digits</Form.Text>

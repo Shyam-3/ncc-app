@@ -307,15 +307,12 @@ async function main() {
 
       switch (item.action) {
         case 'alumni_ncc': {
-          // Move completely to alumni collection, delete from users/cadets
-          const { uid: _uid, _snapshotSource: _src, ...alumniData } = userData;
-          batch.set(alumniRef, {
-            ...alumniData,
+          // Move from active cadet to alumni role
+          batch.set(userRef, {
             role: 'alumni',
-            year: item.newYear,
-            archivedAt: new Date().toISOString(),
-          });
-          batch.delete(userRef);
+            year: item.newYear
+          }, { merge: true });
+          
           batch.delete(cadetRef);
           
           // Free up taken numbers
@@ -337,6 +334,59 @@ async function main() {
         }
 
         case 'delete_graduated_cadet': {
+          const { uid: _uid2, _snapshotSource: _src2, ...alumniData2 } = userData;
+          const is5Year2 = ['ARCH', 'AMCS'].includes(alumniData2.department);
+          const courseDuration2 = is5Year2 ? 5 : 4;
+          
+          let academicYear2 = '';
+          if (alumniData2.year) {
+            let numericYear = 99;
+            const lower = alumniData2.year.toLowerCase();
+            if (lower.includes('1') || lower.includes('i ')) numericYear = 1;
+            else if (lower.includes('2') || lower.includes('ii')) numericYear = 2;
+            else if (lower.includes('3') || lower.includes('iii')) numericYear = 3;
+            else if (lower.includes('4') || lower.includes('iv')) numericYear = 4;
+            else if (lower.includes('5') || lower.includes('v')) numericYear = 5;
+            
+            if (numericYear <= 5) {
+              const now = new Date();
+              const currentAcademicYearEnd = now.getMonth() < 6 ? now.getFullYear() : now.getFullYear() + 1;
+              const startYear = currentAcademicYearEnd - numericYear;
+              academicYear2 = `${startYear}-${startYear + courseDuration2}`;
+            }
+          }
+          
+          const enrollYear2 = alumniData2.dateOfEnrollment ? new Date(alumniData2.dateOfEnrollment).getFullYear() : null;
+          let nccTenure2 = '';
+          if (enrollYear2 && !isNaN(enrollYear2)) {
+            nccTenure2 = `${enrollYear2}-${enrollYear2 + 3}`;
+          }
+
+          batch.set(db.doc(`alumniProfiles/${item.uid}`), {
+            name: alumniData2.name || 'Unknown',
+            email: alumniData2.email || null,
+            phone: alumniData2.phone || null,
+            bloodGroup: alumniData2.bloodGroup || null,
+            division: alumniData2.division || null,
+            department: alumniData2.department || null,
+            academicYear: academicYear2 || null,
+            nccTenure: nccTenure2 || null,
+            rank: alumniData2.rank || 'CDT',
+            achievements: alumniData2.achievements || null,
+            regimentalNumber: alumniData2.regimentalNumber || null,
+            nccYear: alumniData2.nccYear || null,
+            year: alumniData2.year || null,
+            photoURL: alumniData2.photoURL || null,
+            cloudinaryPublicId: alumniData2.cloudinaryPublicId || null,
+            status: 'active',
+            visible: true,
+            source: 'rollover',
+            createdBy: 'rollover-script',
+            createdAt: new Date().toISOString(),
+            archivedAt: new Date().toISOString(),
+            reasonForArchival: 'academic_complete',
+          });
+          
           batch.delete(userRef);
           batch.delete(cadetRef);
           // Queue auth deletion
@@ -358,6 +408,59 @@ async function main() {
         }
 
         case 'delete_graduated_alumni': {
+          const { uid: _uid3, _snapshotSource: _src3, ...alumniData3 } = userData;
+          const is5Year3 = ['ARCH', 'AMCS'].includes(alumniData3.department);
+          const courseDuration3 = is5Year3 ? 5 : 4;
+          
+          let academicYear3 = '';
+          if (alumniData3.year) {
+            let numericYear = 99;
+            const lower = alumniData3.year.toLowerCase();
+            if (lower.includes('1') || lower.includes('i ')) numericYear = 1;
+            else if (lower.includes('2') || lower.includes('ii')) numericYear = 2;
+            else if (lower.includes('3') || lower.includes('iii')) numericYear = 3;
+            else if (lower.includes('4') || lower.includes('iv')) numericYear = 4;
+            else if (lower.includes('5') || lower.includes('v')) numericYear = 5;
+            
+            if (numericYear <= 5) {
+              const now = new Date();
+              const currentAcademicYearEnd = now.getMonth() < 6 ? now.getFullYear() : now.getFullYear() + 1;
+              const startYear = currentAcademicYearEnd - numericYear;
+              academicYear3 = `${startYear}-${startYear + courseDuration3}`;
+            }
+          }
+          
+          const enrollYear3 = alumniData3.dateOfEnrollment ? new Date(alumniData3.dateOfEnrollment).getFullYear() : null;
+          let nccTenure3 = '';
+          if (enrollYear3 && !isNaN(enrollYear3)) {
+            nccTenure3 = `${enrollYear3}-${enrollYear3 + 3}`;
+          }
+
+          batch.set(db.doc(`alumniProfiles/${item.uid}`), {
+            name: alumniData3.name || 'Unknown',
+            email: alumniData3.email || null,
+            phone: alumniData3.phone || null,
+            bloodGroup: alumniData3.bloodGroup || null,
+            division: alumniData3.division || null,
+            department: alumniData3.department || null,
+            academicYear: academicYear3 || null,
+            nccTenure: nccTenure3 || null,
+            rank: alumniData3.rank || 'CDT',
+            achievements: alumniData3.achievements || null,
+            regimentalNumber: alumniData3.regimentalNumber || null,
+            nccYear: alumniData3.nccYear || null,
+            year: alumniData3.year || null,
+            photoURL: alumniData3.photoURL || null,
+            cloudinaryPublicId: alumniData3.cloudinaryPublicId || null,
+            status: 'active',
+            visible: true,
+            source: 'rollover',
+            createdBy: 'rollover-script',
+            createdAt: new Date().toISOString(),
+            archivedAt: new Date().toISOString(),
+            reasonForArchival: 'academic_complete',
+          });
+
           batch.delete(alumniRef);
           // Queue auth deletion
           batch.set(db.doc(`pendingAuthDeletions/${item.uid}`), {

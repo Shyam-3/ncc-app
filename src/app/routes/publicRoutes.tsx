@@ -24,8 +24,8 @@ import { ForgotPassword, Login, Register, VerifyEmail } from '@/pages/auth';
 
 const Unauthorized: React.FC = () => (
   <div className="container py-5 text-center">
-    <h2>Unauthorized Access</h2>
-    <p>You don't have permission to view this page.</p>
+    <h2>Access Denied</h2>
+    <p>You don't have permission to view this page, or your account is still pending approval by an admin.</p>
   </div>
 );
 

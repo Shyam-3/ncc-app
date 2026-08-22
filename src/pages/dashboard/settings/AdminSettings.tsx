@@ -500,20 +500,12 @@ const AdminSettings: React.FC = () => {
 
           switch (item.action) {
             case 'alumni_ncc': {
-              const userData = snapshotUsers[item.cadetId] || {};
-              const { uid: _uid, ...alumniData } = userData;
-              batch.set(alumniRef, {
-                ...alumniData,
-                reasonForArchival: 'ncc_tenure_complete',
-                archivedAt: new Date().toISOString(),
+              // Move from active cadet to alumni role
+              batch.set(userRef, {
                 role: 'alumni',
-                year: item.newYear,
-              });
-              batch.set(doc(collection(db, 'alumniProfiles')), buildAlumniProfileFromCadet(userData, 'rollover', {
-                reasonForArchival: 'ncc_tenure_complete',
-                createdBy: userProfile?.uid,
-              }));
-              batch.delete(userRef);
+                year: item.newYear
+              }, { merge: true });
+              
               batch.delete(doc(db, 'cadets', item.cadetId));
               break;
             }
@@ -527,7 +519,7 @@ const AdminSettings: React.FC = () => {
 
             case 'delete_graduated': {
               const userData = snapshotUsers[item.cadetId] || {};
-              batch.set(doc(collection(db, 'alumniProfiles')), buildAlumniProfileFromCadet(userData, 'rollover', {
+              batch.set(doc(db, 'alumniProfiles', item.cadetId), buildAlumniProfileFromCadet(userData, 'rollover', {
                 reasonForArchival: 'academic_complete',
                 createdBy: userProfile?.uid,
               }));
@@ -654,6 +646,8 @@ const AdminSettings: React.FC = () => {
           
           // Also delete from alumni if they were moved there
           batch.delete(doc(db, 'alumni', userId));
+          // Also delete from new alumniProfiles if they were moved there
+          batch.delete(doc(db, 'alumniProfiles', userId));
           // Remove from pending auth deletions if queued
           batch.delete(doc(db, 'pendingAuthDeletions', userId));
         }
@@ -733,7 +727,7 @@ const AdminSettings: React.FC = () => {
   return (
     <Container className="py-5 admin-settings">
       <Card className="shadow border-0">
-        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+        <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
           <div className="d-flex align-items-center">
             <i className="bi bi-gear fs-4 me-2" />
             <div>
@@ -871,27 +865,27 @@ const AdminSettings: React.FC = () => {
               {config.lastRolloverSummary && (
                 <Row className="g-2">
                   <Col xs={6} md={3}>
-                    <Card className="summary-card p-2 bg-light">
-                      <div className="display-6 text-primary">{config.lastRolloverSummary.incremented}</div>
-                      <small className="text-muted">Incremented</small>
+                    <Card className="summary-card p-2 border-primary bg-primary text-white">
+                      <div className="display-6 fw-bold">{config.lastRolloverSummary.incremented}</div>
+                      <small>Incremented</small>
                     </Card>
                   </Col>
                   <Col xs={6} md={3}>
-                    <Card className="summary-card p-2 bg-light">
-                      <div className="display-6 text-warning">{config.lastRolloverSummary.alumniNcc}</div>
-                      <small className="text-muted">→ Alumni</small>
+                    <Card className="summary-card p-2 border-warning bg-warning bg-opacity-10">
+                      <div className="display-6 fw-bold text-warning">{config.lastRolloverSummary.alumniNcc}</div>
+                      <small className="text-dark">→ Alumni</small>
                     </Card>
                   </Col>
                   <Col xs={6} md={3}>
-                    <Card className="summary-card p-2 bg-light">
-                      <div className="display-6 text-danger">{config.lastRolloverSummary.deletedGraduated}</div>
-                      <small className="text-muted">Archived & Deleted</small>
+                    <Card className="summary-card p-2 border-danger bg-danger text-white">
+                      <div className="display-6 fw-bold">{config.lastRolloverSummary.deletedGraduated}</div>
+                      <small>Archived & Deleted</small>
                     </Card>
                   </Col>
                   <Col xs={6} md={3}>
-                    <Card className="summary-card p-2 bg-light">
-                      <div className="display-6 text-secondary">{config.lastRolloverSummary.skipped}</div>
-                      <small className="text-muted">Skipped</small>
+                    <Card className="summary-card p-2 border-secondary bg-secondary bg-opacity-10">
+                      <div className="display-6 fw-bold text-secondary">{config.lastRolloverSummary.skipped}</div>
+                      <small className="text-dark">Skipped</small>
                     </Card>
                   </Col>
                 </Row>
@@ -951,27 +945,27 @@ const AdminSettings: React.FC = () => {
             {planCounts && (
               <Row className="g-2 mb-3">
                 <Col xs={6} md={3}>
-                  <Card className="summary-card p-2 border-primary bg-primary bg-opacity-10">
-                    <div className="display-6 text-primary">{planCounts.increment}</div>
+                  <Card className="summary-card p-2 border-primary bg-primary text-white">
+                    <div className="display-6 fw-bold">{planCounts.increment}</div>
                     <small>Will Increment</small>
                   </Card>
                 </Col>
                 <Col xs={6} md={3}>
                   <Card className="summary-card p-2 border-warning bg-warning bg-opacity-10">
-                    <div className="display-6 text-warning">{planCounts.alumniNcc}</div>
-                    <small>→ Alumni (NCC)</small>
+                    <div className="display-6 fw-bold text-warning">{planCounts.alumniNcc}</div>
+                    <small className="text-dark">→ Alumni (NCC)</small>
                   </Card>
                 </Col>
                 <Col xs={6} md={3}>
-                  <Card className="summary-card p-2 border-danger bg-danger bg-opacity-10">
-                    <div className="display-6 text-danger">{planCounts.deleteGraduated}</div>
+                  <Card className="summary-card p-2 border-danger bg-danger text-white">
+                    <div className="display-6 fw-bold">{planCounts.deleteGraduated}</div>
                     <small>Archive & Delete</small>
                   </Card>
                 </Col>
                 <Col xs={6} md={3}>
                   <Card className="summary-card p-2 border-secondary bg-secondary bg-opacity-10">
-                    <div className="display-6 text-secondary">{planCounts.skip}</div>
-                    <small>Skipped</small>
+                    <div className="display-6 fw-bold text-secondary">{planCounts.skip}</div>
+                    <small className="text-dark">Skipped</small>
                   </Card>
                 </Col>
               </Row>

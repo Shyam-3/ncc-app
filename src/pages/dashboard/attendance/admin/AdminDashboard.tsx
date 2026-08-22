@@ -162,7 +162,7 @@ export function AdminDashboard({ sessions, cadets, loading = false }: AdminDashb
   return (
     <div className="admin-dashboard py-5 container">
       <Card className="shadow border-0">
-        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+        <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
           <div className="d-flex align-items-center">
             <i className="bi bi-clipboard-data fs-4 me-2" />
             <h3 className="mb-0">Attendance Dashboard</h3>

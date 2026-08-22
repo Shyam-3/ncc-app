@@ -513,7 +513,7 @@ const ParadeStateReport: React.FC = () => {
         {/* ---- Step 1: Meta Data ---- */}
         <Col lg={12}>
           <Card className="shadow-sm">
-            <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+            <Card.Header className="bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
               <span>
                 <i className="bi bi-journal-text me-2" />
                 Step 1 — Parade Meta Data
@@ -773,7 +773,7 @@ const ParadeStateReport: React.FC = () => {
         {dataFetched && sessionsData.length > 0 && (
           <Col lg={12}>
             <Card className="shadow-sm h-100 mb-3">
-              <Card.Header className="bg-warning text-dark d-flex justify-content-between align-items-center">
+              <Card.Header className="bg-warning text-dark d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
                 <span>
                   <i className="bi bi-person-x me-2" />
                   Step 4 — Classify Absentees ({absentees.length})

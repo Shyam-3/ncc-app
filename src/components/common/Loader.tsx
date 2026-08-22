@@ -1,22 +1,37 @@
+import { Spinner } from 'react-bootstrap';
+
 interface LoaderProps {
   size?: 'sm' | 'md' | 'lg';
   fullScreen?: boolean;
 }
 
+const spinnerPx: Record<NonNullable<LoaderProps['size']>, string> = {
+  sm: '1.5rem',
+  md: '3rem',
+  lg: '4rem',
+};
+
 export function Loader({ size = 'md', fullScreen = false }: LoaderProps) {
-  const sizeClass = {
-    sm: 'w-6 h-6',
-    md: 'w-12 h-12',
-    lg: 'w-16 h-16',
-  }[size];
+  const spinner = (
+    <Spinner
+      animation="border"
+      role="status"
+      style={{ width: spinnerPx[size], height: spinnerPx[size] }}
+    >
+      <span className="visually-hidden">Loading...</span>
+    </Spinner>
+  );
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-        <div className={`loading-spinner ${sizeClass}`} />
+      <div
+        className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
+        style={{ zIndex: 1050 }}
+      >
+        {spinner}
       </div>
     );
   }
 
-  return <div className={`loading-spinner ${sizeClass}`} />;
+  return spinner;
 }
