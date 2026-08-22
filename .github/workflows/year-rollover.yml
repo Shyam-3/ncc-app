@@ -1,6 +1,8 @@
 name: NCC Year Rollover
 
 on:
+  schedule:
+    - cron: '0 0 * 4,5 *'    # Every day at midnight UTC, only in April and May
   workflow_dispatch:
     inputs:
       dry_run:
@@ -23,6 +25,7 @@ jobs:
           node-version: '24'
       - name: Install dependencies
         run: cd scripts && npm install
+        
       - name: Run rollover
         run: |
           if [ -n "${{ inputs.rollback_id }}" ]; then
@@ -30,8 +33,27 @@ jobs:
           elif [ "${{ inputs.dry_run }}" = "true" ]; then
             node scripts/year-rollover.mjs --dry-run
           else
-            node scripts/year-rollover.mjs
-            node scripts/auth-cleanup.mjs
+            # If triggered by schedule, check if it's the exact target date first
+            if [ "${{ github.event_name }}" = "schedule" ]; then
+              node scripts/check-schedule.mjs
+              EXIT_CODE=$?
+              
+              if [ $EXIT_CODE -eq 200 ]; then
+                echo "Target date reached! Executing rollover..."
+                node scripts/year-rollover.mjs
+                node scripts/auth-cleanup.mjs
+              elif [ $EXIT_CODE -eq 0 ]; then
+                echo "Not the scheduled target date yet. Sleeping until tomorrow."
+                exit 0
+              else
+                echo "Schedule checker failed with code $EXIT_CODE"
+                exit 1
+              fi
+            else
+              # Triggered manually with dry_run=false
+              node scripts/year-rollover.mjs
+              node scripts/auth-cleanup.mjs
+            fi
           fi
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

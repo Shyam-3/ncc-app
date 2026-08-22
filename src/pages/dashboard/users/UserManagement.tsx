@@ -791,7 +791,7 @@ const UserManagement: React.FC = () => {
                 )}
               </td>
               <td>{u.regimentalNumber || '-'}</td>
-              <td>{u.nccYear || '-'}</td>
+              <td>{u.role === 'alumni' ? <span className="text-success small fw-bold"><i className="bi bi-check-circle-fill me-1"></i>Completed</span> : (u.nccYear || '-')}</td>
               <td>{formatAcademicYear(u.year)}</td>
               <td className="col-left">{u.email}</td>
               <td className="d-flex gap-2">
