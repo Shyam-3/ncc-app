@@ -261,17 +261,8 @@ async function main() {
 
   console.log('\n⏳ Beginning execution phase...');
 
-  // 6. Save Rollback Snapshot
-  console.log('💾 Saving rollback snapshot...');
+  // 6. Generate execution summary
   const snapshotId = new Date().toISOString().replace(/[:.]/g, '-');
-  
-  const snapshotUsers = {};
-  usersSnap.forEach(d => {
-    snapshotUsers[d.id] = { uid: d.id, ...d.data(), _snapshotSource: 'users' };
-  });
-  alumniSnap.forEach(d => {
-    snapshotUsers[d.id] = { uid: d.id, ...d.data(), _snapshotSource: 'alumni' };
-  });
 
   const summary = {
     incremented: counts.increment,
@@ -280,14 +271,6 @@ async function main() {
     skipped: counts.skip,
     timestamp: new Date().toISOString(),
   };
-
-  await db.doc(`rollbackSnapshots/${snapshotId}`).set({
-    timestamp: new Date().toISOString(),
-    summary,
-    users: snapshotUsers,
-  });
-
-  console.log(`   Snapshot saved as: ${snapshotId}`);
 
   // 7. Apply changes using batched writes (max 500 per batch)
   console.log('🔄 Applying changes …');
@@ -477,10 +460,6 @@ async function main() {
             year: item.newYear,
             nccYear: item.newNccYear,
           }, { merge: true });
-          batch.set(cadetRef, {
-            year: item.newYear,
-            nccYear: item.newNccYear,
-          }, { merge: true });
           break;
         }
       }
@@ -528,16 +507,6 @@ async function main() {
     nextRolloverDate: nextRolloverDateStr, // Advanced by 1 year
   }, { merge: true });
   console.log(`   ✓ Next rollover date automatically set to ${nextRolloverDateStr}`);
-
-  // 10. Audit log
-  console.log('📝 Writing audit log …');
-  await db.doc(`auditLogs/rollover-${snapshotId}`).set({
-    type: 'year_rollover',
-    performedBy: 'github-actions',
-    performedAt: new Date().toISOString(),
-    summary,
-    snapshotId,
-  });
 
   console.log();
   console.log('🎉 Rollover complete!');

@@ -9,10 +9,6 @@ on:
         description: 'Dry run — preview changes without applying'
         type: boolean
         default: true
-      rollback_id:
-        description: 'Rollback to a snapshot (leave empty for normal run)'
-        type: string
-        default: ''
 
 jobs:
   rollover:
@@ -28,9 +24,7 @@ jobs:
         
       - name: Run rollover
         run: |
-          if [ -n "${{ inputs.rollback_id }}" ]; then
-            node scripts/rollback.mjs --snapshot-id=${{ inputs.rollback_id }}
-          elif [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
             node scripts/year-rollover.mjs --dry-run
           else
             # If triggered by schedule, check if it's the exact target date first
