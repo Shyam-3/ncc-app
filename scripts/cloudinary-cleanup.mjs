@@ -43,15 +43,15 @@ if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
  * Delete a resource from Cloudinary by its public_id using the Admin API.
  */
 async function deleteFromCloudinary(publicId, resourceType = 'image') {
-  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/destroy`;
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/resources/${resourceType}/upload`;
 
   const formData = new URLSearchParams();
-  formData.append('public_id', publicId);
+  formData.append('public_ids[]', publicId);
 
   const authHeader = 'Basic ' + Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64');
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: 'DELETE',
     headers: {
       'Authorization': authHeader,
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -93,9 +93,11 @@ async function main() {
 
     try {
       const result = await deleteFromCloudinary(publicId, resourceType);
+      
+      const status = result.deleted?.[publicId];
 
-      if (result.result === 'ok' || result.result === 'not found') {
-        console.log(`✅ Deleted: ${publicId} (${result.result})`);
+      if (status === 'deleted' || status === 'not_found') {
+        console.log(`✅ Deleted: ${publicId} (${status})`);
         await doc.ref.delete();
         successCount++;
       } else {

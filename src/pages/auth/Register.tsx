@@ -257,6 +257,7 @@ const Register: React.FC = () => {
       return;
     }
 
+    let createdAuthUser: import('firebase/auth').User | null = null;
     setLoading(true);
 
     try {
@@ -289,6 +290,7 @@ const Register: React.FC = () => {
         formData.email,
         formData.password
       );
+      createdAuthUser = userCredential.user;
       const user = userCredential.user;
 
       // Update Firebase Auth profile with name so the verification email template (%DISPLAY_NAME%) populates correctly
@@ -386,6 +388,14 @@ const Register: React.FC = () => {
       toast.success('Registration submitted! Please check your email to verify.');
       navigate('/verify-email');
     } catch (err: unknown) {
+      if (createdAuthUser) {
+        try {
+          await createdAuthUser.delete();
+          console.log('Rolled back orphaned auth account.');
+        } catch (cleanupErr) {
+          console.error('Failed to rollback auth account:', cleanupErr);
+        }
+      }
       if (err instanceof FirebaseError) {
         if (err.code === 'auth/email-already-in-use') {
           setErrors(prev => ({ ...prev, email: 'This email is already registered' }));

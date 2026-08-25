@@ -2,6 +2,8 @@ import { db, FIREBASE_CONFIG } from '@/shared/config/firebase';
 import { useAuth } from '@/features/auth/AuthContext';
 import { deleteApp, initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, getAuth, signOut } from 'firebase/auth';
+import emailjs from '@emailjs/browser';
+import { NCC_RANKS } from '@/shared/config/constants';
 import {
   collection,
   deleteDoc,
@@ -116,7 +118,7 @@ const UserManagement: React.FC = () => {
   const [pending, setPending] = useState<PendingCadet[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [confirm, setConfirm] = useState<{action: 'approve'|'reject'|'delete'; payload: any} | null>(null);
+  const [confirm, setConfirm] = useState<{ action: 'approve' | 'reject' | 'delete'; payload: any } | null>(null);
   const [viewCadet, setViewCadet] = useState<PendingCadet | null>(null);
 
   // Filter states for pending approvals
@@ -209,14 +211,14 @@ const UserManagement: React.FC = () => {
         try {
           const secondaryApp = initializeApp(FIREBASE_CONFIG, 'Secondary');
           const secondaryAuth = getAuth(secondaryApp);
-          
+
           const userCredential = await createUserWithEmailAndPassword(
             secondaryAuth,
             candidate.email,
             candidate.tempPassword
           );
           authUid = userCredential.user.uid;
-          
+
           await signOut(secondaryAuth);
           await deleteApp(secondaryApp);
         } catch (authError: any) {
@@ -256,7 +258,37 @@ const UserManagement: React.FC = () => {
 
       // Delete from pending collection
       await deleteDoc(doc(db, 'pendingCadets', candidate.id));
-      
+
+      // Send approval email via EmailJS
+      try {
+        const adminRankCode = (userProfile as any)?.rank;
+        const adminRankFull = NCC_RANKS.find(r => r.code === adminRankCode)?.name || adminRankCode || '';
+
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+          {
+            to_email: candidate.email,
+            to_name: candidate.name,
+            regimental_number: candidate.regimentalNumber || '',
+            rank: candidate.rank || 'Cadet',
+            admin_name: userProfile?.name || 'NCC Admin',
+            admin_rank: adminRankFull,
+            admin_email: userProfile?.email || 'tce.nccarmywing@gmail.com',
+            approval_date: new Date().toLocaleDateString('en-IN', { 
+              day: '2-digit', month: 'short', year: 'numeric' 
+            }),
+            approval_time: new Date().toLocaleTimeString('en-IN', { 
+              hour: '2-digit', minute: '2-digit', hour12: true 
+            }),
+          },
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        );
+      } catch (emailError) {
+        console.error('Failed to send approval email:', emailError);
+        toast.error('Account created, but failed to send approval email.');
+      }
+
       toast.success('Cadet approved and account created successfully!');
       await Promise.all([fetchUsers(), fetchPending()]);
     } catch (e) {
@@ -283,7 +315,7 @@ const UserManagement: React.FC = () => {
             queuedBy: currentUser?.uid || 'unknown',
           });
           // Trigger cleanup action
-          triggerAuthCleanup().catch(() => {});
+          triggerAuthCleanup().catch(() => { });
         } catch (authError: any) {
           console.warn('Could not queue auth deletion:', authError);
           // Non-fatal: we still want to delete the pending doc
@@ -646,9 +678,9 @@ const UserManagement: React.FC = () => {
                 >
                   <i className="bi bi-eye-fill"></i>
                 </Button>
-                <Button 
-                  variant="success" 
-                  size="sm" 
+                <Button
+                  variant="success"
+                  size="sm"
                   onClick={() => setConfirm({ action: 'approve', payload: c })}
                   disabled={!c.emailVerified}
                   title={!c.emailVerified ? 'Email not yet verified' : 'Approve this registration'}
@@ -831,7 +863,7 @@ const UserManagement: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner as="span" animation="border"  size="sm" />
+        <Spinner as="span" animation="border" size="sm" />
         <p className="mt-3">Loading user management...</p>
       </Container>
     );
@@ -869,11 +901,11 @@ const UserManagement: React.FC = () => {
               </div>
               {UsersTable}
             </Tab>
-            <Tab 
-              eventKey="approvals" 
+            <Tab
+              eventKey="approvals"
               title={
                 <span>
-                  Pending Approvals 
+                  Pending Approvals
                   {actualPendingCount > 0 && (
                     <Badge bg="danger" className="ms-2">{actualPendingCount}</Badge>
                   )}

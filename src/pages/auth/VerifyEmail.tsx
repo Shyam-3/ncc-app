@@ -1,16 +1,18 @@
 import { auth, db } from '@/shared/config/firebase';
 import { mapFirebaseAuthError } from '@/shared/utils/firebaseErrors';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { sendEmailVerification, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, getDocs, query, updateDoc, where, doc, getDoc } from 'firebase/firestore';
 import React, { FormEvent, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 const VerifyEmail: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [verified, setVerified] = useState<boolean | null>(null);
   const [userStatus, setUserStatus] = useState<'authenticated' | 'pending' | 'unknown' | null>(null);
   const [error, setError] = useState('');
@@ -21,8 +23,6 @@ const VerifyEmail: React.FC = () => {
     if (!email.trim()) {
       errors.email = 'Email is required';
     }
-    // Removed strict TCE domain validation here to support alumni/ANOs, 
-    // or rely on Firebase rules instead if needed.
     
     if (!password) {
       errors.password = 'Password is required';
@@ -42,24 +42,20 @@ const VerifyEmail: React.FC = () => {
     setLoading(true);
 
     try {
-      // Sign in to check email verification status
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Reload user to get latest emailVerified status from Firebase
       await user.reload();
       const isVerified = user.emailVerified;
 
       let status: 'authenticated' | 'pending' | 'unknown' = 'unknown';
 
-      // Check if user is already fully authenticated
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const alumniDoc = await getDoc(doc(db, 'alumni', user.uid));
       
       if (userDoc.exists() || alumniDoc.exists()) {
         status = 'authenticated';
       } else {
-        // Check if user is in pendingCadets
         const pendingRef = collection(db, 'pendingCadets');
         const q = query(pendingRef, where('uid', '==', user.uid));
         const snapshot = await getDocs(q);
@@ -68,7 +64,6 @@ const VerifyEmail: React.FC = () => {
           status = 'pending';
           
           if (isVerified) {
-            // Update the pendingCadets document with emailVerified: true
             try {
               const pendingDoc = snapshot.docs[0];
               await updateDoc(doc(db, 'pendingCadets', pendingDoc.id), {
@@ -84,11 +79,9 @@ const VerifyEmail: React.FC = () => {
       setVerified(isVerified);
       setUserStatus(status);
 
-      // Sign out immediately — user cannot access the app until admin approves
       await signOut(auth);
     } catch (err: any) {
       console.error('Verification check error:', err);
-      // Specifically handle invalid-credential to provide helpful context for this flow
       if (err?.code === 'auth/invalid-credential') {
         setError('Invalid credentials. If you forgot your password or reset it, please use the Login page instead.');
       } else {
@@ -96,6 +89,29 @@ const VerifyEmail: React.FC = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!validateForm()) return;
+    setError('');
+    setResendLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      await signOut(auth);
+      toast.success('Verification link sent! Check your inbox and spam folder.');
+    } catch (err: any) {
+      console.error('Resend error:', err);
+      if (err?.code === 'auth/invalid-credential') {
+        setError('Invalid credentials. If you forgot your password or reset it, please use the Login page instead.');
+      } else if (err?.code === 'auth/too-many-requests') {
+        setError('Too many requests. Please wait a few minutes before trying again.');
+      } else {
+        setError(mapFirebaseAuthError(err?.code));
+      }
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -244,6 +260,27 @@ const VerifyEmail: React.FC = () => {
                       <>
                         <i className="bi bi-arrow-repeat me-2"></i>
                         Check Verification Status
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    className="w-100 mt-3"
+                    size="lg"
+                    onClick={handleResendEmail}
+                    disabled={loading || resendLoading}
+                  >
+                    {resendLoading ? (
+                      <>
+                        <Spinner as="span" animation="border" size="sm" className="me-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-envelope-paper me-2"></i>
+                        Resend Verification Email
                       </>
                     )}
                   </Button>

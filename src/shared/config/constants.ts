@@ -243,5 +243,5 @@ export const ANNOUNCEMENT_VISIBILITY_LABELS: Record<AnnouncementVisibility, stri
 };
 
 // Common blood group options used across forms
-export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'A1B+', 'A1B-'] as const;
+export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'A1+', 'A1-', 'A1B+', 'A1B-'] as const;
 export type BloodGroup = typeof BLOOD_GROUPS[number];

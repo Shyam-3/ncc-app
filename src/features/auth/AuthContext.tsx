@@ -221,17 +221,77 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const alumniSnapshot = await getDocs(alumniQuery);
 
         if (usersSnapshot.empty && alumniSnapshot.empty) {
-          // Not a registered user — sign out FIRST to prevent brief dashboard flash,
-          // then delete the auto-created Google Auth account
-          await firebaseSignOut(auth);
-          setUserProfile(null);
+          // Check if they are in pendingCadets
+          const pendingQuery = query(collection(db, 'pendingCadets'), where('email', '==', user.email));
+          const pendingSnapshot = await getDocs(pendingQuery);
+          
+          if (!pendingSnapshot.empty) {
+            await firebaseSignOut(auth);
+            setUserProfile(null);
+            toast.error('Your account is still pending approval by an admin.');
+            throw new Error('NOT_APPROVED');
+          }
+
+          // Not a registered user — delete the auto-created Google Auth account
           try {
             await deleteUser(user);
           } catch (deleteErr) {
             console.warn('Could not delete unregistered Google auth account:', deleteErr);
           }
+          await firebaseSignOut(auth);
+          setUserProfile(null);
+          
           toast.error('No approved account found. Please register first.');
           throw new Error('NOT_REGISTERED');
+        } else {
+          // AUTO-HEAL: User exists by email, but under a different UID.
+          // This happens if their Auth account was recreated (e.g. they deleted it, or our old pending check deleted it).
+          // We must migrate their Firestore documents to the new UID.
+          try {
+            const batch = writeBatch(db);
+            let migrated = false;
+
+            if (!usersSnapshot.empty) {
+              const oldDoc = usersSnapshot.docs[0];
+              const oldUid = oldDoc.id;
+              if (oldUid !== user.uid) {
+                batch.set(doc(db, 'users', user.uid), { ...oldDoc.data(), uid: user.uid });
+                batch.delete(doc(db, 'users', oldUid));
+
+                // Migrate cadets doc if exists
+                const oldCadetDoc = await getDoc(doc(db, 'cadets', oldUid));
+                if (oldCadetDoc.exists()) {
+                  batch.set(doc(db, 'cadets', user.uid), { ...oldCadetDoc.data(), uid: user.uid });
+                  batch.delete(doc(db, 'cadets', oldUid));
+                }
+
+                // Migrate takenNumbers
+                const takenQuery = query(collection(db, 'takenNumbers'), where('uid', '==', oldUid));
+                const takenSnap = await getDocs(takenQuery);
+                takenSnap.forEach(tDoc => {
+                  batch.update(tDoc.ref, { uid: user.uid });
+                });
+
+                migrated = true;
+              }
+            } else if (!alumniSnapshot.empty) {
+              const oldDoc = alumniSnapshot.docs[0];
+              const oldUid = oldDoc.id;
+              if (oldUid !== user.uid) {
+                batch.set(doc(db, 'alumni', user.uid), { ...oldDoc.data(), uid: user.uid });
+                batch.delete(doc(db, 'alumni', oldUid));
+                migrated = true;
+              }
+            }
+
+            if (migrated) {
+              await batch.commit();
+              console.log('Successfully migrated user data to new Google UID');
+            }
+          } catch (migrationErr) {
+            console.error('Failed to migrate user data:', migrationErr);
+            // We don't block login, but it might fail later in ProtectedRoute if migration fails
+          }
         }
       }
 

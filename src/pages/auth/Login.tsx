@@ -11,7 +11,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [googleLoading, setGoogleLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const { signIn, signInWithGoogle, fetchUserProfile, currentUser, userProfile, loading: authLoading } = useAuth();
+  const { signIn, signInWithGoogle, fetchUserProfile, currentUser, userProfile, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +39,31 @@ const Login: React.FC = () => {
       setLoading(true);
       const credential = await signIn(email, password);
       const profile = await fetchUserProfile(credential.user.uid);
+      
+      if (!profile) {
+        // Check if they are a pending cadet
+        const { getDocs, query, collection, where } = await import('firebase/firestore');
+        const { db } = await import('../../shared/config/firebase');
+        const pendingQuery = query(collection(db, 'pendingCadets'), where('uid', '==', credential.user.uid));
+        const pendingSnap = await getDocs(pendingQuery);
+        
+        if (!pendingSnap.empty) {
+          await signOut();
+          setError('Your account is still pending approval by an admin.');
+          return;
+        } else {
+          // No profile, not pending = Orphaned account from a failed registration!
+          try {
+            await credential.user.delete();
+          } catch (deleteErr) {
+            console.warn('Could not delete orphaned account:', deleteErr);
+          }
+          await signOut();
+          setError('Your previous registration was incomplete. We have cleaned up your stuck account. Please go to the Register page and try again.');
+          return;
+        }
+      }
+
       const landingPage = profile?.role === 'admin' || profile?.role === 'superadmin'
         ? '/admin/dashboard'
         : '/dashboard';

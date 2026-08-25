@@ -67,8 +67,8 @@ service cloud.firestore {
 
     // Pending cadet registrations awaiting approval
     match /pendingCadets/{candidateId} {
-      // Admins can read all, pending users can read their own record (to check/update verification status)
-      allow read: if isAdmin() || isSuperAdmin() || (isAuthenticated() && resource.data.uid == request.auth.uid);
+      // Admins can read all, pending users can read their own record by UID or Email
+      allow read: if isAdmin() || isSuperAdmin() || (isAuthenticated() && (resource.data.uid == request.auth.uid || resource.data.email == request.auth.token.email));
       // Allow unauthenticated users to create registration (write-once)
       allow create: if true;
       // Allow the pending user to update only their emailVerified field
