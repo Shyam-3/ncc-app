@@ -170,13 +170,15 @@ async function main() {
 
     const userRole = data.role || "member";
 
-    // Skip superadmins
-    if (userRole === "superadmin") {
+    const userType = data.userType || "cadet"; // Default to cadet if missing
+
+    // Skip ANOs (roll over all cadets regardless of their role)
+    if (userType === "ano") {
       plan.push({
         uid,
         name: data.name || uid,
         action: "skip",
-        reason: "Superadmin — not touched",
+        reason: "ANO — not touched",
         data,
         userRole,
       });
@@ -290,7 +292,7 @@ async function main() {
   console.log(
     `   🗑️  Delete Graduated Alumni   : ${counts.delete_graduated_alumni}`,
   );
-  console.log(`   ⏭️  Skip (superadmin)         : ${counts.skip}`);
+  console.log(`   ⏭️  Skip (ANO)                : ${counts.skip}`);
   console.log(`   ─── Total                     : ${plan.length}`);
   console.log("─".repeat(30));
 
