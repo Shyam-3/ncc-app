@@ -1,7 +1,6 @@
 import { db } from "@/shared/config/firebase";
 import { addDoc, collection } from "firebase/firestore";
 import type { AlumniProfile, AlumniProfileSource } from "./alumni.types";
-import { DEPARTMENT_DEFS } from "@/shared/config/constants";
 
 type CadetArchiveData = Record<string, unknown>;
 

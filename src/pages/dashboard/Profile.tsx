@@ -289,7 +289,7 @@ const Profile: React.FC = () => {
 
     if (!editForm.bloodGroup.trim()) {
       nextErrors.bloodGroup = "Blood group is required";
-    } else if (!BLOOD_GROUPS.includes(editForm.bloodGroup)) {
+    } else if (!BLOOD_GROUPS.includes(editForm.bloodGroup as any)) {
       nextErrors.bloodGroup = "Invalid blood group";
     }
 

@@ -531,7 +531,7 @@ const CatcCampReport: React.FC = () => {
                             type="checkbox"
                             checked={selectedCadets.has(cadet.uid)}
                             onChange={() => toggleCadetSelection(cadet.uid)}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e: any) => e.stopPropagation()}
                             aria-label={`Select ${cadet.name || cadet.uid}`}
                           />
                         </td>

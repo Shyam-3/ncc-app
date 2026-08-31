@@ -1,12 +1,8 @@
 import { useAuth } from "@/features/auth/AuthContext";
 import { db } from "@/shared/config/firebase";
-import { DEPARTMENT_DEFS } from "@/shared/config/constants";
-import { isAnoUser } from "@/shared/utils/userType";
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  Badge,
   Button,
   Card,
   Col,
@@ -15,7 +11,6 @@ import {
   Modal,
   Row,
   Spinner,
-  Table,
   Tab,
   Tabs,
 } from "react-bootstrap";
@@ -26,14 +21,7 @@ import "./AdminSettings.css";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ACADEMIC_YEARS = [
-  "1st Year",
-  "2nd Year",
-  "3rd Year",
-  "4th Year",
-  "5th Year",
-];
-const NCC_YEARS = ["1st Year", "2nd Year", "3rd Year"];
+
 
 function formatDatetimeLocal(isoString: string | null | undefined): string {
   if (!isoString) return "";
@@ -70,34 +58,7 @@ interface RolloverSummary {
   timestamp: string;
 }
 
-interface CadetDoc {
-  id: string;
-  name?: string;
-  email?: string;
-  year?: string;
-  nccYear?: string;
-  department?: string;
-  division?: string;
-  rank?: string;
-  regimentalNumber?: string;
-  dateOfEnrollment?: string;
-  rollNo?: string;
-  registerNumber?: string;
-  phone?: string;
-  bloodGroup?: string;
-  fatherName?: string;
-  address?: string;
-  residentialStatus?: string;
-  nccNo?: string;
-  dateOfBirth?: string;
-  [key: string]: any;
-}
 
-interface UserDoc {
-  uid: string;
-  role: string;
-  [key: string]: any;
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -111,7 +72,7 @@ const DEFAULT_CONFIG: AppConfig = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const AdminSettings: React.FC = () => {
-  const { userProfile } = useAuth();
+  useAuth(); // keep for side-effects if needed, or remove completely if not
   const navigate = useNavigate();
 
   // Settings state
@@ -145,7 +106,7 @@ const AdminSettings: React.FC = () => {
     useState(false);
 
   // Pending auth deletions count
-  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingCount] = useState(0);
 
   // ─── Load settings ───────────────────────────────────────────────────────
 
@@ -171,14 +132,7 @@ const AdminSettings: React.FC = () => {
     }
   }, []);
 
-  const loadPendingCount = useCallback(async () => {
-    try {
-      const snap = await getDocs(collection(db, "pendingAuthDeletions"));
-      setPendingCount(snap.size);
-    } catch (e) {
-      console.error("Failed to load pending count:", e);
-    }
-  }, []);
+
 
   useEffect(() => {
     loadConfig();
@@ -265,136 +219,7 @@ const AdminSettings: React.FC = () => {
 
   // ─── Plan rollover (dry-run) ────────────────────────────────────────────
 
-  const handleDryRun = async () => {
-    setPlanning(true);
-    setPlan(null);
-    try {
-      const usersSnap = await getDocs(collection(db, "users"));
-      const alumniSnap = await getDocs(collection(db, "alumni"));
-      const items: RolloverPlanItem[] = [];
 
-      // Process active users
-      for (const userDoc of usersSnap.docs) {
-        const data = userDoc.data();
-        const cadetId = userDoc.id;
-
-        const userRole = data.role || "member";
-
-        // Skip ANO accounts
-        if (isAnoUser(data)) {
-          items.push({
-            cadetId,
-            cadetName: data.name || cadetId,
-            currentYear: data.year || "",
-            currentNccYear: data.nccYear || "",
-            department: data.department || "",
-            userRole,
-            action: "skip",
-            reason: "ANO — not touched",
-          });
-          continue;
-        }
-
-        const year = data.year || "";
-        const nccYear = data.nccYear || "";
-        const dept = data.department || "";
-
-        const isAcademicDone = isAcademicComplete(year, dept);
-        const isNccDone = isNccComplete(nccYear);
-        const newYear = getNextYear(year, ACADEMIC_YEARS) || year;
-        const newNccYear = getNextYear(nccYear, NCC_YEARS) || nccYear;
-
-        // RULE 1: If Academic tenure is complete, delete from app
-        if (isAcademicDone) {
-          items.push({
-            cadetId,
-            cadetName: data.name || cadetId,
-            currentYear: year,
-            currentNccYear: nccYear,
-            department: dept,
-            userRole,
-            action: "delete_graduated",
-            reason: `Academic ${year} complete → delete from app`,
-          });
-          continue;
-        }
-
-        // RULE 2: If NCC tenure is complete
-        if (isNccDone) {
-          items.push({
-            cadetId,
-            cadetName: data.name || cadetId,
-            currentYear: year,
-            currentNccYear: nccYear,
-            department: dept,
-            userRole,
-            action: "alumni_ncc",
-            newYear,
-            reason: `NCC complete → move to alumni, promote to ${newYear}`,
-          });
-          continue;
-        }
-
-        // RULE 3: Still active in both
-        items.push({
-          cadetId,
-          cadetName: data.name || cadetId,
-          currentYear: year,
-          currentNccYear: nccYear,
-          department: dept,
-          userRole,
-          action: "increment",
-          newYear,
-          newNccYear,
-          reason: `${year} → ${newYear}, NCC ${nccYear} → ${newNccYear}`,
-        });
-      }
-
-      // Process existing Alumni
-      for (const alumniDoc of alumniSnap.docs) {
-        const data = alumniDoc.data();
-        const cadetId = alumniDoc.id;
-        const year = data.year || "";
-        const dept = data.department || "";
-
-        const isAcademicDone = isAcademicComplete(year, dept);
-        const newYear = getNextYear(year, ACADEMIC_YEARS) || year;
-
-        if (isAcademicDone) {
-          items.push({
-            cadetId,
-            cadetName: data.name || cadetId,
-            currentYear: year,
-            currentNccYear: "",
-            department: dept,
-            userRole: "alumni",
-            action: "delete_graduated",
-            reason: `Alumni Academic ${year} complete → delete from app`,
-          });
-        } else {
-          items.push({
-            cadetId,
-            cadetName: data.name || cadetId,
-            currentYear: year,
-            currentNccYear: "",
-            department: dept,
-            userRole: "alumni",
-            action: "increment_academic_only",
-            newYear,
-            reason: `Alumni staying in college → promote to ${newYear}`,
-          });
-        }
-      }
-
-      setPlan(items);
-      toast.success(`Dry run complete — ${items.length} cadets analyzed`);
-    } catch (e) {
-      console.error(e);
-      toast.error("Dry run failed");
-    } finally {
-      setPlanning(false);
-    }
-  };
 
   if (configLoading) {
     return (
