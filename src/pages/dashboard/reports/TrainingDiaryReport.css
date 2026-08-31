@@ -115,183 +115,183 @@
    Document Styles (Used in Modal and Print)
 ======================================== */
 
-  /* The actual document container */
-  .td-page {
-    display: block !important;
-    background: white;
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 13pt; /* Increased size to match template */
-    color: black !important;
-    line-height: 1.6;
-    text-align: justify; /* Ensure justified alignment */
-  }
+/* The actual document container */
+.td-page {
+  display: block !important;
+  background: white;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 13pt; /* Increased size to match template */
+  color: black !important;
+  line-height: 1.6;
+  text-align: justify; /* Ensure justified alignment */
+}
 
-  .td-header {
-    text-align: center;
-    margin-bottom: 1.5rem;
-  }
+.td-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
 
-  .td-header h4 {
-    font-size: 16pt;
-    font-weight: bold;
-    text-decoration: underline;
-    margin: 0 0 0.5rem 0;
-    font-family: 'Times New Roman', Times, serif;
-  }
-  
-  .td-header h5 {
-    font-size: 15pt;
-    font-weight: bold;
-    text-decoration: underline;
-    margin: 0;
-    font-family: 'Times New Roman', Times, serif;
-  }
+.td-header h4 {
+  font-size: 16pt;
+  font-weight: bold;
+  text-decoration: underline;
+  margin: 0 0 0.5rem 0;
+  font-family: "Times New Roman", Times, serif;
+}
 
-  .td-info-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.8rem;
-  }
+.td-header h5 {
+  font-size: 15pt;
+  font-weight: bold;
+  text-decoration: underline;
+  margin: 0;
+  font-family: "Times New Roman", Times, serif;
+}
 
-  .td-blank {
-    border-bottom: 1px solid black;
-    display: inline-block;
-    padding: 0 0.5rem;
-    min-width: 200px;
-    text-align: left;
-  }
+.td-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
 
-  .td-blank-sm {
-    min-width: 100px;
-  }
-  
-  .td-blank-md {
-    min-width: 150px;
-  }
+.td-blank {
+  border-bottom: 1px solid black;
+  display: inline-block;
+  padding: 0 0.5rem;
+  min-width: 200px;
+  text-align: left;
+}
 
-  .td-blank-lg {
-    min-width: 300px;
-  }
+.td-blank-sm {
+  min-width: 100px;
+}
 
-  .td-table {
-    width: 96%;
-    margin: 1rem auto;
-    border-collapse: collapse;
-  }
+.td-blank-md {
+  min-width: 150px;
+}
 
-  .td-table th,
-  .td-table td {
-    border: 1px solid black;
-    padding: 6px 8px;
-    vertical-align: top;
-  }
+.td-blank-lg {
+  min-width: 300px;
+}
 
-  .td-table th {
-    font-weight: bold;
-    text-align: center;
-    vertical-align: middle;
-  }
+.td-table {
+  width: 96%;
+  margin: 1rem auto;
+  border-collapse: collapse;
+}
 
-  .td-table th:first-child {
-    width: 8%;
-  }
+.td-table th,
+.td-table td {
+  border: 1px solid black;
+  padding: 6px 8px;
+  vertical-align: top;
+}
 
-  .td-table th:nth-child(2) {
-    width: 22%;
-  }
+.td-table th {
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+}
 
-  .td-table th:nth-child(3) {
-    width: 34%;
-  }
+.td-table th:first-child {
+  width: 8%;
+}
 
-  .td-table th:nth-child(4) {
-    width: 18%;
-  }
+.td-table th:nth-child(2) {
+  width: 22%;
+}
 
-  .td-table th:nth-child(5) {
-    width: 18%;
-  }
+.td-table th:nth-child(3) {
+  width: 34%;
+}
 
-  .td-table td.col-sno {
-    text-align: center;
-  }
+.td-table th:nth-child(4) {
+  width: 18%;
+}
 
-  .td-subjects-list {
-    list-style: none;
-    padding-left: 0;
-    margin-bottom: 0.5rem;
-  }
-  
-  .td-subjects-list.last {
-    margin-bottom: 0;
-  }
+.td-table th:nth-child(5) {
+  width: 18%;
+}
 
-  .td-subject-header {
-    text-decoration: underline;
-    margin-bottom: 0.25rem;
-    font-weight: normal;
-  }
+.td-table td.col-sno {
+  text-align: center;
+}
 
-  .td-subject-item {
-    display: flex;
-    margin-bottom: 0.25rem;
-  }
+.td-subjects-list {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0.5rem;
+}
 
-  .td-subject-letter {
-    margin-right: 0.5rem;
-  }
-  
-  .td-footer-section {
-    margin-top: 1rem;
-    line-height: 1.6;
-  }
-  
-  .td-footer-row {
-    margin-bottom: 0.5rem;
-  }
-  
-  .td-signature-blocks {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 3.5rem;
-  }
-  
-  .td-signature-block {
-    text-align: center;
-    border-top: 1px solid black;
-    width: 250px;
-    padding-top: 0.5rem;
-  }
+.td-subjects-list.last {
+  margin-bottom: 0;
+}
 
-  .td-note {
-    margin-top: 1.5rem;
-    font-size: 11pt;
-    font-weight: bold;
-    text-align: justify;
-  }
+.td-subject-header {
+  text-decoration: underline;
+  margin-bottom: 0.25rem;
+  font-weight: normal;
+}
 
-  /* ---- Photo Page ---- */
-  .td-page-photos {
-    padding: 8mm 0;
-    box-sizing: border-box;
-    text-align: center;
-  }
+.td-subject-item {
+  display: flex;
+  margin-bottom: 0.25rem;
+}
 
-  .td-photo-envelope {
-    display: inline-block;
-    margin-bottom: 12mm;
-    border: 1px solid #999;
-    line-height: 0;
-  }
+.td-subject-letter {
+  margin-right: 0.5rem;
+}
 
-  .td-photo-envelope:last-child {
-    margin-bottom: 0;
-  }
+.td-footer-section {
+  margin-top: 1rem;
+  line-height: 1.6;
+}
 
-  .td-photo-envelope img {
-    max-width: 180mm;
-    max-height: 79mm;
-    width: auto;
-    height: auto;
-    display: block;
-  }
+.td-footer-row {
+  margin-bottom: 0.5rem;
+}
+
+.td-signature-blocks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3.5rem;
+}
+
+.td-signature-block {
+  text-align: center;
+  border-top: 1px solid black;
+  width: 250px;
+  padding-top: 0.5rem;
+}
+
+.td-note {
+  margin-top: 1.5rem;
+  font-size: 11pt;
+  font-weight: bold;
+  text-align: justify;
+}
+
+/* ---- Photo Page ---- */
+.td-page-photos {
+  padding: 8mm 0;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.td-photo-envelope {
+  display: inline-block;
+  margin-bottom: 12mm;
+  border: 1px solid #999;
+  line-height: 0;
+}
+
+.td-photo-envelope:last-child {
+  margin-bottom: 0;
+}
+
+.td-photo-envelope img {
+  max-width: 180mm;
+  max-height: 79mm;
+  width: auto;
+  height: auto;
+  display: block;
+}

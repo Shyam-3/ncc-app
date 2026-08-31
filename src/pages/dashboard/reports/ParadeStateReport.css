@@ -16,7 +16,7 @@
   margin: 0 auto 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   max-width: 816px; /* ~A4 width */
-  font-family: 'Times New Roman', Times, serif;
+  font-family: "Times New Roman", Times, serif;
   font-size: 15px;
   color: #000;
 }
@@ -189,7 +189,7 @@
     display: block !important;
     padding: 0 !important;
   }
-  
+
   .modal-dialog {
     max-width: 100% !important;
     width: 100% !important;

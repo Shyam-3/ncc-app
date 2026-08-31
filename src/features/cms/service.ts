@@ -1,5 +1,5 @@
-import { db } from '@/shared/config/firebase';
-import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from "@/shared/config/firebase";
+import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 
 export interface CmsSection {
   heading: string;
@@ -12,20 +12,17 @@ export interface CmsDoc {
   anoUids?: string[];
   updatedAt?: string;
   updatedBy?: string;
-  visibility?: 'public' | 'private';
+  visibility?: "public" | "private";
 }
 
-export const cmsDocRef = (key: string) => doc(db, 'cms', key);
+export const cmsDocRef = (key: string) => doc(db, "cms", key);
 
 export async function fetchCms(key: string): Promise<CmsDoc | null> {
   const snap = await getDoc(cmsDocRef(key));
   return snap.exists() ? (snap.data() as CmsDoc) : null;
 }
 
-export function listenCms(
-  key: string,
-  cb: (data: CmsDoc | null) => void
-) {
+export function listenCms(key: string, cb: (data: CmsDoc | null) => void) {
   return onSnapshot(cmsDocRef(key), (snap: any) => {
     cb(snap.exists() ? (snap.data() as CmsDoc) : null);
   });
@@ -34,7 +31,7 @@ export function listenCms(
 export async function saveCms(
   key: string,
   data: CmsDoc,
-  userId?: string
+  userId?: string,
 ): Promise<void> {
   const payload: CmsDoc = {
     ...data,
@@ -43,4 +40,3 @@ export async function saveCms(
   };
   await setDoc(cmsDocRef(key), payload, { merge: true });
 }
-

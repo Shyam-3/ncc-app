@@ -1,5 +1,5 @@
-import React from 'react';
-import { AuthProvider as AppAuthProvider } from '@/features/auth/AuthContext';
+import React from "react";
+import { AuthProvider as AppAuthProvider } from "@/features/auth/AuthContext";
 
 interface Props {
   children: React.ReactNode;

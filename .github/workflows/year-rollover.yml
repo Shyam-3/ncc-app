@@ -2,11 +2,11 @@ name: NCC Year Rollover
 
 on:
   schedule:
-    - cron: '0 0 * 4,5 *'    # Every day at midnight UTC, only in April and May
+    - cron: "0 0 * 4,5 *" # Every day at midnight UTC, only in April and May
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run — preview changes without applying'
+        description: "Dry run — preview changes without applying"
         type: boolean
         default: true
 
@@ -18,10 +18,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
       - name: Install dependencies
         run: cd scripts && npm install
-        
+
       - name: Run rollover
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then

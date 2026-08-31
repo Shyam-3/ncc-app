@@ -6,7 +6,9 @@
 
 .qsg-card {
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s;
   text-align: center;
   min-height: 80px;
   display: flex;

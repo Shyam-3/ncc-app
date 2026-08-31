@@ -1,5 +1,5 @@
-import React from 'react';
-import { Button, Col, Container, Form, Row } from 'react-bootstrap';
+import React from "react";
+import { Button, Col, Container, Form, Row } from "react-bootstrap";
 
 const Contact: React.FC = () => (
   <Container className="py-5">
@@ -17,7 +17,11 @@ const Contact: React.FC = () => (
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Message</Form.Label>
-            <Form.Control as="textarea" rows={5} placeholder="How can we help?" />
+            <Form.Control
+              as="textarea"
+              rows={5}
+              placeholder="How can we help?"
+            />
           </Form.Group>
           <Button variant="primary">Send</Button>
         </Form>

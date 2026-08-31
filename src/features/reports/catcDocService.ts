@@ -11,12 +11,12 @@
  *  4. Appx 'E' — Form of Indemnity Certificate/Bond
  */
 
-import jsPDF from 'jspdf';
-import JSZip from 'jszip';
+import jsPDF from "jspdf";
+import JSZip from "jszip";
 import {
   DEFAULT_CATC_CAMP_TEMPLATE,
   type CatcCampTemplateData,
-} from './catcTemplateDefaults';
+} from "./catcTemplateDefaults";
 
 /* ──────────────────────────── Types ──────────────────────────── */
 
@@ -25,7 +25,7 @@ export interface CatcCadet {
   name: string;
   regimentalNumber?: string;
   rank?: string;
-  division?: 'SD' | 'SW';
+  division?: "SD" | "SW";
   fatherName?: string;
   year?: string;
   nccYear?: string;
@@ -59,29 +59,65 @@ const CX = PW / 2; // center x 105
 
 const INDENT = ML + 13; // paragraph content indent (after "1. ")
 
-const FONT = 'times';
+const FONT = "times";
 const FS_BODY = 11;
 const FS_TITLE = 13;
 const LH = 6; // line height body
 const LH_TITLE = 8; // line height for titles
 
-const MONTHS_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS_SHORT = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
+];
+const MONTHS_FULL = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
-export const DEFAULT_CAMP_LOCATION = DEFAULT_CATC_CAMP_TEMPLATE.defaultCampLocation;
+export const DEFAULT_CAMP_LOCATION =
+  DEFAULT_CATC_CAMP_TEMPLATE.defaultCampLocation;
 
 const FILL_PLACEHOLDERS = new Set([
-  'regtlNo', 'rank', 'name', 'institution', 'unit', 'sonDaughter',
-  'campLocation', 'fromDate', 'toDate', 'catc', 'atc',
+  "regtlNo",
+  "rank",
+  "name",
+  "institution",
+  "unit",
+  "sonDaughter",
+  "campLocation",
+  "fromDate",
+  "toDate",
+  "catc",
+  "atc",
 ]);
 
 /* ──────────────────────────── Date helpers ──────────────────────────── */
 
 /** Format date as "DD MMM YYYY" (e.g. "05 MAY 2026") — for bold+underlined in body */
 function fmtDateBold(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = new Date(dateStr + "T00:00:00");
   if (isNaN(d.getTime())) return dateStr;
-  const day = String(d.getDate()).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, "0");
   const month = MONTHS_SHORT[d.getMonth()];
   const year = d.getFullYear();
   return `${day} ${month} ${year}`;
@@ -96,20 +132,20 @@ function fmtGenMonthYear(): string {
 /** Returns "19-06-2026" for ZIP filename */
 function fmtGenDateFile(): string {
   const now = new Date();
-  const d = String(now.getDate()).padStart(2, '0');
-  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, "0");
+  const m = String(now.getMonth() + 1).padStart(2, "0");
   return `${d}-${m}-${now.getFullYear()}`;
 }
 
 /* ──────────────────────────── Drawing helpers ──────────────────────────── */
 
 function setNormal(doc: jsPDF, size = FS_BODY) {
-  doc.setFont(FONT, 'normal');
+  doc.setFont(FONT, "normal");
   doc.setFontSize(size);
 }
 
 function setBold(doc: jsPDF, size = FS_BODY) {
-  doc.setFont(FONT, 'bold');
+  doc.setFont(FONT, "bold");
   doc.setFontSize(size);
 }
 
@@ -126,16 +162,21 @@ function drawText(
   text: string,
   x: number,
   y: number,
-  opts?: { bold?: boolean; underline?: boolean; size?: number; align?: 'left' | 'center' | 'right' },
+  opts?: {
+    bold?: boolean;
+    underline?: boolean;
+    size?: number;
+    align?: "left" | "center" | "right";
+  },
 ): number {
   const { bold, underline, size = FS_BODY, align } = opts || {};
-  doc.setFont(FONT, bold ? 'bold' : 'normal');
+  doc.setFont(FONT, bold ? "bold" : "normal");
   doc.setFontSize(size);
 
-  if (align === 'center') {
-    doc.text(text, CX, y, { align: 'center' });
-  } else if (align === 'right') {
-    doc.text(text, RE, y, { align: 'right' });
+  if (align === "center") {
+    doc.text(text, CX, y, { align: "center" });
+  } else if (align === "right") {
+    doc.text(text, RE, y, { align: "right" });
   } else {
     doc.text(text, x, y);
   }
@@ -144,8 +185,8 @@ function drawText(
 
   if (underline) {
     let lx: number;
-    if (align === 'center') lx = CX - tw / 2;
-    else if (align === 'right') lx = RE - tw;
+    if (align === "center") lx = CX - tw / 2;
+    else if (align === "right") lx = RE - tw;
     else lx = x;
     drawLine(doc, lx, y, lx + tw);
   }
@@ -159,10 +200,15 @@ function drawBlank(doc: jsPDF, x: number, y: number, width: number) {
 }
 
 /** Right-aligned label + underlined value (labels not underlined) */
-function drawRightLabelValue(doc: jsPDF, label: string, value: string, y: number) {
+function drawRightLabelValue(
+  doc: jsPDF,
+  label: string,
+  value: string,
+  y: number,
+) {
   setNormal(doc);
   const labelW = doc.getTextWidth(label);
-  doc.setFont(FONT, 'bold');
+  doc.setFont(FONT, "bold");
   const valueW = doc.getTextWidth(value);
   const x = RE - labelW - valueW;
   setNormal(doc);
@@ -171,7 +217,10 @@ function drawRightLabelValue(doc: jsPDF, label: string, value: string, y: number
 }
 
 /** Convert template text with {{placeholders}} and **bold** markers into runs */
-function templateToRuns(template: string, vars: Record<string, string>): TextRun[] {
+function templateToRuns(
+  template: string,
+  vars: Record<string, string>,
+): TextRun[] {
   const runs: TextRun[] = [];
   const regex = /(\{\{(\w+)\}\}|\*\*([^*]+)\*\*)/g;
   let lastIndex = 0;
@@ -184,7 +233,7 @@ function templateToRuns(template: string, vars: Record<string, string>): TextRun
     if (match[2]) {
       const key = match[2];
       runs.push({
-        text: vars[key] || '',
+        text: vars[key] || "",
         bold: true,
         underline: FILL_PLACEHOLDERS.has(key),
       });
@@ -213,7 +262,7 @@ function drawJustifiedParagraph(
 ): number {
   setNormal(doc, fontSize);
   const lines = doc.splitTextToSize(text, maxWidth);
-  doc.text(lines, x, startY, { align: 'justify', maxWidth });
+  doc.text(lines, x, startY, { align: "justify", maxWidth });
   return startY + lines.length * lineHeight;
 }
 
@@ -247,14 +296,14 @@ function drawRichParagraph(
   }
 
   const measureWord = (w: FWord): number => {
-    doc.setFont(FONT, w.bold ? 'bold' : 'normal');
+    doc.setFont(FONT, w.bold ? "bold" : "normal");
     doc.setFontSize(fontSize);
     return doc.getTextWidth(w.text);
   };
 
-  doc.setFont(FONT, 'normal');
+  doc.setFont(FONT, "normal");
   doc.setFontSize(fontSize);
-  const spaceW = doc.getTextWidth(' ');
+  const spaceW = doc.getTextWidth(" ");
 
   // Build lines by word-wrapping
   const lines: FWord[][] = [];
@@ -301,7 +350,7 @@ function drawRichParagraph(
         let j = i;
         while (j < line.length && line[j].underline) {
           const gw = line[j];
-          doc.setFont(FONT, gw.bold ? 'bold' : 'normal');
+          doc.setFont(FONT, gw.bold ? "bold" : "normal");
           doc.setFontSize(fontSize);
           if (j > i) groupEnd += gap;
           doc.text(gw.text, groupEnd, y);
@@ -312,7 +361,7 @@ function drawRichParagraph(
         cx = groupEnd;
         i = j - 1;
       } else {
-        doc.setFont(FONT, w.bold ? 'bold' : 'normal');
+        doc.setFont(FONT, w.bold ? "bold" : "normal");
         doc.setFontSize(fontSize);
         doc.text(w.text, cx, y);
         cx += doc.getTextWidth(w.text);
@@ -334,50 +383,62 @@ function drawCountersigned(
   genMonthYear: string,
   template: CatcCampTemplateData,
 ): number {
-  const heading = template.pages.page1.countersignHeading || 'COUNTERSIGNED BY OC UNIT';
+  const heading =
+    template.pages.page1.countersignHeading || "COUNTERSIGNED BY OC UNIT";
   const station = template.countersignStation;
 
   // Push to bottom region of the page, but never overlap content above
   let y = Math.max(startY + 8, 248);
 
-  drawText(doc, heading, 0, y, { bold: true, underline: true, align: 'center', size: FS_BODY });
+  drawText(doc, heading, 0, y, {
+    bold: true,
+    underline: true,
+    align: "center",
+    size: FS_BODY,
+  });
 
   y += 12;
   setBold(doc);
-  doc.text('Station:', ML, y);
+  doc.text("Station:", ML, y);
   setNormal(doc);
-  doc.text(`  ${station}`, ML + doc.getTextWidth('Station:'), y);
+  doc.text(`  ${station}`, ML + doc.getTextWidth("Station:"), y);
 
   y += LH + 1;
   setBold(doc);
-  doc.text('Date', ML, y);
+  doc.text("Date", ML, y);
   setNormal(doc);
-  doc.text(`:       ${genMonthYear}`, ML + doc.getTextWidth('Date'), y);
+  doc.text(`:       ${genMonthYear}`, ML + doc.getTextWidth("Date"), y);
 
   return y + LH;
 }
 
 /* ──────────────────────────── Cadet helpers ──────────────────────────── */
 
-function getCampLocation(formData: CatcFormData, template: CatcCampTemplateData): string {
-  const loc = formData.campLocation === 'Others' ? formData.campLocationOther : formData.campLocation;
+function getCampLocation(
+  formData: CatcFormData,
+  template: CatcCampTemplateData,
+): string {
+  const loc =
+    formData.campLocation === "Others"
+      ? formData.campLocationOther
+      : formData.campLocation;
   return (loc || template.defaultCampLocation).toUpperCase();
 }
 
 function getSonDaughter(cadet: CatcCadet): string {
-  return cadet.division === 'SW' ? 'Daughter' : 'Son';
+  return cadet.division === "SW" ? "Daughter" : "Son";
 }
 
 function getRank(cadet: CatcCadet): string {
-  return (cadet.rank || 'CDT').toUpperCase();
+  return (cadet.rank || "CDT").toUpperCase();
 }
 
 function getName(cadet: CatcCadet): string {
-  return (cadet.name || '').toUpperCase();
+  return (cadet.name || "").toUpperCase();
 }
 
 function getRegtlNo(cadet: CatcCadet): string {
-  return (cadet.regimentalNumber || '').toUpperCase();
+  return (cadet.regimentalNumber || "").toUpperCase();
 }
 
 function buildTemplateVars(
@@ -395,12 +456,10 @@ function buildTemplateVars(
     campLocation: getCampLocation(formData, template),
     fromDate: fmtDateBold(formData.fromDate),
     toDate: fmtDateBold(formData.toDate),
-    catc: 'Combined Annual Training Camp (CATC)',
-    atc: 'Annual Training Camp (ATC)',
+    catc: "Combined Annual Training Camp (CATC)",
+    atc: "Annual Training Camp (ATC)",
   };
 }
-
-
 
 /* ════════════════════════════════════════════════════════════════════════
  *  PAGE 1 — Appx 'B': Medical Fitness, Vaccination and Inoculation
@@ -423,40 +482,58 @@ function drawPage1(
 
   let y = 28;
 
-  drawText(doc, "Appx 'B'", 0, y, { bold: true, underline: true, align: 'right' });
+  drawText(doc, "Appx 'B'", 0, y, {
+    bold: true,
+    underline: true,
+    align: "right",
+  });
 
   y += LH_TITLE + 12;
   drawText(doc, page.title, 0, y, {
-    bold: true, underline: true, align: 'center', size: FS_TITLE,
+    bold: true,
+    underline: true,
+    align: "center",
+    size: FS_TITLE,
   });
 
   y += LH_TITLE + 14;
   setBold(doc);
-  doc.text('1.', ML, y);
+  doc.text("1.", ML, y);
   setNormal(doc);
   doc.text(page.line1Prefix, INDENT, y);
   const afterNo = INDENT + doc.getTextWidth(`${page.line1Prefix} `);
   drawBlank(doc, afterNo, y, 40);
-  doc.text('Rank :', afterNo + 43, y);
-  drawBlank(doc, afterNo + 43 + doc.getTextWidth('Rank : '), y, 25);
+  doc.text("Rank :", afterNo + 43, y);
+  drawBlank(doc, afterNo + 43 + doc.getTextWidth("Rank : "), y, 25);
 
   y += LH;
   doc.text(page.line2NamePrefix, ML, y);
   drawBlank(doc, ML + doc.getTextWidth(`${page.line2NamePrefix} `), y, 50);
   const sonX = ML + doc.getTextWidth(`${page.line2NamePrefix} `) + 53;
   drawText(doc, sonDaughter, sonX, y, { bold: true, underline: true });
-  const afterSonDaughter = sonX + doc.getTextWidth(sonDaughter) + doc.getTextWidth(' ');
-  doc.text('of', afterSonDaughter, y);
-  const afterSon = afterSonDaughter + doc.getTextWidth('of ');
+  const afterSonDaughter =
+    sonX + doc.getTextWidth(sonDaughter) + doc.getTextWidth(" ");
+  doc.text("of", afterSonDaughter, y);
+  const afterSon = afterSonDaughter + doc.getTextWidth("of ");
   drawBlank(doc, afterSon, y, 45);
-  doc.text('of', afterSon + 47, y);
+  doc.text("of", afterSon + 47, y);
 
   y += LH;
   doc.text(page.line3InstitutionPrefix, ML, y);
-  drawBlank(doc, ML + doc.getTextWidth(`${page.line3InstitutionPrefix} `), y, 60);
+  drawBlank(
+    doc,
+    ML + doc.getTextWidth(`${page.line3InstitutionPrefix} `),
+    y,
+    60,
+  );
   const unitX = ML + doc.getTextWidth(`${page.line3InstitutionPrefix} `) + 63;
-  doc.text('Unit :', unitX, y);
-  drawBlank(doc, unitX + doc.getTextWidth('Unit : '), y, RE - (unitX + doc.getTextWidth('Unit : ')));
+  doc.text("Unit :", unitX, y);
+  drawBlank(
+    doc,
+    unitX + doc.getTextWidth("Unit : "),
+    y,
+    RE - (unitX + doc.getTextWidth("Unit : ")),
+  );
 
   y += LH;
   const para1Runs = templateToRuns(page.para1Continuation, vars);
@@ -464,7 +541,7 @@ function drawPage1(
 
   y += 10;
   setBold(doc);
-  doc.text('2.', ML, y);
+  doc.text("2.", ML, y);
   setNormal(doc);
   const para2Lines = doc.splitTextToSize(page.para2, CW - (INDENT - ML));
   doc.text(para2Lines, INDENT, y);
@@ -472,27 +549,27 @@ function drawPage1(
 
   y += 10;
   setBold(doc);
-  doc.text('*NOTE:-', ML, y);
+  doc.text("*NOTE:-", ML, y);
   setNormal(doc);
-  const noteX = ML + doc.getTextWidth('*NOTE:-       ');
+  const noteX = ML + doc.getTextWidth("*NOTE:-       ");
   const noteLines = doc.splitTextToSize(page.note, RE - noteX);
   doc.text(noteLines, noteX, y);
   y += noteLines.length * LH;
 
   y += 20;
   setBold(doc);
-  doc.text('Station  :', ML, y);
+  doc.text("Station  :", ML, y);
   setNormal(doc);
-  doc.text('(Signature of Medical Officer)', RE, y, { align: 'right' });
+  doc.text("(Signature of Medical Officer)", RE, y, { align: "right" });
 
   y += LH;
   setBold(doc);
-  doc.text('Date     :', ML, y);
+  doc.text("Date     :", ML, y);
   setNormal(doc);
-  doc.text('Name :__________________', RE, y, { align: 'right' });
+  doc.text("Name :__________________", RE, y, { align: "right" });
 
   y += LH;
-  doc.text('Designation :____________', RE, y, { align: 'right' });
+  doc.text("Designation :____________", RE, y, { align: "right" });
 
   drawCountersigned(doc, y + 8, genMonthYear, template);
 }
@@ -516,66 +593,110 @@ function drawPage2(
 
   let y = 28;
 
-  drawText(doc, "Appx 'C'", 0, y, { bold: true, underline: true, align: 'right' });
+  drawText(doc, "Appx 'C'", 0, y, {
+    bold: true,
+    underline: true,
+    align: "right",
+  });
 
   y += LH_TITLE + 8;
-  drawText(doc, 'RISK/VOLUNTEER CERTIFICATE', 0, y, {
-    bold: true, underline: true, align: 'center', size: FS_TITLE,
+  drawText(doc, "RISK/VOLUNTEER CERTIFICATE", 0, y, {
+    bold: true,
+    underline: true,
+    align: "center",
+    size: FS_TITLE,
   });
 
   y += LH_TITLE + 10;
-  y = drawRichParagraph(doc, [{ text: '1. ' }, ...templateToRuns(page.riskParagraph, vars)], ML, y, CW, LH, FS_BODY, true);
+  y = drawRichParagraph(
+    doc,
+    [{ text: "1. " }, ...templateToRuns(page.riskParagraph, vars)],
+    ML,
+    y,
+    CW,
+    LH,
+    FS_BODY,
+    true,
+  );
 
   y += 10;
   setNormal(doc);
-  doc.text('(Signature of Applicant)', RE, y, { align: 'right' });
+  doc.text("(Signature of Applicant)", RE, y, { align: "right" });
 
   y += 14;
   drawText(doc, "PARENT'S CONSENT CERTIFICATE", 0, y, {
-    bold: true, underline: true, align: 'center', size: FS_TITLE,
+    bold: true,
+    underline: true,
+    align: "center",
+    size: FS_TITLE,
   });
 
   y += LH_TITLE + 10;
-  y = drawRichParagraph(doc, [{ text: '1. ' }, ...templateToRuns(page.parentParagraph, vars)], ML, y, CW, LH, FS_BODY, true);
+  y = drawRichParagraph(
+    doc,
+    [{ text: "1. " }, ...templateToRuns(page.parentParagraph, vars)],
+    ML,
+    y,
+    CW,
+    LH,
+    FS_BODY,
+    true,
+  );
 
   y += 10;
   setBold(doc);
-  doc.text('Station :', ML, y);
+  doc.text("Station :", ML, y);
   setNormal(doc);
-  doc.text('(Signature of Parent / Guardian)', RE, y, { align: 'right' });
+  doc.text("(Signature of Parent / Guardian)", RE, y, { align: "right" });
 
   y += LH;
   setBold(doc);
-  doc.text('Date    :', ML, y);
+  doc.text("Date    :", ML, y);
   setNormal(doc);
-  doc.text('Name in Block letters : ________________', RE, y, { align: 'right' });
+  doc.text("Name in Block letters : ________________", RE, y, {
+    align: "right",
+  });
 
   y += LH;
-  doc.text('Address : ______________________________', RE, y, { align: 'right' });
+  doc.text("Address : ______________________________", RE, y, {
+    align: "right",
+  });
 
   y += LH;
   drawBlank(doc, RE - 60, y, 60);
 
   y += 12;
-  drawText(doc, 'TO BE ATTESTED BY PRINCIPAL/HEAD MASTER', 0, y, {
-    bold: true, underline: true, align: 'center', size: FS_BODY,
+  drawText(doc, "TO BE ATTESTED BY PRINCIPAL/HEAD MASTER", 0, y, {
+    bold: true,
+    underline: true,
+    align: "center",
+    size: FS_BODY,
   });
 
   y += LH + 8;
-  y = drawRichParagraph(doc, templateToRuns(page.principalParagraph, vars), ML, y, CW, LH, FS_BODY, true);
+  y = drawRichParagraph(
+    doc,
+    templateToRuns(page.principalParagraph, vars),
+    ML,
+    y,
+    CW,
+    LH,
+    FS_BODY,
+    true,
+  );
 
   y += 10;
   setBold(doc);
-  doc.text('Station :', ML, y);
+  doc.text("Station :", ML, y);
   setNormal(doc);
-  doc.text('(Office Seal)', CX, y, { align: 'center' });
-  doc.text('Signature of Principal/Head Master', RE, y, { align: 'right' });
+  doc.text("(Office Seal)", CX, y, { align: "center" });
+  doc.text("Signature of Principal/Head Master", RE, y, { align: "right" });
 
   y += LH;
   setBold(doc);
-  doc.text('Date    :', ML, y);
+  doc.text("Date    :", ML, y);
   setNormal(doc);
-  doc.text('With seal', RE, y, { align: 'right' });
+  doc.text("With seal", RE, y, { align: "right" });
 
   drawCountersigned(doc, y + 4, genMonthYear, template);
 }
@@ -599,58 +720,98 @@ function drawPage3(
 
   let y = 28;
 
-  drawText(doc, "Appx 'D'", 0, y, { bold: true, underline: true, align: 'right' });
-
-  y += LH_TITLE + 10;
-  drawText(doc, 'DROWNING/ACCIDENT/SAFETY PRECAUTION CERTIFICATE', 0, y, {
-    bold: true, underline: true, align: 'center', size: FS_TITLE,
+  drawText(doc, "Appx 'D'", 0, y, {
+    bold: true,
+    underline: true,
+    align: "right",
   });
 
   y += LH_TITLE + 10;
-  y = drawRichParagraph(doc, [{ text: '1. ' }, ...templateToRuns(page.point1, vars)], ML, y, CW, LH, FS_BODY, true);
+  drawText(doc, "DROWNING/ACCIDENT/SAFETY PRECAUTION CERTIFICATE", 0, y, {
+    bold: true,
+    underline: true,
+    align: "center",
+    size: FS_TITLE,
+  });
+
+  y += LH_TITLE + 10;
+  y = drawRichParagraph(
+    doc,
+    [{ text: "1. " }, ...templateToRuns(page.point1, vars)],
+    ML,
+    y,
+    CW,
+    LH,
+    FS_BODY,
+    true,
+  );
 
   y += 8;
-  y = drawRichParagraph(doc, [{ text: '2. ' }, ...templateToRuns(page.point2, vars)], ML, y, CW, LH, FS_BODY, true);
+  y = drawRichParagraph(
+    doc,
+    [{ text: "2. " }, ...templateToRuns(page.point2, vars)],
+    ML,
+    y,
+    CW,
+    LH,
+    FS_BODY,
+    true,
+  );
 
   y += 12;
   setNormal(doc);
-  doc.text('(Signature of Applicant)', RE, y, { align: 'right' });
+  doc.text("(Signature of Applicant)", RE, y, { align: "right" });
   y += LH;
-  drawRightLabelValue(doc, 'No. ', vars.regtlNo, y);
+  drawRightLabelValue(doc, "No. ", vars.regtlNo, y);
   y += LH;
-  drawRightLabelValue(doc, 'Rank ', vars.rank, y);
+  drawRightLabelValue(doc, "Rank ", vars.rank, y);
   y += LH;
-  drawRightLabelValue(doc, 'Name ', vars.name, y);
+  drawRightLabelValue(doc, "Name ", vars.name, y);
 
   y += 16;
-  drawText(doc, 'CERTIFICATE FROM THE ANO', 0, y, {
-    bold: true, underline: true, align: 'center', size: FS_BODY,
+  drawText(doc, "CERTIFICATE FROM THE ANO", 0, y, {
+    bold: true,
+    underline: true,
+    align: "center",
+    size: FS_BODY,
   });
 
   y += LH + 8;
-  y = drawRichParagraph(doc, templateToRuns(page.anoParagraph, vars), ML, y, CW, LH, FS_BODY, true);
+  y = drawRichParagraph(
+    doc,
+    templateToRuns(page.anoParagraph, vars),
+    ML,
+    y,
+    CW,
+    LH,
+    FS_BODY,
+    true,
+  );
 
   y += 10;
   setNormal(doc);
-  doc.text('Signature of ANO', RE, y, { align: 'right' });
+  doc.text("Signature of ANO", RE, y, { align: "right" });
 
   y += 14;
-  drawText(doc, 'TO BE ATTESTED BY PRINCIPAL/HEAD MASTER', 0, y, {
-    bold: true, underline: true, align: 'center', size: FS_BODY,
+  drawText(doc, "TO BE ATTESTED BY PRINCIPAL/HEAD MASTER", 0, y, {
+    bold: true,
+    underline: true,
+    align: "center",
+    size: FS_BODY,
   });
 
   y += 14;
   setBold(doc);
-  doc.text('Station :', ML, y);
+  doc.text("Station :", ML, y);
   setNormal(doc);
-  doc.text('(Office Seal)', CX, y, { align: 'center' });
-  doc.text('Signature of Principal/Head Master', RE, y, { align: 'right' });
+  doc.text("(Office Seal)", CX, y, { align: "center" });
+  doc.text("Signature of Principal/Head Master", RE, y, { align: "right" });
 
   y += LH;
   setBold(doc);
-  doc.text('Date    :', ML, y);
+  doc.text("Date    :", ML, y);
   setNormal(doc);
-  doc.text('With seal', RE, y, { align: 'right' });
+  doc.text("With seal", RE, y, { align: "right" });
 
   drawCountersigned(doc, y + 4, genMonthYear, template);
 }
@@ -674,77 +835,90 @@ function drawPage4(
 
   let y = 28;
 
-  drawText(doc, "Appx 'E'", 0, y, { bold: true, underline: true, align: 'right' });
+  drawText(doc, "Appx 'E'", 0, y, {
+    bold: true,
+    underline: true,
+    align: "right",
+  });
 
   y += LH_TITLE + 10;
   const infoRuns: TextRun[] = [
-    { text: 'No ' },
+    { text: "No " },
     { text: vars.regtlNo, bold: true, underline: true },
-    { text: '          Rank ' },
+    { text: "          Rank " },
     { text: vars.rank, bold: true, underline: true },
-    { text: '          Name ' },
+    { text: "          Name " },
     { text: vars.name, bold: true, underline: true },
   ];
   y = drawRichParagraph(doc, infoRuns, ML, y, CW, LH, FS_BODY, false);
 
   y += 2;
   const instRuns: TextRun[] = [
-    { text: 'Institution ' },
+    { text: "Institution " },
     { text: vars.institution, bold: true, underline: true },
   ];
   y = drawRichParagraph(doc, instRuns, ML, y, CW, LH, FS_BODY, false);
 
   y += LH_TITLE + 8;
-  drawText(doc, 'FORM OF INDEMNITY CERTIFICATE/BOND FOR NCC OFFICER AND CADETS', 0, y, {
-    bold: true, underline: true, align: 'center', size: 11,
-  });
+  drawText(
+    doc,
+    "FORM OF INDEMNITY CERTIFICATE/BOND FOR NCC OFFICER AND CADETS",
+    0,
+    y,
+    {
+      bold: true,
+      underline: true,
+      align: "center",
+      size: 11,
+    },
+  );
 
   y += LH + 8;
   y = drawJustifiedParagraph(doc, page.bondParagraph, ML, y, CW, LH, FS_BODY);
 
   y += 12;
   setNormal(doc);
-  doc.text('(Signature of the Applicant)', RE, y, { align: 'right' });
+  doc.text("(Signature of the Applicant)", RE, y, { align: "right" });
   y += LH;
-  doc.text('Address :', RE - 50, y);
+  doc.text("Address :", RE - 50, y);
 
   y += 14;
   drawText(doc, page.witnessesHeading, ML, y, { bold: true, underline: true });
 
   y += LH + 4;
   setNormal(doc);
-  doc.text('1.  Signature of ANO', ML, y);
-  drawBlank(doc, ML + doc.getTextWidth('1.  Signature of ANO'), y, 35);
+  doc.text("1.  Signature of ANO", ML, y);
+  drawBlank(doc, ML + doc.getTextWidth("1.  Signature of ANO"), y, 35);
   const rightCol = CX + 15;
-  doc.text('Signature', rightCol, y);
-  drawBlank(doc, rightCol + doc.getTextWidth('Signature '), y, 45);
+  doc.text("Signature", rightCol, y);
+  drawBlank(doc, rightCol + doc.getTextWidth("Signature "), y, 45);
 
   y += LH;
-  doc.text('    Name & Address', ML, y);
-  drawBlank(doc, ML + doc.getTextWidth('    Name & Address '), y, 30);
-  doc.text('(Father/Guardian with date)', rightCol, y);
-
-  y += LH;
-  drawBlank(doc, ML + 15, y, 50);
-  doc.text('Name in Block letters', rightCol, y);
-  drawBlank(doc, rightCol + doc.getTextWidth('Name in Block letters '), y, 30);
+  doc.text("    Name & Address", ML, y);
+  drawBlank(doc, ML + doc.getTextWidth("    Name & Address "), y, 30);
+  doc.text("(Father/Guardian with date)", rightCol, y);
 
   y += LH;
   drawBlank(doc, ML + 15, y, 50);
-  doc.text('Address', rightCol, y);
-  drawBlank(doc, rightCol + doc.getTextWidth('Address '), y, 45);
+  doc.text("Name in Block letters", rightCol, y);
+  drawBlank(doc, rightCol + doc.getTextWidth("Name in Block letters "), y, 30);
+
+  y += LH;
+  drawBlank(doc, ML + 15, y, 50);
+  doc.text("Address", rightCol, y);
+  drawBlank(doc, rightCol + doc.getTextWidth("Address "), y, 45);
 
   y += LH;
   drawBlank(doc, rightCol, y, 55);
 
   y += LH + 2;
-  doc.text('2.  Signature of HOI', ML, y);
-  drawBlank(doc, ML + doc.getTextWidth('2.  Signature of HOI'), y, 35);
+  doc.text("2.  Signature of HOI", ML, y);
+  drawBlank(doc, ML + doc.getTextWidth("2.  Signature of HOI"), y, 35);
   drawBlank(doc, rightCol, y, 55);
 
   y += LH;
-  doc.text('    Name & Address', ML, y);
-  drawBlank(doc, ML + doc.getTextWidth('    Name & Address '), y, 30);
+  doc.text("    Name & Address", ML, y);
+  drawBlank(doc, ML + doc.getTextWidth("    Name & Address "), y, 30);
 
   y += LH;
   drawBlank(doc, ML + 15, y, 50);
@@ -772,7 +946,7 @@ export async function generateCatcZip(
     const cadet = cadets[i];
     onProgress?.(i + 1, cadets.length);
 
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
 
     drawPage1(doc, cadet, formData, genMonthYear, template);
     doc.addPage();
@@ -782,20 +956,22 @@ export async function generateCatcZip(
     doc.addPage();
     drawPage4(doc, cadet, formData, genMonthYear, template);
 
-    const pdfData = doc.output('arraybuffer');
-    const cadetName = (cadet.name || 'cadet').toUpperCase().replace(/\s+/g, '_');
-    const regtlNo = (cadet.regimentalNumber || 'unknown').toUpperCase();
+    const pdfData = doc.output("arraybuffer");
+    const cadetName = (cadet.name || "cadet")
+      .toUpperCase()
+      .replace(/\s+/g, "_");
+    const regtlNo = (cadet.regimentalNumber || "unknown").toUpperCase();
     const fileName = `${cadetName}_${regtlNo}.pdf`;
 
     zip.file(fileName, pdfData);
   }
 
-  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const zipBlob = await zip.generateAsync({ type: "blob" });
   const zipName = `${cadets.length}_${fmtGenDateFile()}.zip`;
 
   // Trigger browser download
   const url = URL.createObjectURL(zipBlob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = zipName;
   document.body.appendChild(a);

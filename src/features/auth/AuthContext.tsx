@@ -1,4 +1,4 @@
-import type { User as FirebaseUser, UserCredential } from 'firebase/auth';
+import type { User as FirebaseUser, UserCredential } from "firebase/auth";
 import {
   createUserWithEmailAndPassword,
   deleteUser,
@@ -9,14 +9,28 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
-} from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
-import { UserRole } from '@/shared/config/constants';
-import { auth, db } from '@/shared/config/firebase';
-import { User } from '@/shared/types';
-import { mapFirebaseAuthError } from '@/shared/utils/firebaseErrors';
+} from "firebase/auth";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import toast from "react-hot-toast";
+import { UserRole } from "@/shared/config/constants";
+import { auth, db } from "@/shared/config/firebase";
+import { User } from "@/shared/types";
+import { mapFirebaseAuthError } from "@/shared/utils/firebaseErrors";
 
 interface SignUpData {
   name: string;
@@ -40,7 +54,11 @@ interface AuthContextType {
   currentUser: FirebaseUser | null;
   userProfile: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, userData: SignUpData) => Promise<FirebaseUser>;
+  signUp: (
+    email: string,
+    password: string,
+    userData: SignUpData,
+  ) => Promise<FirebaseUser>;
   signIn: (email: string, password: string) => Promise<UserCredential>;
   signInWithGoogle: () => Promise<FirebaseUser>;
   signOut: () => Promise<void>;
@@ -60,7 +78,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 };
@@ -77,11 +95,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Fetch user profile from Firestore
   const fetchUserProfile = async (uid: string): Promise<User | null> => {
     try {
-      let userDoc = await getDoc(doc(db, 'users', uid));
-      
+      let userDoc = await getDoc(doc(db, "users", uid));
+
       // If not in users, check alumni collection
       if (!userDoc.exists()) {
-        userDoc = await getDoc(doc(db, 'alumni', uid));
+        userDoc = await getDoc(doc(db, "alumni", uid));
       }
 
       if (userDoc.exists()) {
@@ -95,15 +113,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return null;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error("Error fetching user profile:", error);
       return null;
     }
   };
 
   // Sign up
-  const signUp = async (email: string, password: string, userData: SignUpData): Promise<FirebaseUser> => {
+  const signUp = async (
+    email: string,
+    password: string,
+    userData: SignUpData,
+  ): Promise<FirebaseUser> => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
       const user = userCredential.user;
 
       // Best-effort display name update (do not fail signup if this fails)
@@ -111,7 +137,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           await updateProfile(user, { displayName: userData.name });
         } catch (e) {
-          console.warn('updateProfile failed (non-fatal):', e);
+          console.warn("updateProfile failed (non-fatal):", e);
         }
       }
 
@@ -120,40 +146,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const userDoc: any = {
           uid: user.uid,
           email: user.email!,
-          name: userData.name || '',
-          role: userData.role || 'member',
+          name: userData.name || "",
+          role: userData.role || "member",
           createdAt: new Date().toISOString(),
-          status: 'active',
+          status: "active",
         };
 
         // Add cadet fields if present
-        if (userData.role === 'member') {
-          userDoc.dateOfBirth = userData.dateOfBirth || '';
-          userDoc.registerNumber = userData.registerNumber || '';
-          userDoc.division = userData.division || '';
-          userDoc.regimentalNumber = userData.regimentalNumber || '';
-          userDoc.dateOfEnrollment = userData.dateOfEnrollment || '';
-          userDoc.rank = userData.rank || 'CDT';
-          userDoc.nccYear = '1st Year';
-          userDoc.year = userData.year || '1st Year';
-          userDoc.department = userData.department || '';
-          userDoc.rollNo = userData.rollNo || '';
-          userDoc.phone = userData.phone || '';
-          userDoc.bloodGroup = userData.bloodGroup || '';
-          userDoc.address = userData.address || '';
+        if (userData.role === "member") {
+          userDoc.dateOfBirth = userData.dateOfBirth || "";
+          userDoc.registerNumber = userData.registerNumber || "";
+          userDoc.division = userData.division || "";
+          userDoc.regimentalNumber = userData.regimentalNumber || "";
+          userDoc.dateOfEnrollment = userData.dateOfEnrollment || "";
+          userDoc.rank = userData.rank || "CDT";
+          userDoc.nccYear = "1st Year";
+          userDoc.year = userData.year || "1st Year";
+          userDoc.department = userData.department || "";
+          userDoc.rollNo = userData.rollNo || "";
+          userDoc.phone = userData.phone || "";
+          userDoc.bloodGroup = userData.bloodGroup || "";
+          userDoc.address = userData.address || "";
         }
 
-        await setDoc(doc(db, 'users', user.uid), userDoc);
+        await setDoc(doc(db, "users", user.uid), userDoc);
       } catch (e: any) {
-        console.error('Profile write failed after account creation:', e);
+        console.error("Profile write failed after account creation:", e);
         const msg = mapFirebaseAuthError(e?.code);
-        toast(`Account created, but profile save failed. ${msg}`, { icon: '⚠️' });
+        toast(`Account created, but profile save failed. ${msg}`, {
+          icon: "⚠️",
+        });
       }
 
-      toast.success('Account created successfully!');
+      toast.success("Account created successfully!");
       return user;
     } catch (error: any) {
-      console.error('Sign up error:', error);
+      console.error("Sign up error:", error);
       const message = mapFirebaseAuthError(error?.code);
       toast.error(message);
       throw error;
@@ -161,20 +189,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Sign in
-  const signIn = async (email: string, password: string): Promise<UserCredential> => {
+  const signIn = async (
+    email: string,
+    password: string,
+  ): Promise<UserCredential> => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       const user = result.user;
-      
+
       // Force name sync on login immediately to fix missing name in reset emails
       if (!user.displayName) {
-        let finalName = '';
+        let finalName = "";
         try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             finalName = userDoc.data().name;
           } else {
-            const q = query(collection(db, 'pendingCadets'), where('uid', '==', user.uid));
+            const q = query(
+              collection(db, "pendingCadets"),
+              where("uid", "==", user.uid),
+            );
             const snap = await getDocs(q);
             if (!snap.empty) {
               finalName = snap.docs[0].data().name;
@@ -185,14 +219,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             await user.reload();
           }
         } catch (e) {
-          console.warn('Silent sync failed:', e);
+          console.warn("Silent sync failed:", e);
         }
       }
 
-      toast.success('Logged in successfully!');
+      toast.success("Logged in successfully!");
       return result;
     } catch (error: any) {
-      console.error('Sign in error:', error);
+      console.error("Sign in error:", error);
       const message = mapFirebaseAuthError(error?.code);
       toast.error(message);
       throw error;
@@ -203,46 +237,58 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signInWithGoogle = async (): Promise<FirebaseUser> => {
     const provider = new GoogleAuthProvider();
     // Always show the account picker so users can choose which Google account to use
-    provider.setCustomParameters({ prompt: 'select_account' });
+    provider.setCustomParameters({ prompt: "select_account" });
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
       // Check if user exists in the 'users' or 'alumni' collection (approved users only)
-      const userDocSnap = await getDoc(doc(db, 'users', user.uid));
-      const alumniDocSnap = await getDoc(doc(db, 'alumni', user.uid));
+      const userDocSnap = await getDoc(doc(db, "users", user.uid));
+      const alumniDocSnap = await getDoc(doc(db, "alumni", user.uid));
 
       if (!userDocSnap.exists() && !alumniDocSnap.exists()) {
         // Also check by email in case UID differs (e.g., originally registered with email/password)
-        const usersQuery = query(collection(db, 'users'), where('email', '==', user.email));
+        const usersQuery = query(
+          collection(db, "users"),
+          where("email", "==", user.email),
+        );
         const usersSnapshot = await getDocs(usersQuery);
-        
-        const alumniQuery = query(collection(db, 'alumni'), where('email', '==', user.email));
+
+        const alumniQuery = query(
+          collection(db, "alumni"),
+          where("email", "==", user.email),
+        );
         const alumniSnapshot = await getDocs(alumniQuery);
 
         if (usersSnapshot.empty && alumniSnapshot.empty) {
           // Check if they are in pendingCadets
-          const pendingQuery = query(collection(db, 'pendingCadets'), where('email', '==', user.email));
+          const pendingQuery = query(
+            collection(db, "pendingCadets"),
+            where("email", "==", user.email),
+          );
           const pendingSnapshot = await getDocs(pendingQuery);
-          
+
           if (!pendingSnapshot.empty) {
             await firebaseSignOut(auth);
             setUserProfile(null);
-            toast.error('Your account is still pending approval by an admin.');
-            throw new Error('NOT_APPROVED');
+            toast.error("Your account is still pending approval by an admin.");
+            throw new Error("NOT_APPROVED");
           }
 
           // Not a registered user — delete the auto-created Google Auth account
           try {
             await deleteUser(user);
           } catch (deleteErr) {
-            console.warn('Could not delete unregistered Google auth account:', deleteErr);
+            console.warn(
+              "Could not delete unregistered Google auth account:",
+              deleteErr,
+            );
           }
           await firebaseSignOut(auth);
           setUserProfile(null);
-          
-          toast.error('No approved account found. Please register first.');
-          throw new Error('NOT_REGISTERED');
+
+          toast.error("No approved account found. Please register first.");
+          throw new Error("NOT_REGISTERED");
         } else {
           // AUTO-HEAL: User exists by email, but under a different UID.
           // This happens if their Auth account was recreated (e.g. they deleted it, or our old pending check deleted it).
@@ -255,20 +301,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               const oldDoc = usersSnapshot.docs[0];
               const oldUid = oldDoc.id;
               if (oldUid !== user.uid) {
-                batch.set(doc(db, 'users', user.uid), { ...oldDoc.data(), uid: user.uid });
-                batch.delete(doc(db, 'users', oldUid));
+                batch.set(doc(db, "users", user.uid), {
+                  ...oldDoc.data(),
+                  uid: user.uid,
+                });
+                batch.delete(doc(db, "users", oldUid));
 
                 // Migrate cadets doc if exists
-                const oldCadetDoc = await getDoc(doc(db, 'cadets', oldUid));
+                const oldCadetDoc = await getDoc(doc(db, "cadets", oldUid));
                 if (oldCadetDoc.exists()) {
-                  batch.set(doc(db, 'cadets', user.uid), { ...oldCadetDoc.data(), uid: user.uid });
-                  batch.delete(doc(db, 'cadets', oldUid));
+                  batch.set(doc(db, "cadets", user.uid), {
+                    ...oldCadetDoc.data(),
+                    uid: user.uid,
+                  });
+                  batch.delete(doc(db, "cadets", oldUid));
                 }
 
                 // Migrate takenNumbers
-                const takenQuery = query(collection(db, 'takenNumbers'), where('uid', '==', oldUid));
+                const takenQuery = query(
+                  collection(db, "takenNumbers"),
+                  where("uid", "==", oldUid),
+                );
                 const takenSnap = await getDocs(takenQuery);
-                takenSnap.forEach(tDoc => {
+                takenSnap.forEach((tDoc) => {
                   batch.update(tDoc.ref, { uid: user.uid });
                 });
 
@@ -278,32 +333,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               const oldDoc = alumniSnapshot.docs[0];
               const oldUid = oldDoc.id;
               if (oldUid !== user.uid) {
-                batch.set(doc(db, 'alumni', user.uid), { ...oldDoc.data(), uid: user.uid });
-                batch.delete(doc(db, 'alumni', oldUid));
+                batch.set(doc(db, "alumni", user.uid), {
+                  ...oldDoc.data(),
+                  uid: user.uid,
+                });
+                batch.delete(doc(db, "alumni", oldUid));
                 migrated = true;
               }
             }
 
             if (migrated) {
               await batch.commit();
-              console.log('Successfully migrated user data to new Google UID');
+              console.log("Successfully migrated user data to new Google UID");
             }
           } catch (migrationErr) {
-            console.error('Failed to migrate user data:', migrationErr);
+            console.error("Failed to migrate user data:", migrationErr);
             // We don't block login, but it might fail later in ProtectedRoute if migration fails
           }
         }
       }
 
-      toast.success('Logged in with Google successfully!');
+      toast.success("Logged in with Google successfully!");
       return user;
     } catch (error: any) {
-      if (error?.message === 'NOT_REGISTERED') {
+      if (error?.message === "NOT_REGISTERED") {
         throw error;
       }
-      console.error('Google sign in error:', error);
+      console.error("Google sign in error:", error);
       // If popup was closed by user, don't show an error toast
-      if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
+      if (
+        error?.code !== "auth/popup-closed-by-user" &&
+        error?.code !== "auth/cancelled-popup-request"
+      ) {
         const message = mapFirebaseAuthError(error?.code);
         toast.error(message);
       }
@@ -316,9 +377,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await firebaseSignOut(auth);
       setUserProfile(null);
-      toast.success('Logged out successfully!');
+      toast.success("Logged out successfully!");
     } catch (error: any) {
-      console.error('Sign out error:', error);
+      console.error("Sign out error:", error);
       const message = mapFirebaseAuthError(error?.code);
       toast.error(message);
       throw error;
@@ -329,9 +390,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const resetPassword = async (email: string): Promise<void> => {
     try {
       await sendPasswordResetEmail(auth, email);
-      toast.success('Password reset email sent!');
+      toast.success("Password reset email sent!");
     } catch (error: any) {
-      console.error('Reset password error:', error);
+      console.error("Reset password error:", error);
       const message = mapFirebaseAuthError(error?.code);
       toast.error(message);
       throw error;
@@ -348,11 +409,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Check if user is admin or superadmin
-  const isAdmin = (): boolean => hasRole(['admin', 'superadmin']);
-  const isSuperAdmin = (): boolean => hasRole('superadmin');
-  const isAlumni = (): boolean => hasRole('alumni' as UserRole);
+  const isAdmin = (): boolean => hasRole(["admin", "superadmin"]);
+  const isSuperAdmin = (): boolean => hasRole("superadmin");
+  const isAlumni = (): boolean => hasRole("alumni" as UserRole);
 
-  const isMember = (): boolean => hasRole('member');
+  const isMember = (): boolean => hasRole("member");
   // Removed legacy 'cadet' role; retain helper returning false for compatibility
   const isCadet = (): boolean => false;
 
@@ -362,11 +423,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (user) {
         const profile = await fetchUserProfile(user.uid);
         let finalName = profile?.name;
-        
+
         // If not in users collection, they might be an existing pending cadet
         if (!finalName && !user.displayName) {
           try {
-            const pendingQuery = query(collection(db, 'pendingCadets'), where('uid', '==', user.uid));
+            const pendingQuery = query(
+              collection(db, "pendingCadets"),
+              where("uid", "==", user.uid),
+            );
             const pendingSnap = await getDocs(pendingQuery);
             if (!pendingSnap.empty) {
               const pendingDoc = pendingSnap.docs[0];
@@ -376,15 +440,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // This fixes the case where user verified email after session expired
               if (user.emailVerified && !pendingDoc.data().emailVerified) {
                 try {
-                  await setDoc(pendingDoc.ref, { emailVerified: true }, { merge: true });
-                  console.log('Auto-synced email verification for pending cadet:', user.email);
+                  await setDoc(
+                    pendingDoc.ref,
+                    { emailVerified: true },
+                    { merge: true },
+                  );
+                  console.log(
+                    "Auto-synced email verification for pending cadet:",
+                    user.email,
+                  );
                 } catch (syncErr) {
-                  console.warn('Failed to sync email verification status:', syncErr);
+                  console.warn(
+                    "Failed to sync email verification status:",
+                    syncErr,
+                  );
                 }
               }
             }
           } catch (err) {
-            console.warn('Failed to fetch pending cadet name', err);
+            console.warn("Failed to fetch pending cadet name", err);
           }
         }
 
@@ -393,7 +467,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           try {
             await updateProfile(user, { displayName: finalName });
           } catch (e) {
-            console.warn('Failed to sync displayName:', e);
+            console.warn("Failed to sync displayName:", e);
           }
         }
       } else {
@@ -423,6 +497,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     fetchUserProfile,
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 };
-

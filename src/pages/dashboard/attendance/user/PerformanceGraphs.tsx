@@ -1,15 +1,21 @@
-import { useMemo } from 'react';
-import { Card, Row, Col } from 'react-bootstrap';
-import { AttendanceTrendChart, AttendanceBarChart } from '@/features/attendance/charts';
-import type { CadetAttendanceStats } from '@/features/attendance/attendance.types';
-import { format, subMonths } from 'date-fns';
+import { useMemo } from "react";
+import { Card, Row, Col } from "react-bootstrap";
+import {
+  AttendanceTrendChart,
+  AttendanceBarChart,
+} from "@/features/attendance/charts";
+import type { CadetAttendanceStats } from "@/features/attendance/attendance.types";
+import { format, subMonths } from "date-fns";
 
 interface PerformanceGraphsProps {
   stats: CadetAttendanceStats | null;
   batchTrend?: { label: string; value: number }[];
 }
 
-export function PerformanceGraphs({ stats, batchTrend }: PerformanceGraphsProps) {
+export function PerformanceGraphs({
+  stats,
+  batchTrend,
+}: PerformanceGraphsProps) {
   // Generate monthly trend data
   const trendData = useMemo(() => {
     if (!stats?.monthly) return [];
@@ -19,8 +25,8 @@ export function PerformanceGraphs({ stats, batchTrend }: PerformanceGraphsProps)
 
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(now, i);
-      const monthKey = format(monthDate, 'yyyy-MM');
-      const monthLabel = format(monthDate, 'MMM');
+      const monthKey = format(monthDate, "yyyy-MM");
+      const monthLabel = format(monthDate, "MMM");
 
       const monthData = stats.monthly[monthKey];
       if (monthData && monthData.total > 0) {
@@ -43,8 +49,8 @@ export function PerformanceGraphs({ stats, batchTrend }: PerformanceGraphsProps)
 
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(now, i);
-      const monthKey = format(monthDate, 'yyyy-MM');
-      const monthLabel = format(monthDate, 'MMM');
+      const monthKey = format(monthDate, "yyyy-MM");
+      const monthLabel = format(monthDate, "MMM");
 
       const monthData = stats.monthly[monthKey];
       if (monthData) {

@@ -1,9 +1,12 @@
-import { useState, useMemo, useCallback, type ChangeEvent } from 'react';
-import { Form, InputGroup, Badge, Button, ButtonGroup } from 'react-bootstrap';
-import type { Cadet } from '@/shared/types';
-import type { AttendanceStatus } from '@/features/attendance/attendance.types';
-import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/attendance.types';
-import './QuickSelectGrid.css';
+import { useState, useMemo, useCallback, type ChangeEvent } from "react";
+import { Form, InputGroup, Badge, Button, ButtonGroup } from "react-bootstrap";
+import type { Cadet } from "@/shared/types";
+import type { AttendanceStatus } from "@/features/attendance/attendance.types";
+import {
+  ATTENDANCE_STATUS_COLORS,
+  ATTENDANCE_STATUS_LABELS,
+} from "@/features/attendance/attendance.types";
+import "./QuickSelectGrid.css";
 
 interface QuickSelectGridProps {
   cadets: (Cadet & { id: string })[];
@@ -13,7 +16,7 @@ interface QuickSelectGridProps {
   disabled?: boolean;
 }
 
-const STATUS_CYCLE: AttendanceStatus[] = ['P', 'A'];
+const STATUS_CYCLE: AttendanceStatus[] = ["P", "A"];
 
 export function QuickSelectGrid({
   cadets,
@@ -22,8 +25,8 @@ export function QuickSelectGrid({
   onBulkMark,
   disabled = false,
 }: QuickSelectGridProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
 
   // Filter cadets
   const filteredCadets = useMemo(() => {
@@ -31,10 +34,11 @@ export function QuickSelectGrid({
       const matchesSearch =
         !searchTerm ||
         cadet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cadet.regimentalNumber?.toLowerCase().includes(searchTerm.toLowerCase());
+        cadet.regimentalNumber
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
       const currentStatus = marks[cadet.id];
-      const matchesStatus =
-        !statusFilter || currentStatus === statusFilter;
+      const matchesStatus = !statusFilter || currentStatus === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [cadets, searchTerm, statusFilter, marks]);
@@ -56,11 +60,13 @@ export function QuickSelectGrid({
     (cadetId: string) => {
       if (disabled) return;
       const currentStatus = marks[cadetId];
-      const currentIndex = currentStatus ? STATUS_CYCLE.indexOf(currentStatus) : -1;
+      const currentIndex = currentStatus
+        ? STATUS_CYCLE.indexOf(currentStatus)
+        : -1;
       const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
       onMarkChange(cadetId, STATUS_CYCLE[nextIndex]);
     },
-    [marks, onMarkChange, disabled]
+    [marks, onMarkChange, disabled],
   );
 
   // Handle keyboard for focused cadet
@@ -68,12 +74,12 @@ export function QuickSelectGrid({
     (e: React.KeyboardEvent, cadetId: string) => {
       if (disabled) return;
       const key = e.key.toUpperCase();
-      if (key === 'P' || key === 'A') {
+      if (key === "P" || key === "A") {
         e.preventDefault();
         onMarkChange(cadetId, key as AttendanceStatus);
       }
     },
-    [onMarkChange, disabled]
+    [onMarkChange, disabled],
   );
 
   return (
@@ -89,14 +95,18 @@ export function QuickSelectGrid({
               type="text"
               placeholder="Search name/reg..."
               value={searchTerm}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setSearchTerm(e.target.value)
+              }
             />
           </InputGroup>
 
           <Form.Select
-            style={{ width: 'auto' }}
+            style={{ width: "auto" }}
             value={statusFilter}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setStatusFilter(e.target.value)
+            }
           >
             <option value="">All Status</option>
             {STATUS_CYCLE.map((s) => (
@@ -110,14 +120,14 @@ export function QuickSelectGrid({
             <ButtonGroup size="sm">
               <Button
                 variant="outline-success"
-                onClick={() => onBulkMark('P')}
+                onClick={() => onBulkMark("P")}
                 disabled={disabled}
               >
                 All Present
               </Button>
               <Button
                 variant="outline-danger"
-                onClick={() => onBulkMark('A')}
+                onClick={() => onBulkMark("A")}
                 disabled={disabled}
               >
                 All Absent
@@ -138,26 +148,33 @@ export function QuickSelectGrid({
       <div className="qsg-grid">
         {filteredCadets.map((cadet) => {
           const status = marks[cadet.id];
-          const colorClass = status ? ATTENDANCE_STATUS_COLORS[status] : 'light';
+          const colorClass = status
+            ? ATTENDANCE_STATUS_COLORS[status]
+            : "light";
           return (
             <div
               key={cadet.id}
               className={`qsg-card border rounded p-2 bg-${colorClass} ${
-                status ? 'text-white' : ''
-              } ${disabled ? 'disabled' : ''}`}
+                status ? "text-white" : ""
+              } ${disabled ? "disabled" : ""}`}
               onClick={() => handleCadetClick(cadet.id)}
               onKeyDown={(e) => handleKeyDown(e, cadet.id)}
               tabIndex={0}
               role="button"
-              aria-label={`${cadet.name}: ${status ? ATTENDANCE_STATUS_LABELS[status] : 'Unmarked'}`}
+              aria-label={`${cadet.name}: ${status ? ATTENDANCE_STATUS_LABELS[status] : "Unmarked"}`}
             >
               <div className="qsg-rank small text-uppercase opacity-75">
-                {cadet.rank || 'CDT'}
+                {cadet.rank || "CDT"}
               </div>
-              <div className="qsg-name fw-semibold text-truncate">{cadet.name}</div>
+              <div className="qsg-name fw-semibold text-truncate">
+                {cadet.name}
+              </div>
               <div className="qsg-status mt-1">
                 {status ? (
-                  <Badge bg={colorClass === 'warning' ? 'dark' : 'light'} text={colorClass === 'warning' ? 'white' : 'dark'}>
+                  <Badge
+                    bg={colorClass === "warning" ? "dark" : "light"}
+                    text={colorClass === "warning" ? "white" : "dark"}
+                  >
                     {status}
                   </Badge>
                 ) : (

@@ -1,4 +1,4 @@
-import { ROLES } from '@/shared/config/constants';
+import { ROLES } from "@/shared/config/constants";
 
 interface RoleSelectProps {
   value: string;
@@ -6,7 +6,11 @@ interface RoleSelectProps {
   disabled?: boolean;
 }
 
-export default function RoleSelect({ value, onChange, disabled = false }: RoleSelectProps) {
+export default function RoleSelect({
+  value,
+  onChange,
+  disabled = false,
+}: RoleSelectProps) {
   const roleEntries = Object.entries(ROLES).map(([_, roleValue]) => roleValue);
   const uniqueRoles = Array.from(new Set(roleEntries));
 

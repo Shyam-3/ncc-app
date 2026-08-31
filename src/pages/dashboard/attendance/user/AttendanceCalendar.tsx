@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Card, Button, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { useState, useMemo } from "react";
+import { Card, Button, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
 import {
   format,
   startOfMonth,
@@ -8,10 +8,13 @@ import {
   getDay,
   addMonths,
   subMonths,
-} from 'date-fns';
-import type { AttendanceStatus } from '@/features/attendance/attendance.types';
-import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/attendance.types';
-import './AttendanceCalendar.css';
+} from "date-fns";
+import type { AttendanceStatus } from "@/features/attendance/attendance.types";
+import {
+  ATTENDANCE_STATUS_COLORS,
+  ATTENDANCE_STATUS_LABELS,
+} from "@/features/attendance/attendance.types";
+import "./AttendanceCalendar.css";
 
 interface CalendarEntry {
   date: string;
@@ -25,9 +28,12 @@ interface AttendanceCalendarProps {
   onDateClick?: (date: string, entry?: CalendarEntry) => void;
 }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarProps) {
+export function AttendanceCalendar({
+  entries,
+  onDateClick,
+}: AttendanceCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Build entries map for quick lookup
@@ -68,7 +74,7 @@ export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarP
           <i className="bi bi-chevron-left"></i>
         </Button>
         <div className="text-center">
-          <h5 className="mb-0">{format(currentMonth, 'MMMM yyyy')}</h5>
+          <h5 className="mb-0">{format(currentMonth, "MMMM yyyy")}</h5>
           <Button
             variant="link"
             size="sm"
@@ -86,7 +92,10 @@ export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarP
         {/* Weekday headers */}
         <div className="calendar-grid calendar-header">
           {WEEKDAYS.map((day) => (
-            <div key={day} className="calendar-cell text-muted small fw-semibold">
+            <div
+              key={day}
+              className="calendar-cell text-muted small fw-semibold"
+            >
               {day}
             </div>
           ))}
@@ -96,12 +105,14 @@ export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarP
         <div className="calendar-grid">
           {calendarDays.map((day, index) => {
             if (!day) {
-              return <div key={`pad-${index}`} className="calendar-cell empty" />;
+              return (
+                <div key={`pad-${index}`} className="calendar-cell empty" />
+              );
             }
 
-            const dateStr = format(day, 'yyyy-MM-dd');
+            const dateStr = format(day, "yyyy-MM-dd");
             const entry = entriesMap.get(dateStr);
-            const isToday = dateStr === format(new Date(), 'yyyy-MM-dd');
+            const isToday = dateStr === format(new Date(), "yyyy-MM-dd");
 
             return (
               <OverlayTrigger
@@ -110,7 +121,10 @@ export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarP
                 overlay={
                   entry ? (
                     <Tooltip>
-                      {entry.title}: {entry.status ? ATTENDANCE_STATUS_LABELS[entry.status] : 'Unmarked'}
+                      {entry.title}:{" "}
+                      {entry.status
+                        ? ATTENDANCE_STATUS_LABELS[entry.status]
+                        : "Unmarked"}
                     </Tooltip>
                   ) : (
                     <></>
@@ -118,22 +132,22 @@ export function AttendanceCalendar({ entries, onDateClick }: AttendanceCalendarP
                 }
               >
                 <div
-                  className={`calendar-cell day ${isToday ? 'today' : ''} ${
-                    entry ? 'has-session' : ''
+                  className={`calendar-cell day ${isToday ? "today" : ""} ${
+                    entry ? "has-session" : ""
                   }`}
                   onClick={() => onDateClick?.(dateStr, entry)}
                 >
-                  <span className="day-number">{format(day, 'd')}</span>
+                  <span className="day-number">{format(day, "d")}</span>
                   {entry && (
                     <Badge
                       bg={
                         entry.status
                           ? ATTENDANCE_STATUS_COLORS[entry.status]
-                          : 'secondary'
+                          : "secondary"
                       }
                       className="day-badge"
                     >
-                      {entry.status || '?'}
+                      {entry.status || "?"}
                     </Badge>
                   )}
                 </div>

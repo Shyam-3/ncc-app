@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Badge,
@@ -11,20 +11,27 @@ import {
   Row,
   Spinner,
   Table,
-} from 'react-bootstrap';
-import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import { NCC_RANKS, DIVISIONS, DIVISION_LABELS } from '@/shared/config/constants';
-import type { Cadet } from '@/shared/types';
-import type { AttendanceMark, AttendanceSession } from '@/features/attendance/attendance.types';
+} from "react-bootstrap";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import {
+  NCC_RANKS,
+  DIVISIONS,
+  DIVISION_LABELS,
+} from "@/shared/config/constants";
+import type { Cadet } from "@/shared/types";
+import type {
+  AttendanceMark,
+  AttendanceSession,
+} from "@/features/attendance/attendance.types";
 import {
   getLockedOfficialSessionsByDate,
   listAnoUsers,
   listCadets,
   type AnoUser,
-} from '@/features/attendance/service';
-import { toISTDateInputValue, formatISTDate } from '@/shared/utils/dateTime';
-import './ParadeStateReport.css';
+} from "@/features/attendance/service";
+import { toISTDateInputValue, formatISTDate } from "@/shared/utils/dateTime";
+import "./ParadeStateReport.css";
 
 // ============ Types ============
 
@@ -36,7 +43,7 @@ interface ParadeFormData {
   refreshmentItems: string;
 }
 
-type AbsenteeLeaveType = 'with_leave' | 'without_leave';
+type AbsenteeLeaveType = "with_leave" | "without_leave";
 
 interface AbsenteeCadet {
   cadetId: string;
@@ -55,47 +62,48 @@ interface SessionWithMarks {
 
 // Rank columns in parade state table order
 const PARADE_RANK_COLUMNS = [
-  { key: 'Offr', label: 'Offr' },
-  { key: 'SUO', label: 'SUO' },
-  { key: 'CUO', label: 'CUO' },
-  { key: 'CSM', label: 'CSM' },
-  { key: 'CQMS', label: 'CQMS' },
-  { key: 'SGT', label: 'SGT' },
-  { key: 'CPL', label: 'CPL' },
-  { key: 'LCPL', label: 'L/CPL' },
-  { key: 'CDT', label: 'CDT' },
-  { key: 'Total', label: 'Total' },
+  { key: "Offr", label: "Offr" },
+  { key: "SUO", label: "SUO" },
+  { key: "CUO", label: "CUO" },
+  { key: "CSM", label: "CSM" },
+  { key: "CQMS", label: "CQMS" },
+  { key: "SGT", label: "SGT" },
+  { key: "CPL", label: "CPL" },
+  { key: "LCPL", label: "L/CPL" },
+  { key: "CDT", label: "CDT" },
+  { key: "Total", label: "Total" },
 ] as const;
 
 // Category rows
 const PARADE_CATEGORIES = [
-  { key: 'on_parade', label: 'Total On Parade' },
-  { key: 'absent_with_leave', label: 'Absent with Leave (PTO)' },
-  { key: 'absent_without_leave', label: 'Absent without Leave (PTO)' },
-  { key: 'grand_total', label: 'Grand Total' },
+  { key: "on_parade", label: "Total On Parade" },
+  { key: "absent_with_leave", label: "Absent with Leave (PTO)" },
+  { key: "absent_without_leave", label: "Absent without Leave (PTO)" },
+  { key: "grand_total", label: "Grand Total" },
 ] as const;
 
 // ============ Helpers ============
 
 /** Map a cadet's rank code to parade state column key */
 function mapRankToColumn(rankCode: string): string {
-  const upper = (rankCode || '').toUpperCase().trim();
+  const upper = (rankCode || "").toUpperCase().trim();
   // L/CPL or LCPL
-  if (upper === 'L/CPL' || upper === 'LCPL' || upper === 'LANCE CORPORAL') return 'LCPL';
+  if (upper === "L/CPL" || upper === "LCPL" || upper === "LANCE CORPORAL")
+    return "LCPL";
   const found = NCC_RANKS.find(
-    (r) => r.code.toUpperCase() === upper || r.name.toUpperCase() === upper
+    (r) => r.code.toUpperCase() === upper || r.name.toUpperCase() === upper,
   );
-  return found ? found.code : 'CDT'; // default to CDT if unknown
+  return found ? found.code : "CDT"; // default to CDT if unknown
 }
 
-type AnoStatus = 'present' | 'with_leave' | 'without_leave' | 'none';
+type AnoStatus = "present" | "with_leave" | "without_leave" | "none";
 
 /** Build rank-wise count maps */
 function computeRankCounts(
   sessionsData: SessionWithMarks[],
   cadetsMap: Map<string, Cadet & { id: string }>,
   absentees: AbsenteeCadet[],
-  anoStatuses: Record<string, AnoStatus>
+  anoStatuses: Record<string, AnoStatus>,
 ) {
   const onParade: Record<string, number | string> = {};
   const absentWithLeave: Record<string, number | string> = {};
@@ -114,7 +122,7 @@ function computeRankCounts(
   const presentCadets = new Set<string>();
   sessionsData.forEach(({ marks }) => {
     marks.forEach((mark) => {
-      if (mark.status === 'P') presentCadets.add(mark.cadetId);
+      if (mark.status === "P") presentCadets.add(mark.cadetId);
     });
   });
 
@@ -127,18 +135,26 @@ function computeRankCounts(
   });
 
   // Add ANO counts to Offr column
-  const anoPresent = Object.values(anoStatuses).filter(s => s === 'present').length;
-  const anoWithLeave = Object.values(anoStatuses).filter(s => s === 'with_leave').length;
-  const anoWithoutLeave = Object.values(anoStatuses).filter(s => s === 'without_leave').length;
+  const anoPresent = Object.values(anoStatuses).filter(
+    (s) => s === "present",
+  ).length;
+  const anoWithLeave = Object.values(anoStatuses).filter(
+    (s) => s === "with_leave",
+  ).length;
+  const anoWithoutLeave = Object.values(anoStatuses).filter(
+    (s) => s === "without_leave",
+  ).length;
 
-  onParade['Offr'] = ((onParade['Offr'] as number) || 0) + anoPresent;
-  absentWithLeave['Offr'] = ((absentWithLeave['Offr'] as number) || 0) + anoWithLeave;
-  absentWithoutLeave['Offr'] = ((absentWithoutLeave['Offr'] as number) || 0) + anoWithoutLeave;
+  onParade["Offr"] = ((onParade["Offr"] as number) || 0) + anoPresent;
+  absentWithLeave["Offr"] =
+    ((absentWithLeave["Offr"] as number) || 0) + anoWithLeave;
+  absentWithoutLeave["Offr"] =
+    ((absentWithoutLeave["Offr"] as number) || 0) + anoWithoutLeave;
 
   // Count absent by leave type and rank
   absentees.forEach((ab) => {
     const col = mapRankToColumn(ab.rank);
-    if (ab.leaveType === 'with_leave') {
+    if (ab.leaveType === "with_leave") {
       absentWithLeave[col] = ((absentWithLeave[col] as number) || 0) + 1;
     } else {
       absentWithoutLeave[col] = ((absentWithoutLeave[col] as number) || 0) + 1;
@@ -147,7 +163,7 @@ function computeRankCounts(
 
   // Compute totals for each rank column
   PARADE_RANK_COLUMNS.forEach(({ key }) => {
-    if (key === 'Total') return;
+    if (key === "Total") return;
     grandTotal[key] =
       ((onParade[key] as number) || 0) +
       ((absentWithLeave[key] as number) || 0) +
@@ -159,8 +175,8 @@ function computeRankCounts(
     let cadetTotal = 0;
     let offrTotal = 0;
     PARADE_RANK_COLUMNS.forEach(({ key }) => {
-      if (key === 'Total') return;
-      if (key === 'Offr') {
+      if (key === "Total") return;
+      if (key === "Offr") {
         offrTotal = (row[key] as number) || 0;
       } else {
         cadetTotal += (row[key] as number) || 0;
@@ -172,10 +188,10 @@ function computeRankCounts(
     return cadetTotal;
   };
 
-  onParade['Total'] = computeRowTotal(onParade);
-  absentWithLeave['Total'] = computeRowTotal(absentWithLeave);
-  absentWithoutLeave['Total'] = computeRowTotal(absentWithoutLeave);
-  grandTotal['Total'] = computeRowTotal(grandTotal);
+  onParade["Total"] = computeRowTotal(onParade);
+  absentWithLeave["Total"] = computeRowTotal(absentWithLeave);
+  absentWithoutLeave["Total"] = computeRowTotal(absentWithoutLeave);
+  grandTotal["Total"] = computeRowTotal(grandTotal);
 
   return {
     on_parade: onParade,
@@ -194,10 +210,10 @@ const ParadeStateReport: React.FC = () => {
   // Form state
   const [formData, setFormData] = useState<ParadeFormData>({
     date: toISTDateInputValue(),
-    paradeNumber: '',
-    timeFrom: '',
-    timeTo: '',
-    refreshmentItems: '',
+    paradeNumber: "",
+    timeFrom: "",
+    timeTo: "",
+    refreshmentItems: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -207,9 +223,13 @@ const ParadeStateReport: React.FC = () => {
   const [allCadets, setAllCadets] = useState<(Cadet & { id: string })[]>([]);
   const [anoUsers, setAnoUsers] = useState<AnoUser[]>([]);
   const [sessionsData, setSessionsData] = useState<SessionWithMarks[]>([]);
-  const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
+  const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [anoStatuses, setAnoStatuses] = useState<Record<string, AnoStatus>>({});
-  const [absenteeLeaveTypes, setAbsenteeLeaveTypes] = useState<Record<string, AbsenteeLeaveType>>({});
+  const [absenteeLeaveTypes, setAbsenteeLeaveTypes] = useState<
+    Record<string, AbsenteeLeaveType>
+  >({});
   const [dataFetched, setDataFetched] = useState(false);
 
   // Preview
@@ -225,12 +245,15 @@ const ParadeStateReport: React.FC = () => {
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      const [cadetsResult, anosResult] = await Promise.all([listCadets(), listAnoUsers()]);
+      const [cadetsResult, anosResult] = await Promise.all([
+        listCadets(),
+        listAnoUsers(),
+      ]);
       setAllCadets(cadetsResult);
       setAnoUsers(anosResult);
     } catch (e: any) {
       console.error(e);
-      toast.error('Failed to load initial data');
+      toast.error("Failed to load initial data");
     } finally {
       setLoading(false);
     }
@@ -253,18 +276,20 @@ const ParadeStateReport: React.FC = () => {
         delete nextErrors[field];
 
         // Time validation
-        if (field === 'timeFrom' || field === 'timeTo') {
-          const from = field === 'timeFrom' ? value : prev.timeFrom;
-          const to = field === 'timeTo' ? value : prev.timeTo;
+        if (field === "timeFrom" || field === "timeTo") {
+          const from = field === "timeFrom" ? value : prev.timeFrom;
+          const to = field === "timeTo" ? value : prev.timeTo;
           if (from && to && from > to) {
-            nextErrors.timeTo = 'To time cannot be before From time';
-            nextErrors.timeFrom = 'From time cannot be after To time';
+            nextErrors.timeTo = "To time cannot be before From time";
+            nextErrors.timeFrom = "From time cannot be after To time";
           } else {
             delete nextErrors.timeTo;
             delete nextErrors.timeFrom;
             // Re-add empty checks only if user has interacted
-            if (field === 'timeFrom' && !value) nextErrors.timeFrom = 'From time is required';
-            if (field === 'timeTo' && !value) nextErrors.timeTo = 'To time is required';
+            if (field === "timeFrom" && !value)
+              nextErrors.timeFrom = "From time is required";
+            if (field === "timeTo" && !value)
+              nextErrors.timeTo = "To time is required";
           }
         }
 
@@ -275,7 +300,7 @@ const ParadeStateReport: React.FC = () => {
     });
 
     // Reset fetched data when date changes
-    if (field === 'date') {
+    if (field === "date") {
       setSessionsData([]);
       setSelectedSessionIds(new Set());
       setAbsenteeLeaveTypes({});
@@ -286,13 +311,18 @@ const ParadeStateReport: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!formData.date) errors.date = 'Date is required';
-    if (!formData.paradeNumber.trim()) errors.paradeNumber = 'Parade number is required';
-    if (!formData.timeFrom) errors.timeFrom = 'From time is required';
-    if (!formData.timeTo) errors.timeTo = 'To time is required';
-    if (formData.timeFrom && formData.timeTo && formData.timeFrom > formData.timeTo) {
-      errors.timeFrom = 'From time cannot be after To time';
-      errors.timeTo = 'To time cannot be before From time';
+    if (!formData.date) errors.date = "Date is required";
+    if (!formData.paradeNumber.trim())
+      errors.paradeNumber = "Parade number is required";
+    if (!formData.timeFrom) errors.timeFrom = "From time is required";
+    if (!formData.timeTo) errors.timeTo = "To time is required";
+    if (
+      formData.timeFrom &&
+      formData.timeTo &&
+      formData.timeFrom > formData.timeTo
+    ) {
+      errors.timeFrom = "From time cannot be after To time";
+      errors.timeTo = "To time cannot be before From time";
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -301,7 +331,7 @@ const ParadeStateReport: React.FC = () => {
   // ---- Fetch attendance data for selected date ----
   const fetchAttendanceData = async () => {
     if (!formData.date) {
-      toast.error('Please select a date first');
+      toast.error("Please select a date first");
       return;
     }
 
@@ -310,7 +340,7 @@ const ParadeStateReport: React.FC = () => {
       const results = await getLockedOfficialSessionsByDate(formData.date);
 
       if (results.length === 0) {
-        toast.error('No locked official parade sessions found for this date');
+        toast.error("No locked official parade sessions found for this date");
         setSessionsData([]);
         setSelectedSessionIds(new Set());
         setAbsenteeLeaveTypes({});
@@ -319,10 +349,12 @@ const ParadeStateReport: React.FC = () => {
       }
 
       // Validate: check that for each year present, BOTH SD and SW are found
-      const sessionKeys = new Set(results.map((r) => `${r.session.divisionId}-${r.session.nccYear}`));
+      const sessionKeys = new Set(
+        results.map((r) => `${r.session.divisionId}-${r.session.nccYear}`),
+      );
       const sessionYears = new Set(results.map((r) => r.session.nccYear));
       const missingKeys: string[] = [];
-      
+
       sessionYears.forEach((year) => {
         DIVISIONS.forEach((div) => {
           const key = `${div}-${year}`;
@@ -334,8 +366,8 @@ const ParadeStateReport: React.FC = () => {
 
       if (missingKeys.length > 0) {
         toast.error(
-          `Missing locked official sessions for: ${missingKeys.join(', ')}. Need both SD and SW for each selected year.`,
-          { duration: 6000 }
+          `Missing locked official sessions for: ${missingKeys.join(", ")}. Need both SD and SW for each selected year.`,
+          { duration: 6000 },
         );
       }
 
@@ -347,7 +379,7 @@ const ParadeStateReport: React.FC = () => {
       toast.success(`Found ${results.length} session(s)`);
     } catch (e: any) {
       console.error(e);
-      toast.error('Failed to fetch attendance data');
+      toast.error("Failed to fetch attendance data");
     } finally {
       setFetching(false);
     }
@@ -367,25 +399,39 @@ const ParadeStateReport: React.FC = () => {
   };
 
   // ---- Derived State ----
-  const selectedSessions = useMemo(() => 
-    sessionsData.filter(s => selectedSessionIds.has(s.session.id)), 
-  [sessionsData, selectedSessionIds]);
+  const selectedSessions = useMemo(
+    () => sessionsData.filter((s) => selectedSessionIds.has(s.session.id)),
+    [sessionsData, selectedSessionIds],
+  );
 
   const sessionValidation = useMemo(() => {
     if (selectedSessions.length === 0) {
-      return { isValid: false, missingKeys: ['Select at least one session'], selectedCount: 0 };
+      return {
+        isValid: false,
+        missingKeys: ["Select at least one session"],
+        selectedCount: 0,
+      };
     }
 
-    const selectedKeys = new Set(selectedSessions.map((s) => `${s.session.divisionId}-${s.session.nccYear}`));
-    const selectedYears = new Set(selectedSessions.map((s) => s.session.nccYear));
+    const selectedKeys = new Set(
+      selectedSessions.map(
+        (s) => `${s.session.divisionId}-${s.session.nccYear}`,
+      ),
+    );
+    const selectedYears = new Set(
+      selectedSessions.map((s) => s.session.nccYear),
+    );
     const missingKeys: string[] = [];
 
     // Duplicate check
     const duplicates = new Set<string>();
     const seen = new Set<string>();
-    selectedSessions.forEach(s => {
+    selectedSessions.forEach((s) => {
       const key = `${s.session.divisionId}-${s.session.nccYear}`;
-      if (seen.has(key)) duplicates.add(`${DIVISION_LABELS[s.session.divisionId as keyof typeof DIVISION_LABELS]} ${s.session.nccYear}`);
+      if (seen.has(key))
+        duplicates.add(
+          `${DIVISION_LABELS[s.session.divisionId as keyof typeof DIVISION_LABELS]} ${s.session.nccYear}`,
+        );
       seen.add(key);
     });
 
@@ -394,56 +440,69 @@ const ParadeStateReport: React.FC = () => {
       DIVISIONS.forEach((div) => {
         const key = `${div}-${year}`;
         if (!selectedKeys.has(key)) {
-          missingKeys.push(`${DIVISION_LABELS[div as keyof typeof DIVISION_LABELS]} ${year}`);
+          missingKeys.push(
+            `${DIVISION_LABELS[div as keyof typeof DIVISION_LABELS]} ${year}`,
+          );
         }
       });
     });
 
     const errors: string[] = [];
-    if (missingKeys.length > 0) errors.push(`Missing pairs: ${missingKeys.join(', ')}`);
-    if (duplicates.size > 0) errors.push(`Multiple sessions selected for: ${Array.from(duplicates).join(', ')}`);
+    if (missingKeys.length > 0)
+      errors.push(`Missing pairs: ${missingKeys.join(", ")}`);
+    if (duplicates.size > 0)
+      errors.push(
+        `Multiple sessions selected for: ${Array.from(duplicates).join(", ")}`,
+      );
 
     const isValid = missingKeys.length === 0 && duplicates.size === 0;
-    return { isValid, missingKeys: errors, selectedCount: selectedSessions.length };
+    return {
+      isValid,
+      missingKeys: errors,
+      selectedCount: selectedSessions.length,
+    };
   }, [selectedSessions]);
 
   const absentees = useMemo(() => {
     const presentCadets = new Set<string>();
     selectedSessions.forEach(({ marks }) => {
       marks.forEach((mark) => {
-        if (mark.status === 'P') presentCadets.add(mark.cadetId);
+        if (mark.status === "P") presentCadets.add(mark.cadetId);
       });
     });
 
     const absentMap = new Map<string, AbsenteeCadet>();
     selectedSessions.forEach(({ marks }) => {
       marks.forEach((mark) => {
-        if (mark.status === 'A' && !presentCadets.has(mark.cadetId)) {
+        if (mark.status === "A" && !presentCadets.has(mark.cadetId)) {
           if (!absentMap.has(mark.cadetId)) {
             const cadet = cadetsMap.get(mark.cadetId);
             if (cadet) {
               absentMap.set(mark.cadetId, {
                 cadetId: mark.cadetId,
                 name: cadet.name,
-                rank: cadet.rank || 'CDT',
-                regimentalNumber: cadet.regimentalNumber || '-',
-                division: cadet.division || '-',
-                nccYear: cadet.nccYear || '-',
-                leaveType: absenteeLeaveTypes[mark.cadetId] || 'without_leave',
+                rank: cadet.rank || "CDT",
+                regimentalNumber: cadet.regimentalNumber || "-",
+                division: cadet.division || "-",
+                nccYear: cadet.nccYear || "-",
+                leaveType: absenteeLeaveTypes[mark.cadetId] || "without_leave",
               });
             }
           }
         }
       });
     });
-    
+
     const absentList = Array.from(absentMap.values());
     absentList.sort((a, b) => a.name.localeCompare(b.name));
     return absentList;
   }, [selectedSessions, cadetsMap, absenteeLeaveTypes]);
 
   // ---- Absentee Classification ----
-  const setAbsenteeLeaveType = (cadetId: string, leaveType: AbsenteeLeaveType) => {
+  const setAbsenteeLeaveType = (
+    cadetId: string,
+    leaveType: AbsenteeLeaveType,
+  ) => {
     setAbsenteeLeaveTypes((prev) => ({ ...prev, [cadetId]: leaveType }));
   };
 
@@ -460,27 +519,25 @@ const ParadeStateReport: React.FC = () => {
       selectedSessions,
       cadetsMap,
       absentees,
-      anoStatuses
+      anoStatuses,
     );
   }, [selectedSessions, cadetsMap, anoStatuses, absentees]);
-
-
 
   // ---- Preview ----
   const handlePreview = () => {
     if (!validateForm()) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
     if (sessionsData.length === 0) {
-      toast.error('Please fetch attendance data first');
+      toast.error("Please fetch attendance data first");
       return;
     }
 
     if (!sessionValidation.isValid) {
       toast.error(
-        `Session constraint error: Missing ${sessionValidation.missingKeys.length > 0 ? sessionValidation.missingKeys.join(', ') : 'None'}. Selected: ${sessionValidation.selectedCount}`,
-        { duration: 4000 }
+        `Session constraint error: Missing ${sessionValidation.missingKeys.length > 0 ? sessionValidation.missingKeys.join(", ") : "None"}. Selected: ${sessionValidation.selectedCount}`,
+        { duration: 4000 },
       );
       return;
     }
@@ -492,7 +549,7 @@ const ParadeStateReport: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner as="span" animation="border"  size="sm" />
+        <Spinner as="span" animation="border" size="sm" />
         <p className="mt-3">Loading data...</p>
       </Container>
     );
@@ -504,7 +561,8 @@ const ParadeStateReport: React.FC = () => {
         <Col>
           <h2 className="mb-1">Parade State Report Generator</h2>
           <p className="text-muted mb-0">
-            Generate official NCC Parade State from locked official parade attendance sessions.
+            Generate official NCC Parade State from locked official parade
+            attendance sessions.
           </p>
         </Col>
       </Row>
@@ -532,12 +590,14 @@ const ParadeStateReport: React.FC = () => {
                         type="date"
                         value={formData.date}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleFormChange('date', e.target.value)
+                          handleFormChange("date", e.target.value)
                         }
                         isInvalid={Boolean(formErrors.date)}
                       />
                       {formErrors.date && (
-                        <Form.Text className="text-danger d-block">{formErrors.date}</Form.Text>
+                        <Form.Text className="text-danger d-block">
+                          {formErrors.date}
+                        </Form.Text>
                       )}
                     </Form.Group>
                   </Col>
@@ -549,12 +609,14 @@ const ParadeStateReport: React.FC = () => {
                         placeholder="e.g. 01"
                         value={formData.paradeNumber}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleFormChange('paradeNumber', e.target.value)
+                          handleFormChange("paradeNumber", e.target.value)
                         }
                         isInvalid={Boolean(formErrors.paradeNumber)}
                       />
                       {formErrors.paradeNumber && (
-                        <Form.Text className="text-danger d-block">{formErrors.paradeNumber}</Form.Text>
+                        <Form.Text className="text-danger d-block">
+                          {formErrors.paradeNumber}
+                        </Form.Text>
                       )}
                     </Form.Group>
                   </Col>
@@ -565,12 +627,14 @@ const ParadeStateReport: React.FC = () => {
                         type="time"
                         value={formData.timeFrom}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleFormChange('timeFrom', e.target.value)
+                          handleFormChange("timeFrom", e.target.value)
                         }
                         isInvalid={Boolean(formErrors.timeFrom)}
                       />
                       {formErrors.timeFrom && (
-                        <Form.Text className="text-danger d-block">{formErrors.timeFrom}</Form.Text>
+                        <Form.Text className="text-danger d-block">
+                          {formErrors.timeFrom}
+                        </Form.Text>
                       )}
                     </Form.Group>
                   </Col>
@@ -581,12 +645,14 @@ const ParadeStateReport: React.FC = () => {
                         type="time"
                         value={formData.timeTo}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleFormChange('timeTo', e.target.value)
+                          handleFormChange("timeTo", e.target.value)
                         }
                         isInvalid={Boolean(formErrors.timeTo)}
                       />
                       {formErrors.timeTo && (
-                        <Form.Text className="text-danger d-block">{formErrors.timeTo}</Form.Text>
+                        <Form.Text className="text-danger d-block">
+                          {formErrors.timeTo}
+                        </Form.Text>
                       )}
                     </Form.Group>
                   </Col>
@@ -598,7 +664,7 @@ const ParadeStateReport: React.FC = () => {
                         placeholder="e.g. Tea, Biscuits"
                         value={formData.refreshmentItems}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleFormChange('refreshmentItems', e.target.value)
+                          handleFormChange("refreshmentItems", e.target.value)
                         }
                       />
                     </Form.Group>
@@ -611,16 +677,18 @@ const ParadeStateReport: React.FC = () => {
                       className="w-100"
                     >
                       {fetching ? (
-                        <>
-                          Fetching...
-                        </>
+                        <>Fetching...</>
                       ) : (
                         <>
                           <i className="bi bi-cloud-download me-2" />
-                          Fetch Attendance Data for{' '}
+                          Fetch Attendance Data for{" "}
                           {formData.date
-                            ? formatISTDate(formData.date, { day: '2-digit', month: 'short', year: 'numeric' })
-                            : 'selected date'}
+                            ? formatISTDate(formData.date, {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "selected date"}
                         </>
                       )}
                     </Button>
@@ -642,16 +710,23 @@ const ParadeStateReport: React.FC = () => {
               <Card.Body>
                 {sessionsData.length === 0 ? (
                   <Alert variant="warning" className="mb-0">
-                    No locked official parade sessions found for{' '}
-                    {formatISTDate(formData.date, { day: '2-digit', month: 'long', year: 'numeric' })}.
-                    Make sure sessions are created, marked as Official Parade, and locked.
+                    No locked official parade sessions found for{" "}
+                    {formatISTDate(formData.date, {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                    . Make sure sessions are created, marked as Official Parade,
+                    and locked.
                   </Alert>
                 ) : (
                   <>
                     <p className="text-muted small mb-2">
-                      Select which sessions to include. By default, all locked official sessions for the date are selected. If a cadet attended any selected session, they are marked Present.
+                      Select which sessions to include. By default, all locked
+                      official sessions for the date are selected. If a cadet
+                      attended any selected session, they are marked Present.
                     </p>
-                    
+
                     {!sessionValidation.isValid && (
                       <Alert variant="danger" className="py-2 px-3 small">
                         <strong>Session Constraint Error:</strong>
@@ -663,15 +738,23 @@ const ParadeStateReport: React.FC = () => {
                     )}
                     <div className="d-flex flex-wrap gap-2 mb-3">
                       {sessionsData.map(({ session }) => (
-                        <div key={session.id} className="d-inline-block border rounded p-2 bg-light">
+                        <div
+                          key={session.id}
+                          className="d-inline-block border rounded p-2 bg-light"
+                        >
                           <Form.Check
                             type="checkbox"
                             id={`session-${session.id}`}
                             label={
                               <span>
-                                <strong>{session.divisionId} - {session.nccYear}</strong>
+                                <strong>
+                                  {session.divisionId} - {session.nccYear}
+                                </strong>
                                 <br />
-                                <small className="text-muted">{session.stats.present}P / {session.stats.absent}A</small>
+                                <small className="text-muted">
+                                  {session.stats.present}P /{" "}
+                                  {session.stats.absent}A
+                                </small>
                               </span>
                             }
                             checked={selectedSessionIds.has(session.id)}
@@ -681,7 +764,8 @@ const ParadeStateReport: React.FC = () => {
                       ))}
                     </div>
                     <div className="text-muted small">
-                      <strong>{selectedSessionIds.size}</strong> out of {sessionsData.length} session(s) selected.
+                      <strong>{selectedSessionIds.size}</strong> out of{" "}
+                      {sessionsData.length} session(s) selected.
                     </div>
                   </>
                 )}
@@ -706,7 +790,8 @@ const ParadeStateReport: React.FC = () => {
                 ) : (
                   <>
                     <p className="text-muted small mb-2">
-                      Classify ANO status. Their count will appear in the "Offr" column under the respective category.
+                      Classify ANO status. Their count will appear in the "Offr"
+                      column under the respective category.
                     </p>
                     <Table size="sm" hover className="mb-0">
                       <thead>
@@ -717,10 +802,12 @@ const ParadeStateReport: React.FC = () => {
                       </thead>
                       <tbody>
                         {anoUsers.map((ano) => {
-                          const status = anoStatuses[ano.uid] || 'none';
+                          const status = anoStatuses[ano.uid] || "none";
                           return (
                             <tr key={ano.uid}>
-                              <td className="align-middle">{ano.name} ({ano.email})</td>
+                              <td className="align-middle">
+                                {ano.name} ({ano.email})
+                              </td>
                               <td>
                                 <div className="d-flex gap-3 flex-wrap">
                                   <Form.Check
@@ -728,32 +815,40 @@ const ParadeStateReport: React.FC = () => {
                                     id={`ano-${ano.uid}-none`}
                                     label="None / N/A"
                                     name={`ano-${ano.uid}`}
-                                    checked={status === 'none'}
-                                    onChange={() => setAnoStatus(ano.uid, 'none')}
+                                    checked={status === "none"}
+                                    onChange={() =>
+                                      setAnoStatus(ano.uid, "none")
+                                    }
                                   />
                                   <Form.Check
                                     type="radio"
                                     id={`ano-${ano.uid}-present`}
                                     label="Present"
                                     name={`ano-${ano.uid}`}
-                                    checked={status === 'present'}
-                                    onChange={() => setAnoStatus(ano.uid, 'present')}
+                                    checked={status === "present"}
+                                    onChange={() =>
+                                      setAnoStatus(ano.uid, "present")
+                                    }
                                   />
                                   <Form.Check
                                     type="radio"
                                     id={`ano-${ano.uid}-with_leave`}
                                     label="Absent with Leave"
                                     name={`ano-${ano.uid}`}
-                                    checked={status === 'with_leave'}
-                                    onChange={() => setAnoStatus(ano.uid, 'with_leave')}
+                                    checked={status === "with_leave"}
+                                    onChange={() =>
+                                      setAnoStatus(ano.uid, "with_leave")
+                                    }
                                   />
                                   <Form.Check
                                     type="radio"
                                     id={`ano-${ano.uid}-without_leave`}
                                     label="Absent without Leave"
                                     name={`ano-${ano.uid}`}
-                                    checked={status === 'without_leave'}
-                                    onChange={() => setAnoStatus(ano.uid, 'without_leave')}
+                                    checked={status === "without_leave"}
+                                    onChange={() =>
+                                      setAnoStatus(ano.uid, "without_leave")
+                                    }
                                   />
                                 </div>
                               </td>
@@ -783,14 +878,14 @@ const ParadeStateReport: React.FC = () => {
                     <Button
                       variant="outline-dark"
                       size="sm"
-                      onClick={() => setAllAbsenteesLeaveType('with_leave')}
+                      onClick={() => setAllAbsenteesLeaveType("with_leave")}
                     >
                       All With Leave
                     </Button>
                     <Button
                       variant="outline-dark"
                       size="sm"
-                      onClick={() => setAllAbsenteesLeaveType('without_leave')}
+                      onClick={() => setAllAbsenteesLeaveType("without_leave")}
                     >
                       All Without Leave
                     </Button>
@@ -822,7 +917,9 @@ const ParadeStateReport: React.FC = () => {
                             <td className="align-middle">
                               <Badge bg="secondary">{ab.rank}</Badge>
                             </td>
-                            <td className="small align-middle">{ab.regimentalNumber}</td>
+                            <td className="small align-middle">
+                              {ab.regimentalNumber}
+                            </td>
                             <td>
                               <div className="d-flex gap-3">
                                 <Form.Check
@@ -830,16 +927,26 @@ const ParadeStateReport: React.FC = () => {
                                   id={`absentee-${ab.cadetId}-with`}
                                   label="With Leave"
                                   name={`absentee-${ab.cadetId}`}
-                                  checked={ab.leaveType === 'with_leave'}
-                                  onChange={() => setAbsenteeLeaveType(ab.cadetId, 'with_leave')}
+                                  checked={ab.leaveType === "with_leave"}
+                                  onChange={() =>
+                                    setAbsenteeLeaveType(
+                                      ab.cadetId,
+                                      "with_leave",
+                                    )
+                                  }
                                 />
                                 <Form.Check
                                   type="radio"
                                   id={`absentee-${ab.cadetId}-without`}
                                   label="Without Leave"
                                   name={`absentee-${ab.cadetId}`}
-                                  checked={ab.leaveType === 'without_leave'}
-                                  onChange={() => setAbsenteeLeaveType(ab.cadetId, 'without_leave')}
+                                  checked={ab.leaveType === "without_leave"}
+                                  onChange={() =>
+                                    setAbsenteeLeaveType(
+                                      ab.cadetId,
+                                      "without_leave",
+                                    )
+                                  }
                                 />
                               </div>
                             </td>
@@ -876,10 +983,14 @@ const ParadeStateReport: React.FC = () => {
                     <tbody>
                       {PARADE_CATEGORIES.map(({ key, label }) => (
                         <tr key={key}>
-                          <td className="text-start fw-semibold ps-3">{label}</td>
+                          <td className="text-start fw-semibold ps-3">
+                            {label}
+                          </td>
                           {PARADE_RANK_COLUMNS.map(({ key: col }) => (
                             <td key={col}>
-                              {rankCounts[key as keyof typeof rankCounts][col] || 0}
+                              {rankCounts[key as keyof typeof rankCounts][
+                                col
+                              ] || 0}
                             </td>
                           ))}
                         </tr>
@@ -892,7 +1003,9 @@ const ParadeStateReport: React.FC = () => {
                 <Button
                   variant="primary"
                   onClick={handlePreview}
-                  disabled={sessionsData.length === 0 || !sessionValidation.isValid}
+                  disabled={
+                    sessionsData.length === 0 || !sessionValidation.isValid
+                  }
                 >
                   <i className="bi bi-eye me-2" />
                   Preview Parade State
@@ -933,26 +1046,38 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
   absentees,
 }) => {
   const formatTime = (time: string) => {
-    if (!time) return '-';
-    const [h, m] = time.split(':');
+    if (!time) return "-";
+    const [h, m] = time.split(":");
     const hour = parseInt(h, 10);
-    const suffix = hour >= 12 ? 'PM' : 'AM';
+    const suffix = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${m} ${suffix}`;
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    return formatISTDate(dateStr, { day: '2-digit', month: 'long', year: 'numeric' }, 'en-GB');
+    if (!dateStr) return "-";
+    return formatISTDate(
+      dateStr,
+      { day: "2-digit", month: "long", year: "numeric" },
+      "en-GB",
+    );
   };
 
-  const absenteesWithLeave = absentees.filter((a) => a.leaveType === 'with_leave');
-  const absenteesWithoutLeave = absentees.filter((a) => a.leaveType === 'without_leave');
-  const maxAbsenteeRows = Math.max(absenteesWithLeave.length, absenteesWithoutLeave.length, 14);
+  const absenteesWithLeave = absentees.filter(
+    (a) => a.leaveType === "with_leave",
+  );
+  const absenteesWithoutLeave = absentees.filter(
+    (a) => a.leaveType === "without_leave",
+  );
+  const maxAbsenteeRows = Math.max(
+    absenteesWithLeave.length,
+    absenteesWithoutLeave.length,
+    14,
+  );
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    const dateStr = formData.date ? formatDate(formData.date) : 'Unknown Date';
+    const dateStr = formData.date ? formatDate(formData.date) : "Unknown Date";
     document.title = `${dateStr} Parade State`;
 
     setTimeout(() => {
@@ -963,7 +1088,13 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
   };
 
   return (
-    <Modal show={show} onHide={onHide} size="xl" fullscreen="lg-down" className="ps-preview-modal">
+    <Modal
+      show={show}
+      onHide={onHide}
+      size="xl"
+      fullscreen="lg-down"
+      className="ps-preview-modal"
+    >
       <Modal.Header closeButton className="ps-no-print">
         <Modal.Title>Parade State Preview</Modal.Title>
       </Modal.Header>
@@ -974,34 +1105,113 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
             <div className="ps-title">PARADE STATE</div>
 
             {/* Meta */}
-            <div className="ps-meta" style={{ marginBottom: '15px', lineHeight: '2.5' }}>
+            <div
+              className="ps-meta"
+              style={{ marginBottom: "15px", lineHeight: "2.5" }}
+            >
               {/* Row 1 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px' }}>
-                <div style={{ display: 'flex' }}>
-                  <span style={{ fontWeight: 'bold', marginRight: '8px', whiteSpace: 'nowrap' }}>Institution:</span>
-                  <span><u><strong>THIAGARAJAR COLLEGE OF ENGINEERING</strong></u></span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "20px",
+                }}
+              >
+                <div style={{ display: "flex" }}>
+                  <span
+                    style={{
+                      fontWeight: "bold",
+                      marginRight: "8px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Institution:
+                  </span>
+                  <span>
+                    <u>
+                      <strong>THIAGARAJAR COLLEGE OF ENGINEERING</strong>
+                    </u>
+                  </span>
                 </div>
-                <div style={{ display: 'flex' }}>
-                  <span style={{ fontWeight: 'bold', marginRight: '8px', whiteSpace: 'nowrap' }}>Parade No:</span>
-                  <span><u><strong>{formData.paradeNumber || ' '}</strong></u></span>
+                <div style={{ display: "flex" }}>
+                  <span
+                    style={{
+                      fontWeight: "bold",
+                      marginRight: "8px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Parade No:
+                  </span>
+                  <span>
+                    <u>
+                      <strong>{formData.paradeNumber || " "}</strong>
+                    </u>
+                  </span>
                 </div>
               </div>
-              
+
               {/* Row 2 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px' }}>
-                <div style={{ display: 'flex' }}>
-                  <span style={{ fontWeight: 'bold', marginRight: '8px', whiteSpace: 'nowrap' }}>Troop/ Company No:</span>
-                  <span><u><strong>4(TN) ENGR COY NCC</strong></u></span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "20px",
+                }}
+              >
+                <div style={{ display: "flex" }}>
+                  <span
+                    style={{
+                      fontWeight: "bold",
+                      marginRight: "8px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Troop/ Company No:
+                  </span>
+                  <span>
+                    <u>
+                      <strong>4(TN) ENGR COY NCC</strong>
+                    </u>
+                  </span>
                 </div>
-                <div style={{ display: 'flex' }}>
-                  <span style={{ fontWeight: 'bold', marginRight: '8px', whiteSpace: 'nowrap' }}>Time:</span>
-                  <span><u><strong>
-                    {formData.timeFrom && formData.timeTo ? `${formatTime(formData.timeFrom)} to ${formatTime(formData.timeTo)}` : ' '}
-                  </strong></u></span>
+                <div style={{ display: "flex" }}>
+                  <span
+                    style={{
+                      fontWeight: "bold",
+                      marginRight: "8px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Time:
+                  </span>
+                  <span>
+                    <u>
+                      <strong>
+                        {formData.timeFrom && formData.timeTo
+                          ? `${formatTime(formData.timeFrom)} to ${formatTime(formData.timeTo)}`
+                          : " "}
+                      </strong>
+                    </u>
+                  </span>
                 </div>
-                <div style={{ display: 'flex' }}>
-                  <span style={{ fontWeight: 'bold', marginRight: '8px', whiteSpace: 'nowrap' }}>Date:</span>
-                  <span><u><strong>{formData.date ? formatDate(formData.date) : ' '}</strong></u></span>
+                <div style={{ display: "flex" }}>
+                  <span
+                    style={{
+                      fontWeight: "bold",
+                      marginRight: "8px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Date:
+                  </span>
+                  <span>
+                    <u>
+                      <strong>
+                        {formData.date ? formatDate(formData.date) : " "}
+                      </strong>
+                    </u>
+                  </span>
                 </div>
               </div>
             </div>
@@ -1029,8 +1239,15 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
                 ))}
                 <tr>
                   <td className="ps-cat-label">Refreshment Items</td>
-                  <td colSpan={PARADE_RANK_COLUMNS.length} style={{ textAlign: 'left', fontWeight: 'bold', paddingLeft: '12px' }}>
-                    {formData.refreshmentItems || ' '}
+                  <td
+                    colSpan={PARADE_RANK_COLUMNS.length}
+                    style={{
+                      textAlign: "left",
+                      fontWeight: "bold",
+                      paddingLeft: "12px",
+                    }}
+                  >
+                    {formData.refreshmentItems || " "}
                   </td>
                 </tr>
               </tbody>
@@ -1042,7 +1259,7 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
                 <div className="ps-sig-line">Signature of Instructor</div>
                 <div className="ps-sig-subtitle">(No, Rank &amp; Name)</div>
               </div>
-            
+
               <div className="ps-sig-block">
                 <div className="ps-sig-line">Signature of the ANO/CTO</div>
                 <div className="ps-sig-subtitle">(With seal)</div>
@@ -1057,12 +1274,23 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
             <div className="ps-countersigned">COUNTERSIGNED</div>
 
             {/* Notes */}
-            <div className="ps-notes" style={{ marginTop: '20px', textAlign: 'justify', lineHeight: '1.5' }}>
-              <strong>Note:</strong> <span style={{ marginLeft: '4px' }}>This parade state will be submitted to 
-                4 (TN) Engr Coy NCC, Madurai by 10am of the following day. A member of regular
-                Indian Instructional Staff will sign in this place and none else. If no such
-                Instructor on parade, the space will be left blank. The entry relevant to the 
-                unit should be retained and others, scored out when the form filled in.</span>
+            <div
+              className="ps-notes"
+              style={{
+                marginTop: "20px",
+                textAlign: "justify",
+                lineHeight: "1.5",
+              }}
+            >
+              <strong>Note:</strong>{" "}
+              <span style={{ marginLeft: "4px" }}>
+                This parade state will be submitted to 4 (TN) Engr Coy NCC,
+                Madurai by 10am of the following day. A member of regular Indian
+                Instructional Staff will sign in this place and none else. If no
+                such Instructor on parade, the space will be left blank. The
+                entry relevant to the unit should be retained and others, scored
+                out when the form filled in.
+              </span>
             </div>
 
             {/* ---- Roll of Absentees ---- */}
@@ -1091,16 +1319,19 @@ const ParadeStatePreview: React.FC<PreviewProps> = ({
                   return (
                     <tr key={i}>
                       <td>{i + 1}</td>
-                      <td>{withLeave?.regimentalNumber || ''}</td>
-                      <td>{withLeave?.rank || ''}</td>
-                      <td className="ps-absentee-name">{withLeave?.name || ''}</td>
-                      <td>{withoutLeave?.regimentalNumber || ''}</td>
-                      <td>{withoutLeave?.rank || ''}</td>
-                      <td className="ps-absentee-name">{withoutLeave?.name || ''}</td>
+                      <td>{withLeave?.regimentalNumber || ""}</td>
+                      <td>{withLeave?.rank || ""}</td>
+                      <td className="ps-absentee-name">
+                        {withLeave?.name || ""}
+                      </td>
+                      <td>{withoutLeave?.regimentalNumber || ""}</td>
+                      <td>{withoutLeave?.rank || ""}</td>
+                      <td className="ps-absentee-name">
+                        {withoutLeave?.name || ""}
+                      </td>
                     </tr>
                   );
                 })}
-
               </tbody>
             </table>
           </div>

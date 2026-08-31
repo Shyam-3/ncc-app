@@ -1,5 +1,5 @@
 // Auth API wrapper functions
-import { auth } from '@/shared/config/firebase';
+import { auth } from "@/shared/config/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -8,13 +8,21 @@ import {
   sendEmailVerification,
   updateProfile,
   type User,
-} from 'firebase/auth';
-import { mapFirebaseAuthError } from '@/shared/utils/firebaseErrors';
+} from "firebase/auth";
+import { mapFirebaseAuthError } from "@/shared/utils/firebaseErrors";
 
 export const authApi = {
-  async registerWithEmail(email: string, password: string, displayName: string) {
+  async registerWithEmail(
+    email: string,
+    password: string,
+    displayName: string,
+  ) {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
       if (userCredential.user) {
         await updateProfile(userCredential.user, { displayName });
       }
@@ -58,7 +66,7 @@ export const authApi = {
 
   async updateUserProfile(displayName: string, photoURL?: string) {
     const user = auth.currentUser;
-    if (!user) throw new Error('No authenticated user');
+    if (!user) throw new Error("No authenticated user");
     try {
       return await updateProfile(user, { displayName, photoURL });
     } catch (error) {

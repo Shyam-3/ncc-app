@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface DefaultAvatarProps {
   /** Size in pixels. Defaults to 80. */
@@ -11,7 +11,10 @@ interface DefaultAvatarProps {
  * A "bitten donut" default avatar displayed when a user hasn't uploaded a photo.
  * Renders as an inline SVG so it works without any external dependencies.
  */
-const DefaultAvatar: React.FC<DefaultAvatarProps> = ({ size = 80, className = '' }) => {
+const DefaultAvatar: React.FC<DefaultAvatarProps> = ({
+  size = 80,
+  className = "",
+}) => {
   return (
     <svg
       width={size}

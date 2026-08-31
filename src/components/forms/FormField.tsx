@@ -1,11 +1,13 @@
-import React from 'react';
+import React from "react";
 
 interface FormFieldProps {
   label: string;
   type?: string;
   name: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
   error?: string;
   placeholder?: string;
   required?: boolean;
@@ -15,7 +17,7 @@ interface FormFieldProps {
 
 export default function FormField({
   label,
-  type = 'text',
+  type = "text",
   name,
   value,
   onChange,
@@ -26,7 +28,7 @@ export default function FormField({
   rows,
 }: FormFieldProps) {
   const inputId = `field_${name}`;
-  const isTextarea = type === 'textarea';
+  const isTextarea = type === "textarea";
 
   return (
     <div className="form-group">
@@ -43,7 +45,7 @@ export default function FormField({
           placeholder={placeholder}
           disabled={disabled}
           rows={rows || 3}
-          className={error ? 'error' : ''}
+          className={error ? "error" : ""}
         />
       ) : (
         <input
@@ -55,7 +57,7 @@ export default function FormField({
           placeholder={placeholder}
           required={required}
           disabled={disabled}
-          className={error ? 'error' : ''}
+          className={error ? "error" : ""}
         />
       )}
       {error && <span className="error-message">{error}</span>}

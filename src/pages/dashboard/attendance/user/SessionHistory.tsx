@@ -1,7 +1,13 @@
-import { Table, Badge, Form, Card } from 'react-bootstrap';
-import { useState, useMemo, type ChangeEvent } from 'react';
-import type { AttendanceSession, AttendanceMark } from '@/features/attendance/attendance.types';
-import { ATTENDANCE_STATUS_COLORS, ATTENDANCE_STATUS_LABELS } from '@/features/attendance/attendance.types';
+import { Table, Badge, Form, Card } from "react-bootstrap";
+import { useState, useMemo, type ChangeEvent } from "react";
+import type {
+  AttendanceSession,
+  AttendanceMark,
+} from "@/features/attendance/attendance.types";
+import {
+  ATTENDANCE_STATUS_COLORS,
+  ATTENDANCE_STATUS_LABELS,
+} from "@/features/attendance/attendance.types";
 
 interface SessionWithMark {
   session: AttendanceSession & { id: string };
@@ -13,7 +19,7 @@ interface SessionHistoryProps {
 }
 
 export function SessionHistory({ history }: SessionHistoryProps) {
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>("");
 
   const filteredHistory = useMemo(() => {
     return history.filter((item) => {
@@ -29,9 +35,11 @@ export function SessionHistory({ history }: SessionHistoryProps) {
         <div className="ms-auto d-flex gap-2">
           <Form.Select
             size="sm"
-            style={{ width: 'auto' }}
+            style={{ width: "auto" }}
             value={statusFilter}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setStatusFilter(e.target.value)
+            }
           >
             <option value="">All Status</option>
             <option value="P">Present</option>
@@ -59,8 +67,16 @@ export function SessionHistory({ history }: SessionHistoryProps) {
                   <td>{item.session.date}</td>
                   <td>{item.session.title}</td>
                   <td>
-                    <Badge bg={item.mark ? ATTENDANCE_STATUS_COLORS[item.mark.status] : 'secondary'}>
-                      {item.mark ? ATTENDANCE_STATUS_LABELS[item.mark.status] : 'N/A'}
+                    <Badge
+                      bg={
+                        item.mark
+                          ? ATTENDANCE_STATUS_COLORS[item.mark.status]
+                          : "secondary"
+                      }
+                    >
+                      {item.mark
+                        ? ATTENDANCE_STATUS_LABELS[item.mark.status]
+                        : "N/A"}
                     </Badge>
                   </td>
                 </tr>

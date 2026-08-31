@@ -14,23 +14,25 @@ export const validators = {
    */
   password(value: string): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     if (value.length < 8) {
-      errors.push('Password must be at least 8 characters long');
+      errors.push("Password must be at least 8 characters long");
     }
     if (!/[A-Z]/.test(value)) {
-      errors.push('Password must contain at least one uppercase letter');
+      errors.push("Password must contain at least one uppercase letter");
     }
     if (!/[a-z]/.test(value)) {
-      errors.push('Password must contain at least one lowercase letter');
+      errors.push("Password must contain at least one lowercase letter");
     }
     if (!/[0-9]/.test(value)) {
-      errors.push('Password must contain at least one number');
+      errors.push("Password must contain at least one number");
     }
     if (!/[!@#$%^&*]/.test(value)) {
-      errors.push('Password must contain at least one special character (!@#$%^&*)');
+      errors.push(
+        "Password must contain at least one special character (!@#$%^&*)",
+      );
     }
-    
+
     return {
       valid: errors.length === 0,
       errors,
@@ -42,7 +44,7 @@ export const validators = {
    */
   phone(value: string): boolean {
     const phoneRegex = /^[0-9]{10}$/;
-    return phoneRegex.test(value.replace(/\D/g, ''));
+    return phoneRegex.test(value.replace(/\D/g, ""));
   },
 
   /**
@@ -61,7 +63,7 @@ export const validators = {
    * Validate required field
    */
   required(value: any): boolean {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       return value.trim().length > 0;
     }
     return value !== null && value !== undefined;

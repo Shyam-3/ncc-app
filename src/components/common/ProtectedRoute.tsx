@@ -1,21 +1,24 @@
-import React, { ReactNode } from 'react';
-import { Spinner } from 'react-bootstrap';
-import { Navigate } from 'react-router-dom';
-import { UserRole } from '../../shared/config/constants';
-import { useAuth } from '@/features/auth/AuthContext';
+import React, { ReactNode } from "react";
+import { Spinner } from "react-bootstrap";
+import { Navigate } from "react-router-dom";
+import { UserRole } from "../../shared/config/constants";
+import { useAuth } from "@/features/auth/AuthContext";
 
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRoles?: UserRole[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles = [] }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredRoles = [],
+}) => {
   const { currentUser, userProfile, loading } = useAuth();
 
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">
-        <Spinner as="span" animation="border" variant="primary"  size="sm" />
+        <Spinner as="span" animation="border" variant="primary" size="sm" />
       </div>
     );
   }
@@ -25,7 +28,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   }
 
   // If the user has not been approved yet, they won't have a userProfile (or it will be inactive)
-  if (!userProfile || userProfile.status !== 'active') {
+  if (!userProfile || userProfile.status !== "active") {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -40,4 +43,3 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
 };
 
 export default ProtectedRoute;
-

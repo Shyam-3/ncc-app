@@ -11,10 +11,10 @@ export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
-  status: 'pending' | 'active' | 'inactive' | 'rejected';
+  status: "pending" | "active" | "inactive" | "rejected";
 }
 
-export type UserRole = 'admin' | 'officer' | 'cadet' | 'viewer';
+export type UserRole = "admin" | "officer" | "cadet" | "viewer";
 
 export interface LoginCredentials {
   email: string;

@@ -17,13 +17,15 @@
 }
 
 .home-recruitment-banner::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: 0;
   padding: 3px;
   background: linear-gradient(135deg, #ffd700, #ff6b35, #ffd700);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   animation: recruitmentGlow 2.5s ease-in-out infinite;
@@ -31,16 +33,23 @@
 }
 
 @keyframes recruitmentGlow {
-  0%, 100% { opacity: 0.5; }
-  50%      { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .home-recruitment-banner::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   border-radius: 0;
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.15), 0 0 60px rgba(255, 107, 53, 0.1);
+  box-shadow:
+    0 0 30px rgba(255, 215, 0, 0.15),
+    0 0 60px rgba(255, 107, 53, 0.1);
   animation: recruitmentGlow 2.5s ease-in-out infinite;
   pointer-events: none;
 }
@@ -69,7 +78,9 @@
   padding: 0.75rem 2rem;
   border-radius: 50px;
   font-size: 1.1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .home-recruitment-cta:hover {
@@ -89,11 +100,15 @@
   overflow: hidden;
 }
 
-
 /* -- Celebration Banner (IDC / RDC) ----------------------------------------- */
 .home-celebration-tricolor-banner {
   position: relative;
-  background: linear-gradient(135deg, rgba(255,153,51,0.85) 0%, rgba(255,255,255,0.95) 50%, rgba(19,136,8,0.85) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 153, 51, 0.85) 0%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(19, 136, 8, 0.85) 100%
+  );
   color: #111;
   padding: 3rem 0;
   overflow: hidden;
@@ -127,15 +142,18 @@
 
 .home-celebration-ncc-banner {
   position: relative;
-  background: linear-gradient(135deg, 
-    rgba(239, 28, 37, 0.9) 0%, 
-    rgba(15, 15, 20, 0.95) 25%, 
-    rgba(45, 48, 146, 0.95) 55%, 
+  background: linear-gradient(
+    135deg,
+    rgba(239, 28, 37, 0.9) 0%,
+    rgba(239, 28, 37, 0.9) 25%,
+    rgba(45, 48, 146, 0.95) 45%,
+    rgba(45, 48, 146, 0.95) 60%,
     rgba(0, 174, 239, 0.9) 100%
   );
   color: #fff;
   padding: 3rem 0;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .home-celebration-ncc-banner .home-recruitment-title {
@@ -144,7 +162,7 @@
 }
 
 .home-celebration-ncc-banner .home-recruitment-body {
-  color: #eaeaea;
+  color: #e0e6ed;
   font-weight: 500;
 }
 
@@ -163,4 +181,3 @@
   background-color: #f0f0f0;
   color: #002244;
 }
-

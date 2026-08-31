@@ -1,13 +1,13 @@
-import * as XLSX from 'xlsx';
-import type { NccYear, Division } from '@/shared/config/constants';
-import { ROMAN_YEAR_MAP } from '@/shared/config/constants';
+import * as XLSX from "xlsx";
+import type { NccYear, Division } from "@/shared/config/constants";
+import { ROMAN_YEAR_MAP } from "@/shared/config/constants";
 import {
   getSessionsByDivision,
   listMarks,
   getCadetsByDivision,
-} from '@/features/attendance/service';
-import type { AttendanceSession } from '@/features/attendance/attendance.types';
-import type { Cadet } from '@/shared/types';
+} from "@/features/attendance/service";
+import type { AttendanceSession } from "@/features/attendance/attendance.types";
+import type { Cadet } from "@/shared/types";
 
 // ============ TYPES ============
 
@@ -27,11 +27,11 @@ export interface AnnualReportPreview {
 
 // ============ HELPERS ============
 
-const UNIT_NAME = '4(TN) ENGR COY, NCC';
+const UNIT_NAME = "4(TN) ENGR COY, NCC";
 
 function getNccYearRoman(nccYear: NccYear): string {
   // nccYear is like '1st Year', '2nd Year', '3rd Year'
-  const prefix = nccYear.replace(' Year', '');
+  const prefix = nccYear.replace(" Year", "");
   return ROMAN_YEAR_MAP[prefix] || prefix;
 }
 
@@ -50,17 +50,19 @@ function formatDateForColumn(dateStr: string): string {
   // dateStr is 'YYYY-MM-DD' from the database
   // Return as-is from database (user requested: keep whatever format is in the database)
   // Convert YYYY-MM-DD to DD/MM/YYYY for display
-  const parts = dateStr.split('-');
+  const parts = dateStr.split("-");
   if (parts.length === 3) {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
   return dateStr;
 }
 
-function sortByRegimentalNumber(cadets: (Cadet & { id: string })[]): (Cadet & { id: string })[] {
+function sortByRegimentalNumber(
+  cadets: (Cadet & { id: string })[],
+): (Cadet & { id: string })[] {
   return [...cadets].sort((a, b) => {
-    const aReg = a.regimentalNumber || '';
-    const bReg = b.regimentalNumber || '';
+    const aReg = a.regimentalNumber || "";
+    const bReg = b.regimentalNumber || "";
     return aReg.localeCompare(bReg, undefined, { numeric: true });
   });
 }
@@ -70,7 +72,7 @@ function sortByRegimentalNumber(cadets: (Cadet & { id: string })[]): (Cadet & { 
 async function fetchSessionsWithMarks(
   nccYear: NccYear,
   division: Division,
-  officialOnly = false
+  officialOnly = false,
 ): Promise<SessionWithMarks[]> {
   let sessions = await getSessionsByDivision(division, nccYear);
 
@@ -95,10 +97,13 @@ async function fetchSessionsWithMarks(
 
 // ============ PREVIEW ============
 
-export async function getAnnualReportPreview(nccYear: NccYear, officialOnly = false): Promise<AnnualReportPreview> {
+export async function getAnnualReportPreview(
+  nccYear: NccYear,
+  officialOnly = false,
+): Promise<AnnualReportPreview> {
   let [sdSessions, swSessions] = await Promise.all([
-    getSessionsByDivision('SD', nccYear),
-    getSessionsByDivision('SW', nccYear),
+    getSessionsByDivision("SD", nccYear),
+    getSessionsByDivision("SW", nccYear),
   ]);
 
   // Filter to official parades only if requested
@@ -111,14 +116,17 @@ export async function getAnnualReportPreview(nccYear: NccYear, officialOnly = fa
   const allSessionMap = new Map<string, AttendanceSession & { id: string }>();
   [...sdSessions, ...swSessions].forEach((s) => allSessionMap.set(s.id!, s));
   const allSessions = Array.from(allSessionMap.values()).sort((a, b) =>
-    a.date.localeCompare(b.date)
+    a.date.localeCompare(b.date),
   );
 
-  const totalParades = allSessions.reduce((sum, s) => sum + (s.paradeCount || 1), 0);
+  const totalParades = allSessions.reduce(
+    (sum, s) => sum + (s.paradeCount || 1),
+    0,
+  );
 
   const [sdCadets, swCadets] = await Promise.all([
-    getCadetsByDivision('SD', nccYear),
-    getCadetsByDivision('SW', nccYear),
+    getCadetsByDivision("SD", nccYear),
+    getCadetsByDivision("SW", nccYear),
   ]);
 
   return {
@@ -129,23 +137,29 @@ export async function getAnnualReportPreview(nccYear: NccYear, officialOnly = fa
     swCadetCount: swCadets.length,
     dateRange:
       allSessions.length > 0
-        ? { first: allSessions[0].date, last: allSessions[allSessions.length - 1].date }
+        ? {
+            first: allSessions[0].date,
+            last: allSessions[allSessions.length - 1].date,
+          }
         : null,
   };
 }
 
 // ============ EXCEL GENERATION ============
 
-export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOnly = false): Promise<void> {
+export async function generateAnnualAttendanceExcel(
+  nccYear: NccYear,
+  officialOnly = false,
+): Promise<void> {
   // Fetch data for both divisions
   const [sdSessionsWithMarks, swSessionsWithMarks] = await Promise.all([
-    fetchSessionsWithMarks(nccYear, 'SD', officialOnly),
-    fetchSessionsWithMarks(nccYear, 'SW', officialOnly),
+    fetchSessionsWithMarks(nccYear, "SD", officialOnly),
+    fetchSessionsWithMarks(nccYear, "SW", officialOnly),
   ]);
 
   const [sdCadets, swCadets] = await Promise.all([
-    getCadetsByDivision('SD', nccYear),
-    getCadetsByDivision('SW', nccYear),
+    getCadetsByDivision("SD", nccYear),
+    getCadetsByDivision("SW", nccYear),
   ]);
 
   // Sort cadets by regimental number within each division
@@ -154,7 +168,10 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
 
   // Use SD sessions for date columns (SD and SW should share session dates for the same NCC year)
   // But combine all unique session dates from both divisions
-  const sessionDateMap = new Map<string, { sd?: SessionWithMarks; sw?: SessionWithMarks }>();
+  const sessionDateMap = new Map<
+    string,
+    { sd?: SessionWithMarks; sw?: SessionWithMarks }
+  >();
 
   sdSessionsWithMarks.forEach((swm) => {
     const key = swm.session.date;
@@ -189,7 +206,7 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
       for (let i = 0; i < count; i++) {
         nums.push(currentParade + i);
       }
-      paradeLabels.push(nums.join(','));
+      paradeLabels.push(nums.join(","));
       currentParade += count;
     }
   });
@@ -225,22 +242,29 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
 
   // Row 5: Headers
   const headerRow: (string | null)[] = [
-    'S.NO',
-    'REGIMENTAL NO',
-    'RANK',
-    'NAME OF THE CADET',
+    "S.NO",
+    "REGIMENTAL NO",
+    "RANK",
+    "NAME OF THE CADET",
     ...sortedDates.map(formatDateForColumn),
-    'percentage',
+    "percentage",
   ];
   wsData.push(headerRow);
 
   // Row 6: Parade numbers
-  const paradeRow: (string | null)[] = [null, null, null, null, ...paradeLabels, null];
+  const paradeRow: (string | null)[] = [
+    null,
+    null,
+    null,
+    null,
+    ...paradeLabels,
+    null,
+  ];
   wsData.push(paradeRow);
 
   // SD Section
   // Row: "SD" header
-  const sdHeaderRow: (string | null)[] = ['SD'];
+  const sdHeaderRow: (string | null)[] = ["SD"];
   for (let i = 1; i < totalCols; i++) sdHeaderRow.push(null);
   wsData.push(sdHeaderRow);
 
@@ -248,9 +272,9 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
   sortedSdCadets.forEach((cadet, idx) => {
     const row: (string | number | null)[] = [
       idx + 1,
-      cadet.regimentalNumber || '',
-      cadet.rank || '',
-      cadet.name || '',
+      cadet.regimentalNumber || "",
+      cadet.rank || "",
+      cadet.name || "",
     ];
 
     let presentParades = 0;
@@ -259,19 +283,27 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
       const entry = sessionDateMap.get(date)!;
       const sdSession = entry.sd;
       if (sdSession) {
-        const mark = sdSession.marks.get(cadet.id) || '';
-        const status = mark.toUpperCase() === 'P' ? 'P' : mark.toUpperCase() === 'A' ? 'A' : '';
+        const mark = sdSession.marks.get(cadet.id) || "";
+        const status =
+          mark.toUpperCase() === "P"
+            ? "P"
+            : mark.toUpperCase() === "A"
+              ? "A"
+              : "";
         row.push(status);
-        if (status === 'P') {
+        if (status === "P") {
           presentParades += sdSession.session.paradeCount || 1;
         }
       } else {
-        row.push('');
+        row.push("");
       }
     });
 
     // Percentage
-    const pct = totalParades > 0 ? Math.round(((presentParades / totalParades) * 100) * 100) / 100 : 0;
+    const pct =
+      totalParades > 0
+        ? Math.round((presentParades / totalParades) * 100 * 100) / 100
+        : 0;
     row.push(pct);
     wsData.push(row);
   });
@@ -280,7 +312,7 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
   wsData.push(Array(totalCols).fill(null));
 
   // SD Total row
-  const sdTotalRow: (string | number | null)[] = [null, null, null, 'TOTAL'];
+  const sdTotalRow: (string | number | null)[] = [null, null, null, "TOTAL"];
   sortedDates.forEach((date) => {
     const entry = sessionDateMap.get(date)!;
     const sdSession = entry.sd;
@@ -288,7 +320,7 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
       let count = 0;
       sortedSdCadets.forEach((cadet) => {
         const mark = sdSession.marks.get(cadet.id);
-        if (mark && mark.toUpperCase() === 'P') count++;
+        if (mark && mark.toUpperCase() === "P") count++;
       });
       sdTotalRow.push(count);
     } else {
@@ -299,7 +331,7 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
   wsData.push(sdTotalRow);
 
   // SW Section
-  const swHeaderRow: (string | null)[] = ['SW'];
+  const swHeaderRow: (string | null)[] = ["SW"];
   for (let i = 1; i < totalCols; i++) swHeaderRow.push(null);
   wsData.push(swHeaderRow);
 
@@ -307,9 +339,9 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
   sortedSwCadets.forEach((cadet, idx) => {
     const row: (string | number | null)[] = [
       idx + 1,
-      cadet.regimentalNumber || '',
-      cadet.rank || '',
-      cadet.name || '',
+      cadet.regimentalNumber || "",
+      cadet.rank || "",
+      cadet.name || "",
     ];
 
     let presentParades = 0;
@@ -318,19 +350,27 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
       const entry = sessionDateMap.get(date)!;
       const swSession = entry.sw;
       if (swSession) {
-        const mark = swSession.marks.get(cadet.id) || '';
-        const status = mark.toUpperCase() === 'P' ? 'P' : mark.toUpperCase() === 'A' ? 'A' : '';
+        const mark = swSession.marks.get(cadet.id) || "";
+        const status =
+          mark.toUpperCase() === "P"
+            ? "P"
+            : mark.toUpperCase() === "A"
+              ? "A"
+              : "";
         row.push(status);
-        if (status === 'P') {
+        if (status === "P") {
           presentParades += swSession.session.paradeCount || 1;
         }
       } else {
-        row.push('');
+        row.push("");
       }
     });
 
     // Percentage
-    const pct = totalParades > 0 ? Math.round(((presentParades / totalParades) * 100) * 100) / 100 : 0;
+    const pct =
+      totalParades > 0
+        ? Math.round((presentParades / totalParades) * 100 * 100) / 100
+        : 0;
     row.push(pct);
     wsData.push(row);
   });
@@ -339,7 +379,7 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
   wsData.push(Array(totalCols).fill(null));
 
   // SW Total row
-  const swTotalRow: (string | number | null)[] = [null, null, null, 'TOTAL'];
+  const swTotalRow: (string | number | null)[] = [null, null, null, "TOTAL"];
   sortedDates.forEach((date) => {
     const entry = sessionDateMap.get(date)!;
     const swSession = entry.sw;
@@ -347,7 +387,7 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
       let count = 0;
       sortedSwCadets.forEach((cadet) => {
         const mark = swSession.marks.get(cadet.id);
-        if (mark && mark.toUpperCase() === 'P') count++;
+        if (mark && mark.toUpperCase() === "P") count++;
       });
       swTotalRow.push(count);
     } else {
@@ -361,10 +401,17 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
   wsData.push(Array(totalCols).fill(null));
 
   // Grand total row: TOTAL(SD+SW)
-  const grandTotalRow: (string | number | null)[] = [' TOTAL(SD+SW)', ' ', null, null];
+  const grandTotalRow: (string | number | null)[] = [
+    " TOTAL(SD+SW)",
+    " ",
+    null,
+    null,
+  ];
   sortedDates.forEach((_date, i) => {
-    const sdVal = typeof sdTotalRow[4 + i] === 'number' ? (sdTotalRow[4 + i] as number) : 0;
-    const swVal = typeof swTotalRow[4 + i] === 'number' ? (swTotalRow[4 + i] as number) : 0;
+    const sdVal =
+      typeof sdTotalRow[4 + i] === "number" ? (sdTotalRow[4 + i] as number) : 0;
+    const swVal =
+      typeof swTotalRow[4 + i] === "number" ? (swTotalRow[4 + i] as number) : 0;
     grandTotalRow.push(sdVal + swVal);
   });
   grandTotalRow.push(null);
@@ -375,7 +422,7 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
   // Merge cells for header rows
-  ws['!merges'] = [
+  ws["!merges"] = [
     // Row 1: Unit name merged across all columns
     { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } },
     // Row 3: Title merged across all columns
@@ -384,16 +431,16 @@ export async function generateAnnualAttendanceExcel(nccYear: NccYear, officialOn
 
   // Column widths
   const colWidths: XLSX.ColInfo[] = [
-    { wch: 5 },  // S.NO
+    { wch: 5 }, // S.NO
     { wch: 20 }, // REGIMENTAL NO
-    { wch: 6 },  // RANK
+    { wch: 6 }, // RANK
     { wch: 28 }, // NAME OF THE CADET
   ];
   for (let i = 0; i < numDateCols; i++) {
     colWidths.push({ wch: 12 }); // Date columns
   }
   colWidths.push({ wch: 11 }); // percentage
-  ws['!cols'] = colWidths;
+  ws["!cols"] = colWidths;
 
   // ============ BUILD WORKBOOK & DOWNLOAD ============
 

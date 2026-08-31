@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Badge,
@@ -7,8 +7,8 @@ import {
   Modal,
   Spinner,
   Table,
-} from 'react-bootstrap';
-import { useAuth } from '@/features/auth/AuthContext';
+} from "react-bootstrap";
+import { useAuth } from "@/features/auth/AuthContext";
 import {
   getReadAnalytics,
   getReadCount,
@@ -16,51 +16,57 @@ import {
   listAnnouncementsForUser,
   listPublicAnnouncements,
   markAsRead,
-} from '@/features/announcements/service';
-import type { Announcement, ReadAnalyticsGroup } from '@/features/announcements/announcement.types';
-import type { AnnouncementCategory } from '@/shared/config/constants';
+} from "@/features/announcements/service";
+import type {
+  Announcement,
+  ReadAnalyticsGroup,
+} from "@/features/announcements/announcement.types";
+import type { AnnouncementCategory } from "@/shared/config/constants";
 import {
   ANNOUNCEMENT_CATEGORY_COLORS,
   ANNOUNCEMENT_CATEGORY_LABELS,
-} from '@/shared/config/constants';
-import { formatISTDateTime } from '@/shared/utils/dateTime';
+} from "@/shared/config/constants";
+import { formatISTDateTime } from "@/shared/utils/dateTime";
 
 // ─── Category filter config ──────────────────────────────────────────────────
-const CATEGORY_FILTERS: { value: AnnouncementCategory | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'celebrations', label: '🎉 Celebrations' },
-  { value: 'camps', label: '⛺ Camps' },
-  { value: 'activities', label: '🌳 Activities' },
-  { value: 'parades', label: '🎖️ Parades' },
+const CATEGORY_FILTERS: {
+  value: AnnouncementCategory | "all";
+  label: string;
+}[] = [
+  { value: "all", label: "All" },
+  { value: "celebrations", label: "🎉 Celebrations" },
+  { value: "camps", label: "⛺ Camps" },
+  { value: "activities", label: "🌳 Activities" },
+  { value: "parades", label: "🎖️ Parades" },
 ];
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = {
   filterPill: (active: boolean): React.CSSProperties => ({
-    display: 'inline-block',
-    padding: '6px 16px',
-    borderRadius: '20px',
-    cursor: 'pointer',
+    display: "inline-block",
+    padding: "6px 16px",
+    borderRadius: "20px",
+    cursor: "pointer",
     fontWeight: active ? 600 : 400,
-    fontSize: '0.875rem',
-    border: active ? '2px solid #0d6efd' : '1px solid #dee2e6',
-    backgroundColor: active ? '#e7f1ff' : '#fff',
-    color: active ? '#0d6efd' : '#495057',
-    transition: 'all 0.2s ease',
-    userSelect: 'none' as const,
+    fontSize: "0.875rem",
+    border: active ? "2px solid #0d6efd" : "1px solid #dee2e6",
+    backgroundColor: active ? "#e7f1ff" : "#fff",
+    color: active ? "#0d6efd" : "#495057",
+    transition: "all 0.2s ease",
+    userSelect: "none" as const,
   }),
   unreadCard: {
-    borderLeft: '4px solid #0d6efd',
-    backgroundColor: '#f8faff',
+    borderLeft: "4px solid #0d6efd",
+    backgroundColor: "#f8faff",
   } as React.CSSProperties,
   readCard: {
-    borderLeft: '4px solid transparent',
+    borderLeft: "4px solid transparent",
   } as React.CSSProperties,
   analyticsLink: {
-    cursor: 'pointer',
-    color: '#6c757d',
-    fontSize: '0.8rem',
-    textDecoration: 'underline',
+    cursor: "pointer",
+    color: "#6c757d",
+    fontSize: "0.8rem",
+    textDecoration: "underline",
   } as React.CSSProperties,
 };
 
@@ -68,17 +74,17 @@ const NotificationsPage: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
   const isAuthenticated = Boolean(currentUser);
   const isAdminUser =
-    userProfile?.role === 'admin' || userProfile?.role === 'superadmin';
+    userProfile?.role === "admin" || userProfile?.role === "superadmin";
 
   // ─── State ────────────────────────────────────────────────────────────────
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [readCounts, setReadCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<
-    AnnouncementCategory | 'all'
-  >('all');
+    AnnouncementCategory | "all"
+  >("all");
 
   // Expand / collapse tracking for auto-mark-as-read
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -89,7 +95,7 @@ const NotificationsPage: React.FC = () => {
     title: string;
     groups: ReadAnalyticsGroup[];
     loading: boolean;
-  }>({ show: false, title: '', groups: [], loading: false });
+  }>({ show: false, title: "", groups: [], loading: false });
 
   // ─── Data fetching ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -98,7 +104,7 @@ const NotificationsPage: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         if (isAuthenticated && currentUser) {
           const [items, userReadIds] = await Promise.all([
@@ -110,7 +116,10 @@ const NotificationsPage: React.FC = () => {
           setReadIds(userReadIds);
 
           // Fetch read counts in background ONLY for admins/superadmins
-          if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+          if (
+            userProfile?.role === "admin" ||
+            userProfile?.role === "superadmin"
+          ) {
             const counts: Record<string, number> = {};
             await Promise.all(
               items.map(async (a) => {
@@ -127,8 +136,8 @@ const NotificationsPage: React.FC = () => {
           setAnnouncements(items);
         }
       } catch (e) {
-        console.error('Failed to load announcements:', e);
-        if (!cancelled) setError('Failed to load announcements');
+        console.error("Failed to load announcements:", e);
+        if (!cancelled) setError("Failed to load announcements");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -150,12 +159,17 @@ const NotificationsPage: React.FC = () => {
       setExpandedId(announcementId);
 
       // Mark as read if authenticated and not yet read
-      if (isAuthenticated && currentUser && userProfile && !readIds.has(announcementId)) {
+      if (
+        isAuthenticated &&
+        currentUser &&
+        userProfile &&
+        !readIds.has(announcementId)
+      ) {
         try {
           await markAsRead(announcementId, {
             uid: currentUser.uid,
             name: userProfile.name,
-            nccYear: (userProfile as any).nccYear || '',
+            nccYear: (userProfile as any).nccYear || "",
             role: userProfile.role,
           });
           setReadIds((prev) => new Set(prev).add(announcementId));
@@ -165,7 +179,7 @@ const NotificationsPage: React.FC = () => {
             [announcementId]: (prev[announcementId] || 0) + 1,
           }));
         } catch (e) {
-          console.error('Failed to mark as read:', e);
+          console.error("Failed to mark as read:", e);
         }
       }
     },
@@ -179,14 +193,14 @@ const NotificationsPage: React.FC = () => {
       const groups = await getReadAnalytics(announcementId);
       setAnalyticsModal({ show: true, title, groups, loading: false });
     } catch (e) {
-      console.error('Failed to load analytics:', e);
+      console.error("Failed to load analytics:", e);
       setAnalyticsModal({ show: true, title, groups: [], loading: false });
     }
   };
 
   // ─── Filtering ────────────────────────────────────────────────────────────
   const filtered =
-    categoryFilter === 'all'
+    categoryFilter === "all"
       ? announcements
       : announcements.filter((a) => a.category === categoryFilter);
 
@@ -219,10 +233,10 @@ const NotificationsPage: React.FC = () => {
                 <Badge bg="primary" className="me-1">
                   {unreadCount}
                 </Badge>
-                unread notification{unreadCount !== 1 ? 's' : ''}
+                unread notification{unreadCount !== 1 ? "s" : ""}
               </>
             ) : (
-              'All caught up!'
+              "All caught up!"
             )}
           </p>
         )}
@@ -237,7 +251,7 @@ const NotificationsPage: React.FC = () => {
             onClick={() => setCategoryFilter(f.value)}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setCategoryFilter(f.value)}
+            onKeyDown={(e) => e.key === "Enter" && setCategoryFilter(f.value)}
           >
             {f.label}
           </span>
@@ -247,7 +261,7 @@ const NotificationsPage: React.FC = () => {
       {/* Loading */}
       {loading && (
         <div className="text-center py-5">
-          <Spinner as="span" animation="border" variant="primary"  size="sm" />
+          <Spinner as="span" animation="border" variant="primary" size="sm" />
           <p className="text-muted mt-2">Loading announcements…</p>
         </div>
       )}
@@ -260,18 +274,19 @@ const NotificationsPage: React.FC = () => {
         <div className="d-grid gap-3">
           {filtered.length === 0 && (
             <Alert variant="info">
-              {categoryFilter === 'all'
-                ? 'No announcements yet.'
+              {categoryFilter === "all"
+                ? "No announcements yet."
                 : `No announcements in this category.`}
             </Alert>
           )}
 
           {filtered.map((announcement) => {
-            const id = announcement.id || '';
+            const id = announcement.id || "";
             const isRead = readIds.has(id);
             const isExpanded = expandedId === id;
             const categoryColor =
-              ANNOUNCEMENT_CATEGORY_COLORS[announcement.category] || 'secondary';
+              ANNOUNCEMENT_CATEGORY_COLORS[announcement.category] ||
+              "secondary";
             const categoryLabel =
               ANNOUNCEMENT_CATEGORY_LABELS[announcement.category] ||
               announcement.category;
@@ -289,7 +304,7 @@ const NotificationsPage: React.FC = () => {
                 }
               >
                 <Card.Body
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: "pointer" }}
                   onClick={() => handleExpand(id)}
                 >
                   {/* Top row: category badge + pinned */}
@@ -308,7 +323,7 @@ const NotificationsPage: React.FC = () => {
                       )}
                     </div>
                     <i
-                      className={`bi bi-chevron-${isExpanded ? 'up' : 'down'} text-muted`}
+                      className={`bi bi-chevron-${isExpanded ? "up" : "down"} text-muted`}
                     ></i>
                   </div>
 
@@ -334,20 +349,22 @@ const NotificationsPage: React.FC = () => {
                       <i className="bi bi-clock me-1"></i>
                       {announcement.createdAt?.toDate
                         ? formatISTDateTime(announcement.createdAt.toDate())
-                        : ''}
+                        : ""}
                     </span>
-                    {isAuthenticated && isAdminUser && readCounts[id] !== undefined && (
-                      <span>
-                        <i className="bi bi-eye me-1"></i>
-                        {readCounts[id]} read
-                      </span>
-                    )}
+                    {isAuthenticated &&
+                      isAdminUser &&
+                      readCounts[id] !== undefined && (
+                        <span>
+                          <i className="bi bi-eye me-1"></i>
+                          {readCounts[id]} read
+                        </span>
+                      )}
                   </div>
 
                   {/* Expanded body */}
                   {isExpanded && (
                     <div className="mt-3">
-                      <p style={{ whiteSpace: 'pre-wrap' }}>
+                      <p style={{ whiteSpace: "pre-wrap" }}>
                         {announcement.body}
                       </p>
 
@@ -377,7 +394,12 @@ const NotificationsPage: React.FC = () => {
       <Modal
         show={analyticsModal.show}
         onHide={() =>
-          setAnalyticsModal({ show: false, title: '', groups: [], loading: false })
+          setAnalyticsModal({
+            show: false,
+            title: "",
+            groups: [],
+            loading: false,
+          })
         }
         size="lg"
         centered
@@ -395,7 +417,7 @@ const NotificationsPage: React.FC = () => {
 
           {analyticsModal.loading ? (
             <div className="text-center py-4">
-              <Spinner as="span" animation="border" size="sm"  />
+              <Spinner as="span" animation="border" size="sm" />
               <span className="ms-2">Loading analytics…</span>
             </div>
           ) : analyticsModal.groups.length === 0 ? (
@@ -404,7 +426,7 @@ const NotificationsPage: React.FC = () => {
             analyticsModal.groups.map((group) => (
               <div key={group.label} className="mb-4">
                 <h6>
-                  {group.label}{' '}
+                  {group.label}{" "}
                   <Badge bg="secondary" className="ms-1">
                     {group.readers.length}
                   </Badge>
@@ -425,7 +447,7 @@ const NotificationsPage: React.FC = () => {
                         <td>
                           {reader.readAt?.toDate
                             ? formatISTDateTime(reader.readAt.toDate())
-                            : '-'}
+                            : "-"}
                         </td>
                       </tr>
                     ))}

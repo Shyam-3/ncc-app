@@ -10,7 +10,8 @@ export interface Report {
   data: Record<string, any>;
 }
 
-export type ReportType = 'on-duty-letter' | 'attendance' | 'performance' | 'activity';
+export type ReportType =
+  "on-duty-letter" | "attendance" | "performance" | "activity";
 
 export interface ReportTemplate {
   id?: string;
@@ -25,7 +26,7 @@ export interface ReportTemplate {
 export interface TemplateField {
   name: string;
   label: string;
-  type: 'text' | 'date' | 'select' | 'textarea';
+  type: "text" | "date" | "select" | "textarea";
   required: boolean;
   options?: string[];
 }

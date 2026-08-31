@@ -15,13 +15,13 @@ export interface Section {
   id?: string;
   heading: string;
   body: string;
-  type: 'text' | 'markdown' | 'html';
+  type: "text" | "markdown" | "html";
   order: number;
 }
 
 export interface CmsMetadata {
   author: string;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   tags: string[];
   seoTitle?: string;
   seoDescription?: string;
@@ -30,6 +30,6 @@ export interface CmsMetadata {
 export interface CmsFragment {
   key: string;
   content: string;
-  type: 'text' | 'html';
+  type: "text" | "html";
   lastUpdated: string;
 }

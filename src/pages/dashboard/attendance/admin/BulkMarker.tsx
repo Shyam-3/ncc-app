@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, ChangeEvent } from 'react';
-import { Card, Button, Alert, Spinner, Badge, Form } from 'react-bootstrap';
+import { useState, useEffect, useCallback, ChangeEvent } from "react";
+import { Card, Button, Alert, Spinner, Badge, Form } from "react-bootstrap";
 
-import { useAuth } from '@/features/auth/AuthContext';
-import { QuickSelectGrid } from './QuickSelectGrid';
+import { useAuth } from "@/features/auth/AuthContext";
+import { QuickSelectGrid } from "./QuickSelectGrid";
 import {
   getSession,
   getCadetsByDivision,
@@ -11,12 +11,15 @@ import {
   lockSession,
   updateSessionStatus,
   updateSessionParadeFlags,
-} from '@/features/attendance/service';
-import type { Division, NccYear } from '@/shared/config/constants';
-import type { AttendanceSession, AttendanceStatus } from '@/features/attendance/attendance.types';
-import type { Cadet } from '@/shared/types';
-import toast from 'react-hot-toast';
-import { formatISTDate } from '@/shared/utils/dateTime';
+} from "@/features/attendance/service";
+import type { Division, NccYear } from "@/shared/config/constants";
+import type {
+  AttendanceSession,
+  AttendanceStatus,
+} from "@/features/attendance/attendance.types";
+import type { Cadet } from "@/shared/types";
+import toast from "react-hot-toast";
+import { formatISTDate } from "@/shared/utils/dateTime";
 
 interface BulkMarkerProps {
   sessionId: string;
@@ -24,9 +27,10 @@ interface BulkMarkerProps {
 }
 
 export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
-
   const { currentUser, userProfile } = useAuth();
-  const [session, setSession] = useState<(AttendanceSession & { id: string }) | null>(null);
+  const [session, setSession] = useState<
+    (AttendanceSession & { id: string }) | null
+  >(null);
   const [cadets, setCadets] = useState<(Cadet & { id: string })[]>([]);
   const [marks, setMarks] = useState<Record<string, AttendanceStatus>>({});
   const [loading, setLoading] = useState(true);
@@ -40,7 +44,7 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
       try {
         const sess = await getSession(sessionId);
         if (!sess) {
-          toast.error('Session not found');
+          toast.error("Session not found");
           onClose?.();
           return;
         }
@@ -49,14 +53,14 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
         // Load cadets for this division/year
         const cadetList = await getCadetsByDivision(
           sess.divisionId as Division,
-          sess.nccYear as NccYear
+          sess.nccYear as NccYear,
         );
         setCadets(cadetList);
 
         // Default all cadets to absent for quick draft/lock workflows.
         const marksMap: Record<string, AttendanceStatus> = {};
         cadetList.forEach((c) => {
-          marksMap[c.id] = 'A';
+          marksMap[c.id] = "A";
         });
 
         // Load existing marks
@@ -66,8 +70,8 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
         });
         setMarks(marksMap);
       } catch (err) {
-        console.error('Error loading session:', err);
-        toast.error('Failed to load session');
+        console.error("Error loading session:", err);
+        toast.error("Failed to load session");
       } finally {
         setLoading(false);
       }
@@ -76,10 +80,13 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
   }, [sessionId]);
 
   // Handle individual mark change
-  const handleMarkChange = useCallback((cadetId: string, status: AttendanceStatus) => {
-    setMarks((prev) => ({ ...prev, [cadetId]: status }));
-    setHasChanges(true);
-  }, []);
+  const handleMarkChange = useCallback(
+    (cadetId: string, status: AttendanceStatus) => {
+      setMarks((prev) => ({ ...prev, [cadetId]: status }));
+      setHasChanges(true);
+    },
+    [],
+  );
 
   // Handle bulk mark (all present/absent)
   const handleBulkMark = useCallback(
@@ -91,14 +98,16 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
       setMarks(newMarks);
       setHasChanges(true);
     },
-    [cadets]
+    [cadets],
   );
 
   // Save marks
   const handleSave = async (lock = false) => {
     const markerUid = currentUser?.uid || userProfile?.uid;
     if (!markerUid) {
-      toast.error('Unable to identify current user. Please re-login and try again.');
+      toast.error(
+        "Unable to identify current user. Please re-login and try again.",
+      );
       return;
     }
 
@@ -125,20 +134,20 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
 
       if (lock) {
         await lockSession(sessionId, markerUid);
-        toast.success('Attendance saved and session locked');
+        toast.success("Attendance saved and session locked");
         onClose?.();
       } else {
         // Just open the session if it was draft
-        if (session?.status === 'draft') {
-          await updateSessionStatus(sessionId, 'open');
+        if (session?.status === "draft") {
+          await updateSessionStatus(sessionId, "open");
         }
-        toast.success('Attendance saved');
+        toast.success("Attendance saved");
       }
 
       setHasChanges(false);
     } catch (err) {
-      console.error('Error saving marks:', err);
-      toast.error('Failed to save attendance');
+      console.error("Error saving marks:", err);
+      toast.error("Failed to save attendance");
     } finally {
       setSaving(false);
     }
@@ -147,7 +156,7 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
   if (loading) {
     return (
       <div className="text-center py-5">
-        <Spinner as="span" animation="border"  size="sm" />
+        <Spinner as="span" animation="border" size="sm" />
         <p className="mt-2">Loading session...</p>
       </div>
     );
@@ -157,7 +166,7 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
     return <Alert variant="danger">Session not found</Alert>;
   }
 
-  const isLocked = session.status === 'locked';
+  const isLocked = session.status === "locked";
 
   return (
     <Card>
@@ -166,10 +175,23 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
           <h5 className="mb-0">
             {session.title}
             <span className="ms-2 fs-6 fw-normal text-muted">
-              {formatISTDate(session.date, { day: '2-digit', month: '2-digit', year: '2-digit' })} | {session.divisionId} | {session.nccYear}
+              {formatISTDate(session.date, {
+                day: "2-digit",
+                month: "2-digit",
+                year: "2-digit",
+              })}{" "}
+              | {session.divisionId} | {session.nccYear}
             </span>
-            {(session.paradeCount || 1) >= 2 && <Badge bg="warning" text="dark" className="ms-2 fw-normal">Double</Badge>}
-            {session.isOfficialParade && <Badge bg="info" className="ms-2 fw-normal">Official</Badge>}
+            {(session.paradeCount || 1) >= 2 && (
+              <Badge bg="warning" text="dark" className="ms-2 fw-normal">
+                Double
+              </Badge>
+            )}
+            {session.isOfficialParade && (
+              <Badge bg="info" className="ms-2 fw-normal">
+                Official
+              </Badge>
+            )}
           </h5>
         </div>
         <div className="d-flex gap-2">
@@ -197,7 +219,9 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
               checked={(session.paradeCount || 1) >= 2}
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 const newCount = e.target.checked ? 2 : 1;
-                setSession((prev) => prev ? { ...prev, paradeCount: newCount } : prev);
+                setSession((prev) =>
+                  prev ? { ...prev, paradeCount: newCount } : prev,
+                );
                 setHasChanges(true);
               }}
             />
@@ -208,7 +232,9 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
               checked={session.isOfficialParade === true}
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 const newVal = e.target.checked;
-                setSession((prev) => prev ? { ...prev, isOfficialParade: newVal } : prev);
+                setSession((prev) =>
+                  prev ? { ...prev, isOfficialParade: newVal } : prev,
+                );
                 setHasChanges(true);
               }}
             />
@@ -239,14 +265,14 @@ export function BulkMarker({ sessionId, onClose }: BulkMarkerProps) {
               onClick={() => handleSave(false)}
               disabled={saving || !hasChanges}
             >
-              {saving ? 'Saving...' : 'Save Draft'}
+              {saving ? "Saving..." : "Save Draft"}
             </Button>
             <Button
               variant="success"
               onClick={() => handleSave(true)}
               disabled={saving}
             >
-              {saving ? 'Saving...' : 'Save & Lock'}
+              {saving ? "Saving..." : "Save & Lock"}
             </Button>
           </div>
         </Card.Footer>

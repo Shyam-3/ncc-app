@@ -31,7 +31,9 @@
 /* ── Announcement Cards ──────────────────────────────────────────────────────── */
 
 .announcement-card {
-  transition: box-shadow 0.2s ease, opacity 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .announcement-card:hover {

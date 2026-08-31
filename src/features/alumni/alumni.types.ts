@@ -1,12 +1,13 @@
-export type AlumniProfileStatus = 'pending' | 'active' | 'rejected';
-export type AlumniProfileSource = 'rollover' | 'deletion' | 'self_submit' | 'manual';
+export type AlumniProfileStatus = "pending" | "active" | "rejected";
+export type AlumniProfileSource =
+  "rollover" | "deletion" | "self_submit" | "manual";
 
 export interface AlumniProfile {
   name: string;
   email?: string;
   phone?: string;
   bloodGroup?: string;
-  division?: 'SD' | 'SW';
+  division?: "SD" | "SW";
   department?: string;
   batchYears?: string;
   academicYear?: string;

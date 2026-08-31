@@ -5,7 +5,7 @@
  * directly to Cloudinary without a backend server.
  */
 
-import { envConfig } from '../config/env';
+import { envConfig } from "../config/env";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ export interface CloudinaryUploadOptions {
   /** The filename without extension (e.g., 'john_doe') */
   publicId: string;
   /** Resource type: 'image' for photos, 'raw' for PDFs/Excel/etc. Defaults to 'image'. */
-  resourceType?: 'image' | 'raw';
+  resourceType?: "image" | "raw";
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -41,8 +41,8 @@ export function sanitizeName(name: string): string {
   return name
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_-]/g, '');
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_-]/g, "");
 }
 
 /**
@@ -67,7 +67,7 @@ export function calculateTenure(dateOfEnrollment: string): string {
  */
 export function buildCadetPhotoPath(
   dateOfEnrollment: string,
-  division: 'SD' | 'SW'
+  division: "SD" | "SW",
 ): string {
   const tenure = calculateTenure(dateOfEnrollment);
   return `ncc_assets/profiles/cadets/${tenure}/${division}`;
@@ -83,9 +83,9 @@ export function buildCadetPhotoPath(
  */
 export function buildAlumniPhotoPath(
   nccTenure: string,
-  division: 'SD' | 'SW'
+  division: "SD" | "SW",
 ): string {
-  const sanitizedTenure = nccTenure.trim().replace(/\s+/g, '');
+  const sanitizedTenure = nccTenure.trim().replace(/\s+/g, "");
   return `ncc_assets/profiles/cadets/${sanitizedTenure}/${division}`;
 }
 
@@ -95,7 +95,7 @@ export function buildAlumniPhotoPath(
  * @returns Folder path 'ncc_assets/profiles/ano'
  */
 export function buildAnoPhotoPath(): string {
-  return 'ncc_assets/profiles/ano';
+  return "ncc_assets/profiles/ano";
 }
 
 // ─── Upload ──────────────────────────────────────────────────────────────────
@@ -111,35 +111,35 @@ export function buildAnoPhotoPath(): string {
  */
 export async function uploadToCloudinary(
   file: File,
-  options: CloudinaryUploadOptions
+  options: CloudinaryUploadOptions,
 ): Promise<CloudinaryUploadResult> {
   const { cloudName, uploadPreset } = envConfig.cloudinaryConfig;
 
   if (!cloudName || !uploadPreset) {
     throw new Error(
-      'Cloudinary is not configured. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in your .env file.'
+      "Cloudinary is not configured. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in your .env file.",
     );
   }
 
-  const resourceType = options.resourceType || 'image';
+  const resourceType = options.resourceType || "image";
 
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', uploadPreset);
-  formData.append('folder', options.folder);
-  formData.append('public_id', options.publicId);
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
+  formData.append("folder", options.folder);
+  formData.append("public_id", options.publicId);
 
   const url = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     body: formData,
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      `Cloudinary upload failed: ${errorData?.error?.message || response.statusText}`
+      `Cloudinary upload failed: ${errorData?.error?.message || response.statusText}`,
     );
   }
 
@@ -159,12 +159,12 @@ export async function uploadCadetPhoto(
   file: File,
   name: string,
   dateOfEnrollment: string,
-  division: 'SD' | 'SW'
+  division: "SD" | "SW",
 ): Promise<CloudinaryUploadResult> {
   return uploadToCloudinary(file, {
     folder: buildCadetPhotoPath(dateOfEnrollment, division),
     publicId: `${sanitizeName(name)}_${Date.now()}`,
-    resourceType: 'image',
+    resourceType: "image",
   });
 }
 
@@ -181,12 +181,12 @@ export async function uploadAlumniPhoto(
   file: File,
   name: string,
   nccTenure: string,
-  division: 'SD' | 'SW'
+  division: "SD" | "SW",
 ): Promise<CloudinaryUploadResult> {
   return uploadToCloudinary(file, {
     folder: buildAlumniPhotoPath(nccTenure, division),
     publicId: `${sanitizeName(name)}_${Date.now()}`,
-    resourceType: 'image',
+    resourceType: "image",
   });
 }
 
@@ -199,11 +199,11 @@ export async function uploadAlumniPhoto(
  */
 export async function uploadAnoPhoto(
   file: File,
-  name: string
+  name: string,
 ): Promise<CloudinaryUploadResult> {
   return uploadToCloudinary(file, {
     folder: buildAnoPhotoPath(),
     publicId: `${sanitizeName(name)}_${Date.now()}`,
-    resourceType: 'image',
+    resourceType: "image",
   });
 }

@@ -1,7 +1,50 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, addDoc } from "firebase/firestore";
-import dotenv from "dotenv"; 
-import fs from "fs"; 
+import dotenv from "dotenv";
+import fs from "fs";
 
-const envConfig = dotenv.parse(fs.readFileSync(".env")); 
-const firebaseConfig = { apiKey: envConfig.VITE_FIREBASE_API_KEY, authDomain: envConfig.VITE_FIREBASE_AUTH_DOMAIN, projectId: envConfig.VITE_FIREBASE_PROJECT_ID, storageBucket: envConfig.VITE_FIREBASE_STORAGE_BUCKET, messagingSenderId: envConfig.VITE_FIREBASE_MESSAGING_SENDER_ID, appId: envConfig.VITE_FIREBASE_APP_ID }; const app = initializeApp(firebaseConfig); const db = getFirestore(app); async function test() { console.log("Adding pending profile..."); const data = { name: "Test Pending Profile", division: "SD", department: "Computer Science", passOutYear: "2024", status: "pending", visible: false, source: "self_submit", createdAt: new Date().toISOString(), submittedAt: new Date().toISOString() }; try { const docRef = await addDoc(collection(db, "alumniProfiles"), data); console.log("Added doc ID:", docRef.id); } catch (e) { console.error("Error adding doc:", e); } console.log("Fetching profiles..."); try { const snap = await getDocs(collection(db, "alumniProfiles")); console.log("Total profiles:", snap.size); snap.forEach(doc => { const d = doc.data(); if (d.status === "pending") { console.log("Pending Profile:", doc.id, d.name, d.createdAt); } }); } catch (e) { console.error("Error fetching profiles:", e); } } test().then(() => process.exit(0));
+const envConfig = dotenv.parse(fs.readFileSync(".env"));
+const firebaseConfig = {
+  apiKey: envConfig.VITE_FIREBASE_API_KEY,
+  authDomain: envConfig.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: envConfig.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: envConfig.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: envConfig.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: envConfig.VITE_FIREBASE_APP_ID,
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+async function test() {
+  console.log("Adding pending profile...");
+  const data = {
+    name: "Test Pending Profile",
+    division: "SD",
+    department: "Computer Science",
+    passOutYear: "2024",
+    status: "pending",
+    visible: false,
+    source: "self_submit",
+    createdAt: new Date().toISOString(),
+    submittedAt: new Date().toISOString(),
+  };
+  try {
+    const docRef = await addDoc(collection(db, "alumniProfiles"), data);
+    console.log("Added doc ID:", docRef.id);
+  } catch (e) {
+    console.error("Error adding doc:", e);
+  }
+  console.log("Fetching profiles...");
+  try {
+    const snap = await getDocs(collection(db, "alumniProfiles"));
+    console.log("Total profiles:", snap.size);
+    snap.forEach((doc) => {
+      const d = doc.data();
+      if (d.status === "pending") {
+        console.log("Pending Profile:", doc.id, d.name, d.createdAt);
+      }
+    });
+  } catch (e) {
+    console.error("Error fetching profiles:", e);
+  }
+}
+test().then(() => process.exit(0));

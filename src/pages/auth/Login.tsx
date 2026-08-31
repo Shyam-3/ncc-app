@@ -1,75 +1,105 @@
-import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/features/auth/AuthContext';
-import './Login.css';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  Row,
+} from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/features/auth/AuthContext";
+import "./Login.css";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [googleLoading, setGoogleLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const { signIn, signInWithGoogle, fetchUserProfile, currentUser, userProfile, loading: authLoading, signOut } = useAuth();
+  const {
+    signIn,
+    signInWithGoogle,
+    fetchUserProfile,
+    currentUser,
+    userProfile,
+    loading: authLoading,
+    signOut,
+  } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (authLoading || !currentUser || loading || googleLoading || !userProfile) {
+    if (
+      authLoading ||
+      !currentUser ||
+      loading ||
+      googleLoading ||
+      !userProfile
+    ) {
       return;
     }
 
-    const landingPage = userProfile.role === 'admin' || userProfile.role === 'superadmin'
-      ? '/admin/dashboard'
-      : '/dashboard';
+    const landingPage =
+      userProfile.role === "admin" || userProfile.role === "superadmin"
+        ? "/admin/dashboard"
+        : "/dashboard";
 
     navigate(landingPage, { replace: true });
   }, [authLoading, currentUser, googleLoading, loading, navigate, userProfile]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
-      setError('Please fill in all fields');
+      setError("Please fill in all fields");
       return;
     }
 
     try {
-      setError('');
+      setError("");
       setLoading(true);
       const credential = await signIn(email, password);
       const profile = await fetchUserProfile(credential.user.uid);
-      
+
       if (!profile) {
         // Check if they are a pending cadet
-        const { getDocs, query, collection, where } = await import('firebase/firestore');
-        const { db } = await import('../../shared/config/firebase');
-        const pendingQuery = query(collection(db, 'pendingCadets'), where('uid', '==', credential.user.uid));
+        const { getDocs, query, collection, where } =
+          await import("firebase/firestore");
+        const { db } = await import("../../shared/config/firebase");
+        const pendingQuery = query(
+          collection(db, "pendingCadets"),
+          where("uid", "==", credential.user.uid),
+        );
         const pendingSnap = await getDocs(pendingQuery);
-        
+
         if (!pendingSnap.empty) {
           await signOut();
-          setError('Your account is still pending approval by an admin.');
+          setError("Your account is still pending approval by an admin.");
           return;
         } else {
           // No profile, not pending = Orphaned account from a failed registration!
           try {
             await credential.user.delete();
           } catch (deleteErr) {
-            console.warn('Could not delete orphaned account:', deleteErr);
+            console.warn("Could not delete orphaned account:", deleteErr);
           }
           await signOut();
-          setError('Your previous registration was incomplete. We have cleaned up your stuck account. Please go to the Register page and try again.');
+          setError(
+            "Your previous registration was incomplete. We have cleaned up your stuck account. Please go to the Register page and try again.",
+          );
           return;
         }
       }
 
-      const landingPage = profile?.role === 'admin' || profile?.role === 'superadmin'
-        ? '/admin/dashboard'
-        : '/dashboard';
+      const landingPage =
+        profile?.role === "admin" || profile?.role === "superadmin"
+          ? "/admin/dashboard"
+          : "/dashboard";
       navigate(landingPage, { replace: true });
     } catch (err) {
-      setError('Failed to sign in. Please check your credentials.');
+      setError("Failed to sign in. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -77,19 +107,23 @@ const Login: React.FC = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      setError('');
+      setError("");
       setGoogleLoading(true);
       const user = await signInWithGoogle();
       const profile = await fetchUserProfile(user.uid);
-      const landingPage = profile?.role === 'admin' || profile?.role === 'superadmin'
-        ? '/admin/dashboard'
-        : '/dashboard';
+      const landingPage =
+        profile?.role === "admin" || profile?.role === "superadmin"
+          ? "/admin/dashboard"
+          : "/dashboard";
       navigate(landingPage, { replace: true });
     } catch (err: any) {
-      if (err?.message === 'NOT_REGISTERED') {
-        navigate('/register');
-      } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
-        setError('Google sign-in failed. Please try again.');
+      if (err?.message === "NOT_REGISTERED") {
+        navigate("/register");
+      } else if (
+        err?.code !== "auth/popup-closed-by-user" &&
+        err?.code !== "auth/cancelled-popup-request"
+      ) {
+        setError("Google sign-in failed. Please try again.");
       }
     } finally {
       setGoogleLoading(false);
@@ -117,7 +151,9 @@ const Login: React.FC = () => {
                     type="email"
                     placeholder="Enter your student email"
                     value={email}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setEmail(e.target.value)
+                    }
                     required
                   />
                 </Form.Group>
@@ -126,21 +162,27 @@ const Login: React.FC = () => {
                   <Form.Label>Password</Form.Label>
                   <div className="position-relative">
                     <Form.Control
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={password}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setPassword(e.target.value)
+                      }
                       required
                       className="pe-5"
                     />
                     <Button
                       variant="link"
                       type="button"
-                      onClick={() => setShowPassword(prev => !prev)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                       className="position-absolute end-0 top-50 translate-middle-y text-muted p-0 me-2"
                     >
-                      <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                      <i
+                        className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
+                      ></i>
                     </Button>
                   </div>
                 </Form.Group>
@@ -158,7 +200,7 @@ const Login: React.FC = () => {
                   size="lg"
                   disabled={loading}
                 >
-                  {loading ? 'Logging in...' : 'Login'}
+                  {loading ? "Logging in..." : "Login"}
                 </Button>
               </Form>
 
@@ -176,14 +218,32 @@ const Login: React.FC = () => {
                 disabled={googleLoading || loading}
               >
                 {googleLoading ? (
-                  'Signing in...'
+                  "Signing in..."
                 ) : (
                   <>
-                    <svg width="18" height="18" viewBox="0 0 48 48" className="me-2" style={{ verticalAlign: 'middle' }}>
-                      <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-                      <path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-                      <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-                      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 48 48"
+                      className="me-2"
+                      style={{ verticalAlign: "middle" }}
+                    >
+                      <path
+                        fill="#FFC107"
+                        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+                      />
+                      <path
+                        fill="#FF3D00"
+                        d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
+                      />
+                      <path
+                        fill="#4CAF50"
+                        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+                      />
+                      <path
+                        fill="#1976D2"
+                        d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+                      />
                     </svg>
                     Sign in with Google
                   </>
@@ -192,7 +252,7 @@ const Login: React.FC = () => {
 
               <div className="text-center">
                 <p className="mb-0">
-                 A New Cadet?{' '}
+                  A New Cadet?{" "}
                   <Link to="/register" className="text-decoration-none">
                     Register here
                   </Link>

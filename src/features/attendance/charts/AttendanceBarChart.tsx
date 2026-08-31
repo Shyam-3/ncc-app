@@ -1,6 +1,6 @@
-import { Bar } from 'react-chartjs-2';
-import { chartColors, barChartOptions, stackedBarOptions } from './ChartConfig';
-import './Charts.css';
+import { Bar } from "react-chartjs-2";
+import { chartColors, barChartOptions, stackedBarOptions } from "./ChartConfig";
+import "./Charts.css";
 
 interface BarDataPoint {
   label: string;
@@ -24,7 +24,7 @@ interface AttendanceBarChartProps {
 
 export function AttendanceBarChart({
   data,
-  title = 'Attendance Comparison',
+  title = "Attendance Comparison",
   height = 300,
   stacked = false,
   horizontal = false,
@@ -35,12 +35,12 @@ export function AttendanceBarChart({
       labels: data.map((d) => d.label),
       datasets: [
         {
-          label: 'Present',
+          label: "Present",
           data: data.map((d) => d.present),
           backgroundColor: chartColors.present,
         },
         {
-          label: 'Absent',
+          label: "Absent",
           data: data.map((d) => d.absent),
           backgroundColor: chartColors.absent,
         },
@@ -49,7 +49,7 @@ export function AttendanceBarChart({
 
     const options = {
       ...stackedBarOptions,
-      indexAxis: horizontal ? ('y' as const) : ('x' as const),
+      indexAxis: horizontal ? ("y" as const) : ("x" as const),
     };
 
     return (
@@ -66,18 +66,16 @@ export function AttendanceBarChart({
     labels: simpleData.map((d) => d.label),
     datasets: [
       {
-        label: 'Attendance %',
+        label: "Attendance %",
         data: simpleData.map((d) => d.value),
-        backgroundColor: simpleData.map(
-          (d) => d.color || chartColors.present
-        ),
+        backgroundColor: simpleData.map((d) => d.color || chartColors.present),
       },
     ],
   };
 
   const options = {
     ...barChartOptions,
-    indexAxis: horizontal ? ('y' as const) : ('x' as const),
+    indexAxis: horizontal ? ("y" as const) : ("x" as const),
   };
 
   return (
@@ -88,6 +86,8 @@ export function AttendanceBarChart({
   );
 }
 
-function isStackedData(data: BarDataPoint[] | StackedBarData[]): data is StackedBarData[] {
-  return data.length > 0 && 'present' in data[0];
+function isStackedData(
+  data: BarDataPoint[] | StackedBarData[],
+): data is StackedBarData[] {
+  return data.length > 0 && "present" in data[0];
 }

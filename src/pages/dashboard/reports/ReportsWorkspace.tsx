@@ -1,7 +1,7 @@
-import React from 'react';
-import { Button, Card, Col, Container, Row } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import './ReportsWorkspace.css';
+import React from "react";
+import { Button, Card, Col, Container, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import "./ReportsWorkspace.css";
 
 const ReportsWorkspace: React.FC = () => {
   return (
@@ -18,7 +18,12 @@ const ReportsWorkspace: React.FC = () => {
                 <h3 className="mt-3">On-Duty</h3>
                 <p className="text-muted small">Generate letters</p>
               </div>
-              <Button as={Link} to="/admin/reports/generators/on-duty-letter" variant="danger" className="mt-2">
+              <Button
+                as={Link}
+                to="/admin/reports/generators/on-duty-letter"
+                variant="danger"
+                className="mt-2"
+              >
                 Open
               </Button>
             </Card.Body>
@@ -33,7 +38,12 @@ const ReportsWorkspace: React.FC = () => {
                 <h3 className="mt-3">Attendance</h3>
                 <p className="text-muted small">Annual attendance sheet</p>
               </div>
-              <Button as={Link} to="/admin/reports/generators/annual-attendance" variant="success" className="mt-2">
+              <Button
+                as={Link}
+                to="/admin/reports/generators/annual-attendance"
+                variant="success"
+                className="mt-2"
+              >
                 Open
               </Button>
             </Card.Body>
@@ -48,7 +58,12 @@ const ReportsWorkspace: React.FC = () => {
                 <h3 className="mt-3">Templates</h3>
                 <p className="text-muted small">Manage report templates</p>
               </div>
-              <Button as={Link} to="/admin/reports/templates" variant="secondary" className="mt-2">
+              <Button
+                as={Link}
+                to="/admin/reports/templates"
+                variant="secondary"
+                className="mt-2"
+              >
                 Open
               </Button>
             </Card.Body>
@@ -63,7 +78,12 @@ const ReportsWorkspace: React.FC = () => {
                 <h3 className="mt-3">Nominal Roll</h3>
                 <p className="text-muted small">Generate nominal roll sheet</p>
               </div>
-              <Button as={Link} to="/admin/reports/generators/nominal-roll" variant="primary" className="mt-2">
+              <Button
+                as={Link}
+                to="/admin/reports/generators/nominal-roll"
+                variant="primary"
+                className="mt-2"
+              >
                 Open
               </Button>
             </Card.Body>
@@ -78,7 +98,12 @@ const ReportsWorkspace: React.FC = () => {
                 <h3 className="mt-3">CATC Camp</h3>
                 <p className="text-muted small">Generate camp documents</p>
               </div>
-              <Button as={Link} to="/admin/reports/generators/catc-camp" variant="info" className="mt-2">
+              <Button
+                as={Link}
+                to="/admin/reports/generators/catc-camp"
+                variant="info"
+                className="mt-2"
+              >
                 Open
               </Button>
             </Card.Body>
@@ -93,7 +118,12 @@ const ReportsWorkspace: React.FC = () => {
                 <h3 className="mt-3">Parade State</h3>
                 <p className="text-muted small">Generate parade state</p>
               </div>
-              <Button as={Link} to="/admin/reports/generators/parade-state" variant="warning" className="mt-2">
+              <Button
+                as={Link}
+                to="/admin/reports/generators/parade-state"
+                variant="warning"
+                className="mt-2"
+              >
                 Open
               </Button>
             </Card.Body>
@@ -108,7 +138,12 @@ const ReportsWorkspace: React.FC = () => {
                 <h3 className="mt-3">Training Diary</h3>
                 <p className="text-muted small">Generate training diary</p>
               </div>
-              <Button as={Link} to="/admin/reports/generators/training-diary" variant="dark" className="mt-2">
+              <Button
+                as={Link}
+                to="/admin/reports/generators/training-diary"
+                variant="dark"
+                className="mt-2"
+              >
                 Open
               </Button>
             </Card.Body>

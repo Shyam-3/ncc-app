@@ -1,33 +1,46 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Card, Spinner, Tab, Tabs } from 'react-bootstrap';
-import { useAuth } from '@/features/auth/AuthContext';
-import { StatsOverview, AttendanceCalendar, PerformanceGraphs, SessionHistory } from './user';
+import { useState, useEffect, useMemo } from "react";
+import { Card, Spinner, Tab, Tabs } from "react-bootstrap";
+import { useAuth } from "@/features/auth/AuthContext";
+import {
+  StatsOverview,
+  AttendanceCalendar,
+  PerformanceGraphs,
+  SessionHistory,
+} from "./user";
 import {
   getCadetByUserId,
   getUserAttendanceHistory,
   getSessionsForCalendar,
-} from '@/features/attendance/service';
+} from "@/features/attendance/service";
 import type {
   AttendanceSession,
   AttendanceMark,
   CadetAttendanceStats,
   AttendanceStatus,
-} from '@/features/attendance/attendance.types';
-import type { Cadet } from '@/shared/types';
-import { normalizeNccYear } from '@/shared/config/constants';
-import { isAnoUser } from '@/shared/utils/userType';
-import type { Division } from '@/shared/config/constants';
+} from "@/features/attendance/attendance.types";
+import type { Cadet } from "@/shared/types";
+import { normalizeNccYear } from "@/shared/config/constants";
+import { isAnoUser } from "@/shared/utils/userType";
+import type { Division } from "@/shared/config/constants";
 
 const AttendanceView: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [cadet, setCadet] = useState<(Cadet & { id: string }) | null>(null);
   const [history, setHistory] = useState<
-    Array<{ session: AttendanceSession & { id: string }; mark: AttendanceMark | null }>
+    Array<{
+      session: AttendanceSession & { id: string };
+      mark: AttendanceMark | null;
+    }>
   >([]);
   const [calendarEntries, setCalendarEntries] = useState<
-    Array<{ date: string; sessionId: string; title: string; status: AttendanceStatus | null }>
+    Array<{
+      date: string;
+      sessionId: string;
+      title: string;
+      status: AttendanceStatus | null;
+    }>
   >([]);
 
   // Load cadet data
@@ -49,12 +62,12 @@ const AttendanceView: React.FC = () => {
           const historyData = await getUserAttendanceHistory(
             cadetData.id,
             cadetData.division as Division,
-            cadetNccYear || undefined
+            cadetNccYear || undefined,
           );
           setHistory(historyData);
         }
       } catch (e) {
-        console.error('Error loading attendance data:', e);
+        console.error("Error loading attendance data:", e);
       } finally {
         setLoading(false);
       }
@@ -78,7 +91,7 @@ const AttendanceView: React.FC = () => {
         cadetId,
         year,
         month,
-        cadetDivision
+        cadetDivision,
       );
       setCalendarEntries(entries);
     }
@@ -94,16 +107,18 @@ const AttendanceView: React.FC = () => {
 
     let present = 0,
       absent = 0;
-    const monthly: Record<string, { total: number; present: number; absent: number }> =
-      {};
+    const monthly: Record<
+      string,
+      { total: number; present: number; absent: number }
+    > = {};
 
     history.forEach(({ session, mark }) => {
       if (!mark) return;
       switch (mark.status) {
-        case 'P':
+        case "P":
           present++;
           break;
-        case 'A':
+        case "A":
           absent++;
           break;
       }
@@ -113,8 +128,8 @@ const AttendanceView: React.FC = () => {
         monthly[monthKey] = { total: 0, present: 0, absent: 0 };
       }
       monthly[monthKey].total++;
-      if (mark.status === 'P') monthly[monthKey].present++;
-      if (mark.status === 'A') monthly[monthKey].absent++;
+      if (mark.status === "P") monthly[monthKey].present++;
+      if (mark.status === "A") monthly[monthKey].absent++;
     });
 
     const totalSessions = present + absent;
@@ -138,7 +153,7 @@ const AttendanceView: React.FC = () => {
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center py-5">
-        <Spinner as="span" animation="border"  size="sm" />
+        <Spinner as="span" animation="border" size="sm" />
       </div>
     );
   }
@@ -150,8 +165,13 @@ const AttendanceView: React.FC = () => {
           <Card>
             <Card.Body className="text-center py-5 text-muted">
               <i className="bi bi-shield-check fs-1 d-block mb-3"></i>
-              <p className="mb-2">Attendance is not applicable to ANO accounts.</p>
-              <p className="mb-0">You can still manage and mark attendance for all cadets from Admin Attendance.</p>
+              <p className="mb-2">
+                Attendance is not applicable to ANO accounts.
+              </p>
+              <p className="mb-0">
+                You can still manage and mark attendance for all cadets from
+                Admin Attendance.
+              </p>
             </Card.Body>
           </Card>
         </div>
@@ -164,7 +184,9 @@ const AttendanceView: React.FC = () => {
           <Card.Body className="text-center py-5 text-muted">
             <i className="bi bi-person-x fs-1 d-block mb-3"></i>
             <p>Your profile is not set up as a cadet yet.</p>
-            <p>Please contact an administrator to complete your registration.</p>
+            <p>
+              Please contact an administrator to complete your registration.
+            </p>
           </Card.Body>
         </Card>
       </div>
@@ -178,7 +200,8 @@ const AttendanceView: React.FC = () => {
         <div>
           <h2 className="mb-1">My Attendance</h2>
           <p className="text-muted mb-0">
-            {cadet.name} | {cadet.division} | {normalizeNccYear(cadet.nccYear) || '-'}
+            {cadet.name} | {cadet.division} |{" "}
+            {normalizeNccYear(cadet.nccYear) || "-"}
           </p>
         </div>
       </div>
@@ -186,7 +209,7 @@ const AttendanceView: React.FC = () => {
       <Tabs
         id="attendance-view-tabs"
         activeKey={activeTab}
-        onSelect={(k: string | null) => setActiveTab(k || 'overview')}
+        onSelect={(k: string | null) => setActiveTab(k || "overview")}
         className="mb-4"
       >
         {/* Overview Tab */}
@@ -203,7 +226,7 @@ const AttendanceView: React.FC = () => {
             entries={calendarEntries}
             onDateClick={(_, entry) => {
               if (entry) {
-                console.log('Selected session:', entry.sessionId);
+                console.log("Selected session:", entry.sessionId);
               }
             }}
           />

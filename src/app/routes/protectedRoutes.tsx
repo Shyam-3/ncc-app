@@ -1,24 +1,24 @@
-import React from 'react';
-import { Route } from 'react-router-dom';
-import { ProtectedRoute } from '@/components';
-import DashboardHome from '@/pages/dashboard/DashboardHome';
-import Profile from '@/pages/dashboard/Profile';
-import AnnouncementsAdmin from '@/pages/dashboard/announcements/AnnouncementsAdmin';
-import AttendanceManagement from '@/pages/dashboard/attendance/AttendanceManagement';
-import AttendanceView from '@/pages/dashboard/attendance/AttendanceView';
-import CadetManagement from '@/pages/dashboard/users/CadetManagement';
-import AnnualAttendanceReport from '@/pages/dashboard/reports/AnnualAttendanceReport';
-import NominalRollReport from '@/pages/dashboard/reports/NominalRollReport';
-import CatcCampReport from '@/pages/dashboard/reports/CatcCampReport';
-import ParadeStateReport from '@/pages/dashboard/reports/ParadeStateReport';
-import TrainingDiaryReport from '@/pages/dashboard/reports/TrainingDiaryReport';
-import OnDutyLetterReport from '@/pages/dashboard/reports/OnDutyLetterReport';
-import ReportsTemplateManager from '@/pages/dashboard/reports/ReportsTemplateManager';
-import ReportsWorkspace from '@/pages/dashboard/reports/ReportsWorkspace';
-import RoleManagement from '@/pages/dashboard/users/RoleManagement';
-import UserManagement from '@/pages/dashboard/users/UserManagement';
-import AdminSettings from '@/pages/dashboard/settings/AdminSettings';
-import AlumniManagement from '@/pages/dashboard/alumni/AlumniManagement';
+import React from "react";
+import { Route } from "react-router-dom";
+import { ProtectedRoute } from "@/components";
+import DashboardHome from "@/pages/dashboard/DashboardHome";
+import Profile from "@/pages/dashboard/Profile";
+import AnnouncementsAdmin from "@/pages/dashboard/announcements/AnnouncementsAdmin";
+import AttendanceManagement from "@/pages/dashboard/attendance/AttendanceManagement";
+import AttendanceView from "@/pages/dashboard/attendance/AttendanceView";
+import CadetManagement from "@/pages/dashboard/users/CadetManagement";
+import AnnualAttendanceReport from "@/pages/dashboard/reports/AnnualAttendanceReport";
+import NominalRollReport from "@/pages/dashboard/reports/NominalRollReport";
+import CatcCampReport from "@/pages/dashboard/reports/CatcCampReport";
+import ParadeStateReport from "@/pages/dashboard/reports/ParadeStateReport";
+import TrainingDiaryReport from "@/pages/dashboard/reports/TrainingDiaryReport";
+import OnDutyLetterReport from "@/pages/dashboard/reports/OnDutyLetterReport";
+import ReportsTemplateManager from "@/pages/dashboard/reports/ReportsTemplateManager";
+import ReportsWorkspace from "@/pages/dashboard/reports/ReportsWorkspace";
+import RoleManagement from "@/pages/dashboard/users/RoleManagement";
+import UserManagement from "@/pages/dashboard/users/UserManagement";
+import AdminSettings from "@/pages/dashboard/settings/AdminSettings";
+import AlumniManagement from "@/pages/dashboard/alumni/AlumniManagement";
 
 export const protectedRoutes = (
   <>
@@ -33,7 +33,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/dashboard"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin", "alumni"]}>
           <DashboardHome />
         </ProtectedRoute>
       }
@@ -49,7 +49,7 @@ export const protectedRoutes = (
     <Route
       path="/attendance"
       element={
-        <ProtectedRoute requiredRoles={['member']}>
+        <ProtectedRoute requiredRoles={["member"]}>
           <AttendanceView />
         </ProtectedRoute>
       }
@@ -57,7 +57,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/roles"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin", "alumni"]}>
           <RoleManagement />
         </ProtectedRoute>
       }
@@ -65,7 +65,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/users"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin", "alumni"]}>
           <UserManagement />
         </ProtectedRoute>
       }
@@ -73,7 +73,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/attendance"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin", "alumni"]}>
           <AttendanceManagement />
         </ProtectedRoute>
       }
@@ -81,7 +81,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/cadets"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin", "alumni"]}>
           <CadetManagement />
         </ProtectedRoute>
       }
@@ -89,23 +89,27 @@ export const protectedRoutes = (
     <Route
       path="/admin/duties"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
-          <div className="container py-5"><h2>Duty Management</h2></div>
+        <ProtectedRoute requiredRoles={["admin", "superadmin", "alumni"]}>
+          <div className="container py-5">
+            <h2>Duty Management</h2>
+          </div>
         </ProtectedRoute>
       }
     />
     <Route
       path="/admin/events"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin', 'alumni']}>
-          <div className="container py-5"><h2>Event Management</h2></div>
+        <ProtectedRoute requiredRoles={["admin", "superadmin", "alumni"]}>
+          <div className="container py-5">
+            <h2>Event Management</h2>
+          </div>
         </ProtectedRoute>
       }
     />
     <Route
       path="/admin/reports"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <ReportsWorkspace />
         </ProtectedRoute>
       }
@@ -113,7 +117,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/generators/on-duty-letter"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <OnDutyLetterReport />
         </ProtectedRoute>
       }
@@ -121,7 +125,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/generators/annual-attendance"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <AnnualAttendanceReport />
         </ProtectedRoute>
       }
@@ -129,7 +133,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/templates"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <ReportsTemplateManager />
         </ProtectedRoute>
       }
@@ -137,7 +141,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/generators/nominal-roll"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <NominalRollReport />
         </ProtectedRoute>
       }
@@ -145,7 +149,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/generators/catc-camp"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <CatcCampReport />
         </ProtectedRoute>
       }
@@ -153,7 +157,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/generators/parade-state"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <ParadeStateReport />
         </ProtectedRoute>
       }
@@ -161,7 +165,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/reports/generators/training-diary"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <TrainingDiaryReport />
         </ProtectedRoute>
       }
@@ -169,7 +173,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/announcements"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <AnnouncementsAdmin />
         </ProtectedRoute>
       }
@@ -177,7 +181,7 @@ export const protectedRoutes = (
     <Route
       path="/admin/settings"
       element={
-        <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+        <ProtectedRoute requiredRoles={["admin", "superadmin"]}>
           <AdminSettings />
         </ProtectedRoute>
       }
@@ -185,12 +189,11 @@ export const protectedRoutes = (
     <Route
       path="/admin/alumni"
       element={
-        <ProtectedRoute requiredRoles={['superadmin']}>
+        <ProtectedRoute requiredRoles={["superadmin"]}>
           <AlumniManagement />
         </ProtectedRoute>
       }
     />
-
   </>
 );
 

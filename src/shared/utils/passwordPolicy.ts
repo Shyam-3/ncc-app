@@ -49,16 +49,16 @@ export function validatePassword(password: string): PasswordValidationResult {
     errors.push(`Maximum ${PASSWORD_POLICY.maxLength} characters`);
   }
   if (PASSWORD_POLICY.requireUppercase && !checks.hasUppercase) {
-    errors.push('At least one uppercase letter (A–Z)');
+    errors.push("At least one uppercase letter (A–Z)");
   }
   if (PASSWORD_POLICY.requireLowercase && !checks.hasLowercase) {
-    errors.push('At least one lowercase letter (a–z)');
+    errors.push("At least one lowercase letter (a–z)");
   }
   if (PASSWORD_POLICY.requireNumeric && !checks.hasNumeric) {
-    errors.push('At least one number (0–9)');
+    errors.push("At least one number (0–9)");
   }
   if (PASSWORD_POLICY.requireSpecial && !checks.hasSpecial) {
-    errors.push('At least one special character (!@#$%^&* etc.)');
+    errors.push("At least one special character (!@#$%^&* etc.)");
   }
 
   return {

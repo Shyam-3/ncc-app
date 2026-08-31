@@ -1,6 +1,10 @@
-import { Line } from 'react-chartjs-2';
-import { chartColors, chartColorsTransparent, lineChartOptions } from './ChartConfig';
-import './Charts.css';
+import { Line } from "react-chartjs-2";
+import {
+  chartColors,
+  chartColorsTransparent,
+  lineChartOptions,
+} from "./ChartConfig";
+import "./Charts.css";
 
 interface TrendDataPoint {
   label: string; // Month label like 'Jan 2026'
@@ -17,14 +21,14 @@ interface AttendanceTrendChartProps {
 export function AttendanceTrendChart({
   data,
   comparisonData,
-  title = 'Attendance Trend',
+  title = "Attendance Trend",
   height = 300,
 }: AttendanceTrendChartProps) {
   const chartData = {
     labels: data.map((d) => d.label),
     datasets: [
       {
-        label: 'Attendance Rate',
+        label: "Attendance Rate",
         data: data.map((d) => d.value),
         borderColor: chartColors.present,
         backgroundColor: chartColorsTransparent.present,
@@ -34,10 +38,10 @@ export function AttendanceTrendChart({
       ...(comparisonData
         ? [
             {
-              label: 'Batch Average',
+              label: "Batch Average",
               data: comparisonData.map((d) => d.value),
               borderColor: chartColors.SD,
-              backgroundColor: 'transparent',
+              backgroundColor: "transparent",
               borderDash: [5, 5],
               fill: false,
               tension: 0.3,

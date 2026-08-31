@@ -1,10 +1,10 @@
 // Firebase configuration
-import { initializeApp } from 'firebase/app';
+import { initializeApp } from "firebase/app";
 // Analytics (optional)
-import { getAnalytics, isSupported } from 'firebase/analytics';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 interface FirebaseConfig {
   apiKey: string;
@@ -23,7 +23,7 @@ const firebaseConfig: FirebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // Dev-time validation to help diagnose configuration-not-found
@@ -33,7 +33,7 @@ if (import.meta.env.DEV) {
     .map(([k]) => k);
   if (missing.length) {
     // eslint-disable-next-line no-console
-    console.warn('[Firebase] Missing env keys:', missing.join(', '));
+    console.warn("[Firebase] Missing env keys:", missing.join(", "));
   }
 }
 
@@ -43,7 +43,10 @@ try {
   app = initializeApp(firebaseConfig);
 } catch (e) {
   // eslint-disable-next-line no-console
-  console.error('[Firebase] initializeApp failed. Check your .env and Vite restart.', e);
+  console.error(
+    "[Firebase] initializeApp failed. Check your .env and Vite restart.",
+    e,
+  );
   throw e;
 }
 
@@ -59,10 +62,11 @@ if (import.meta.env.PROD && firebaseConfig.measurementId) {
       try {
         getAnalytics(app);
         // eslint-disable-next-line no-console
-        if (import.meta.env.DEV) console.info('[Firebase] Analytics initialized.');
+        if (import.meta.env.DEV)
+          console.info("[Firebase] Analytics initialized.");
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('[Firebase] Analytics init failed:', e);
+        console.warn("[Firebase] Analytics init failed:", e);
       }
     }
   });

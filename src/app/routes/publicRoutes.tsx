@@ -1,5 +1,5 @@
-import React from 'react';
-import { Route } from 'react-router-dom';
+import React from "react";
+import { Route } from "react-router-dom";
 import {
   About,
   Achievements,
@@ -17,15 +17,18 @@ import {
   Resources,
   SocialService,
   Videos,
-} from '@/pages/public';
-import NotFound from '@/pages/NotFound';
-import AlumniSubmitForm from '@/pages/public/AlumniSubmitForm';
-import { ForgotPassword, Login, Register, VerifyEmail } from '@/pages/auth';
+} from "@/pages/public";
+import NotFound from "@/pages/NotFound";
+import AlumniSubmitForm from "@/pages/public/AlumniSubmitForm";
+import { ForgotPassword, Login, Register, VerifyEmail } from "@/pages/auth";
 
 const Unauthorized: React.FC = () => (
   <div className="container py-5 text-center">
     <h2>Access Denied</h2>
-    <p>You don't have permission to view this page, or your account is still pending approval by an admin.</p>
+    <p>
+      You don't have permission to view this page, or your account is still
+      pending approval by an admin.
+    </p>
   </div>
 );
 

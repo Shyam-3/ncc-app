@@ -1,1 +1,1 @@
-export { default as AnnouncementsAdmin } from './AnnouncementsAdmin';
+export { default as AnnouncementsAdmin } from "./AnnouncementsAdmin";

@@ -1,14 +1,22 @@
-import React, { useState, useEffect, type ChangeEvent } from 'react';
-import { Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import type { NccYear } from '@/shared/config/constants';
-import { NCC_YEARS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
+import React, { useState, useEffect, type ChangeEvent } from "react";
+import {
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  Row,
+  Spinner,
+} from "react-bootstrap";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import type { NccYear } from "@/shared/config/constants";
+import { NCC_YEARS, ROMAN_YEAR_MAP } from "@/shared/config/constants";
 import {
   generateNominalRollExcel,
   getNominalRollPreview,
   type NominalRollPreview,
-} from '@/features/reports/nominalRollService';
+} from "@/features/reports/nominalRollService";
 
 /** Generate a list of academic year options like "2023-2024", "2024-2025", … */
 function buildAcademicYearOptions(): string[] {
@@ -34,8 +42,10 @@ function getDefaultAcademicYear(): string {
 }
 
 const NominalRollReport: React.FC = () => {
-  const [nccYear, setNccYear] = useState<NccYear>('1st Year');
-  const [academicYear, setAcademicYear] = useState<string>(getDefaultAcademicYear());
+  const [nccYear, setNccYear] = useState<NccYear>("1st Year");
+  const [academicYear, setAcademicYear] = useState<string>(
+    getDefaultAcademicYear(),
+  );
   const [preview, setPreview] = useState<NominalRollPreview | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -50,7 +60,7 @@ const NominalRollReport: React.FC = () => {
         if (!cancelled) setPreview(data);
       } catch (e: any) {
         console.error(e);
-        if (!cancelled) toast.error('Failed to load preview');
+        if (!cancelled) toast.error("Failed to load preview");
       } finally {
         if (!cancelled) setLoadingPreview(false);
       }
@@ -68,17 +78,18 @@ const NominalRollReport: React.FC = () => {
     try {
       setGenerating(true);
       await generateNominalRollExcel(nccYear, academicYear);
-      toast.success('Nominal Roll Excel downloaded!');
+      toast.success("Nominal Roll Excel downloaded!");
     } catch (e: any) {
       console.error(e);
-      toast.error(e.message || 'Failed to generate report');
+      toast.error(e.message || "Failed to generate report");
     } finally {
       setGenerating(false);
     }
   }
 
-  const romanYear = ROMAN_YEAR_MAP[nccYear.replace(' Year', '')] || nccYear;
-  const totalCadets = (preview?.sdCadetCount || 0) + (preview?.swCadetCount || 0);
+  const romanYear = ROMAN_YEAR_MAP[nccYear.replace(" Year", "")] || nccYear;
+  const totalCadets =
+    (preview?.sdCadetCount || 0) + (preview?.swCadetCount || 0);
 
   return (
     <Container className="py-4">
@@ -133,7 +144,12 @@ const NominalRollReport: React.FC = () => {
 
           {loadingPreview && (
             <div className="text-center py-4">
-              <Spinner as="span" animation="border" size="sm" className="me-2"  />
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                className="me-2"
+              />
               Loading data...
             </div>
           )}
@@ -147,15 +163,21 @@ const NominalRollReport: React.FC = () => {
                 </h6>
                 <Row className="g-3 text-center">
                   <Col xs={4}>
-                    <div className="fs-3 fw-bold text-primary">{preview.sdCadetCount}</div>
+                    <div className="fs-3 fw-bold text-primary">
+                      {preview.sdCadetCount}
+                    </div>
                     <div className="small text-muted">SD Cadets</div>
                   </Col>
                   <Col xs={4}>
-                    <div className="fs-3 fw-bold text-warning">{preview.swCadetCount}</div>
+                    <div className="fs-3 fw-bold text-warning">
+                      {preview.swCadetCount}
+                    </div>
                     <div className="small text-muted">SW Cadets</div>
                   </Col>
                   <Col xs={4}>
-                    <div className="fs-3 fw-bold text-success">{totalCadets}</div>
+                    <div className="fs-3 fw-bold text-success">
+                      {totalCadets}
+                    </div>
                     <div className="small text-muted">Total</div>
                   </Col>
                 </Row>
@@ -179,7 +201,12 @@ const NominalRollReport: React.FC = () => {
           >
             {generating ? (
               <>
-                <Spinner as="span" animation="border" size="sm" className="me-2"  />
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  className="me-2"
+                />
                 Generating...
               </>
             ) : (

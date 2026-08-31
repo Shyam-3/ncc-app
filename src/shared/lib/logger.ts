@@ -1,10 +1,10 @@
 // Application logger utility
 
 enum LogLevel {
-  DEBUG = 'DEBUG',
-  INFO = 'INFO',
-  WARN = 'WARN',
-  ERROR = 'ERROR',
+  DEBUG = "DEBUG",
+  INFO = "INFO",
+  WARN = "WARN",
+  ERROR = "ERROR",
 }
 
 interface LogEntry {
@@ -35,10 +35,10 @@ class Logger {
 
   private getLogStyle(level: LogLevel): string {
     const styles: Record<LogLevel, string> = {
-      [LogLevel.DEBUG]: 'color: gray;',
-      [LogLevel.INFO]: 'color: blue;',
-      [LogLevel.WARN]: 'color: orange; font-weight: bold;',
-      [LogLevel.ERROR]: 'color: red; font-weight: bold;',
+      [LogLevel.DEBUG]: "color: gray;",
+      [LogLevel.INFO]: "color: blue;",
+      [LogLevel.WARN]: "color: orange; font-weight: bold;",
+      [LogLevel.ERROR]: "color: red; font-weight: bold;",
     };
     return styles[level];
   }

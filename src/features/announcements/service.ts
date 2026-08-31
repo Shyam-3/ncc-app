@@ -1,5 +1,5 @@
 // Announcements service - Full CRUD + read tracking + analytics
-import { db } from '@/shared/config/firebase';
+import { db } from "@/shared/config/firebase";
 import {
   collection,
   doc,
@@ -13,15 +13,15 @@ import {
   where,
   orderBy,
   serverTimestamp,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 import type {
   Announcement,
   AnnouncementFilter,
   AnnouncementRead,
   ReadAnalyticsGroup,
-} from './announcement.types';
+} from "./announcement.types";
 
-const announcementsCol = collection(db, 'announcements');
+const announcementsCol = collection(db, "announcements");
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -30,7 +30,10 @@ function isExpired(announcement: Announcement): boolean {
   return new Date(announcement.expiresAt) < new Date();
 }
 
-function filterExpired(announcements: Announcement[], includeExpired = false): Announcement[] {
+function filterExpired(
+  announcements: Announcement[],
+  includeExpired = false,
+): Announcement[] {
   if (includeExpired) return announcements;
   return announcements.filter((a) => !isExpired(a));
 }
@@ -38,7 +41,7 @@ function filterExpired(announcements: Announcement[], includeExpired = false): A
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export async function createAnnouncement(
-  data: Omit<Announcement, 'id' | 'createdAt'>,
+  data: Omit<Announcement, "id" | "createdAt">,
 ): Promise<string> {
   const docRef = await addDoc(announcementsCol, {
     ...data,
@@ -49,27 +52,29 @@ export async function createAnnouncement(
 
 export async function updateAnnouncement(
   id: string,
-  data: Partial<Omit<Announcement, 'id' | 'createdAt'>>,
+  data: Partial<Omit<Announcement, "id" | "createdAt">>,
 ): Promise<void> {
-  await updateDoc(doc(db, 'announcements', id), data);
+  await updateDoc(doc(db, "announcements", id), data);
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
   // Delete all reads subcollection docs first
-  const readsSnap = await getDocs(collection(db, 'announcements', id, 'reads'));
+  const readsSnap = await getDocs(collection(db, "announcements", id, "reads"));
   const deletePromises = readsSnap.docs.map((d) => deleteDoc(d.ref));
   await Promise.all(deletePromises);
 
   // Delete the announcement itself
-  await deleteDoc(doc(db, 'announcements', id));
+  await deleteDoc(doc(db, "announcements", id));
 }
 
 // ─── List / Query ─────────────────────────────────────────────────────────────
 
-export async function listAnnouncements(filter?: AnnouncementFilter): Promise<Announcement[]> {
-  const q = query(announcementsCol, orderBy('createdAt', 'desc'));
+export async function listAnnouncements(
+  filter?: AnnouncementFilter,
+): Promise<Announcement[]> {
+  const q = query(announcementsCol, orderBy("createdAt", "desc"));
   const snap = await getDocs(q);
-  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Announcement));
+  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
 
   if (filter?.category) {
     items = items.filter((a) => a.category === filter.category);
@@ -82,34 +87,44 @@ export async function listAnnouncements(filter?: AnnouncementFilter): Promise<An
 
 /** Public announcements only (visibility === 'public'), not expired */
 export async function listPublicAnnouncements(): Promise<Announcement[]> {
-  const q = query(announcementsCol, where('visibility', '==', 'public'));
+  const q = query(announcementsCol, where("visibility", "==", "public"));
   const snap = await getDocs(q);
-  const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Announcement));
-  
+  const items = snap.docs.map(
+    (d) => ({ id: d.id, ...d.data() }) as Announcement,
+  );
+
   // Sort client-side to avoid requiring a composite index
-  items.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-  
+  items.sort(
+    (a, b) =>
+      (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0),
+  );
+
   return filterExpired(items);
 }
 
 /** Active recruitment announcements (public, not expired) for homepage banner */
-export async function getActiveRecruitmentAnnouncements(): Promise<Announcement[]> {
+export async function getActiveRecruitmentAnnouncements(): Promise<
+  Announcement[]
+> {
   // Only query by visibility to satisfy security rules, filter category and sort client-side
-  const q = query(announcementsCol, where('visibility', '==', 'public'));
+  const q = query(announcementsCol, where("visibility", "==", "public"));
   const snap = await getDocs(q);
-  
-  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Announcement));
-  items = items.filter((a) => a.category === 'recruitment');
-  items.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-  
+
+  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
+  items = items.filter((a) => a.category === "recruitment");
+  items.sort(
+    (a, b) =>
+      (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0),
+  );
+
   return filterExpired(items);
 }
 
 /** All announcements visible to an authenticated user (public + auth_only), not expired */
 export async function listAnnouncementsForUser(): Promise<Announcement[]> {
-  const q = query(announcementsCol, orderBy('createdAt', 'desc'));
+  const q = query(announcementsCol, orderBy("createdAt", "desc"));
   const snap = await getDocs(q);
-  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Announcement));
+  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
   return filterExpired(items);
 }
 
@@ -123,23 +138,32 @@ export async function markAsRead(
   const readData: AnnouncementRead = {
     userId: user.uid,
     userName: user.name,
-    nccYear: user.nccYear || '',
+    nccYear: user.nccYear || "",
     role: user.role,
     readAt: serverTimestamp(),
   };
 
   // Check if already marked as read before writing — Firestore rules disallow updates,
   // so setDoc on an existing doc would fail with a permission error.
-  const userReadRef = doc(db, 'users', user.uid, 'readAnnouncements', announcementId);
+  const userReadRef = doc(
+    db,
+    "users",
+    user.uid,
+    "readAnnouncements",
+    announcementId,
+  );
   const existingRead = await getDoc(userReadRef);
-  
+
   if (existingRead.exists()) {
     // Already read — nothing to do
     return;
   }
 
   // Write 1: announcements/{id}/reads/{uid} (for admin analytics)
-  await setDoc(doc(db, 'announcements', announcementId, 'reads', user.uid), readData);
+  await setDoc(
+    doc(db, "announcements", announcementId, "reads", user.uid),
+    readData,
+  );
 
   // Write 2: users/{uid}/readAnnouncements/{announcementId} (for user's unread count)
   await setDoc(userReadRef, {
@@ -150,19 +174,25 @@ export async function markAsRead(
 
 /** Get all announcement IDs that a user has read */
 export async function getUserReadIds(uid: string): Promise<Set<string>> {
-  const snap = await getDocs(collection(db, 'users', uid, 'readAnnouncements'));
+  const snap = await getDocs(collection(db, "users", uid, "readAnnouncements"));
   return new Set(snap.docs.map((d) => d.id));
 }
 
 /** Get read count for an announcement */
 export async function getReadCount(announcementId: string): Promise<number> {
-  const snap = await getDocs(collection(db, 'announcements', announcementId, 'reads'));
+  const snap = await getDocs(
+    collection(db, "announcements", announcementId, "reads"),
+  );
   return snap.size;
 }
 
 /** Get read analytics grouped by NCC year (for admin view) */
-export async function getReadAnalytics(announcementId: string): Promise<ReadAnalyticsGroup[]> {
-  const snap = await getDocs(collection(db, 'announcements', announcementId, 'reads'));
+export async function getReadAnalytics(
+  announcementId: string,
+): Promise<ReadAnalyticsGroup[]> {
+  const snap = await getDocs(
+    collection(db, "announcements", announcementId, "reads"),
+  );
   const reads = snap.docs.map((d) => d.data() as AnnouncementRead);
 
   // Group by category
@@ -170,10 +200,10 @@ export async function getReadAnalytics(announcementId: string): Promise<ReadAnal
   const anoGroup: AnnouncementRead[] = [];
 
   for (const read of reads) {
-    if (read.role === 'superadmin' || read.role === 'admin') {
+    if (read.role === "superadmin" || read.role === "admin") {
       anoGroup.push(read);
     } else {
-      const key = read.nccYear || 'Unknown';
+      const key = read.nccYear || "Unknown";
       if (!groups[key]) groups[key] = [];
       groups[key].push(read);
     }
@@ -182,7 +212,7 @@ export async function getReadAnalytics(announcementId: string): Promise<ReadAnal
   const result: ReadAnalyticsGroup[] = [];
 
   // NCC years in order
-  const yearOrder = ['1st Year', '2nd Year', '3rd Year'];
+  const yearOrder = ["1st Year", "2nd Year", "3rd Year"];
   for (const year of yearOrder) {
     if (groups[year]) {
       result.push({ label: year, readers: groups[year] });
@@ -197,7 +227,7 @@ export async function getReadAnalytics(announcementId: string): Promise<ReadAnal
 
   // ANOs at the end
   if (anoGroup.length > 0) {
-    result.push({ label: 'ANOs', readers: anoGroup });
+    result.push({ label: "ANOs", readers: anoGroup });
   }
 
   return result;

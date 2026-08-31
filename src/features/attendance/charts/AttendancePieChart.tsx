@@ -1,6 +1,6 @@
-import { Pie, Doughnut } from 'react-chartjs-2';
-import { chartColors, pieChartOptions } from './ChartConfig';
-import './Charts.css';
+import { Pie, Doughnut } from "react-chartjs-2";
+import { chartColors, pieChartOptions } from "./ChartConfig";
+import "./Charts.css";
 
 interface PieDataPoint {
   label: string;
@@ -33,10 +33,11 @@ export function AttendancePieChart({
       {
         data: data.map((d) => d.value),
         backgroundColor: data.map(
-          (d) => d.color || defaultCategoryColors[d.label] || chartColors.absent
+          (d) =>
+            d.color || defaultCategoryColors[d.label] || chartColors.absent,
         ),
         borderWidth: 1,
-        borderColor: '#fff',
+        borderColor: "#fff",
       },
     ],
   };

@@ -1,12 +1,12 @@
-export type { 
-  Announcement, 
-  AnnouncementCategory, 
-  AnnouncementVisibility, 
-  AnnouncementFilter, 
-  AnnouncementRead, 
-  UserReadAnnouncement, 
-  ReadAnalyticsGroup 
-} from './announcement.types';
+export type {
+  Announcement,
+  AnnouncementCategory,
+  AnnouncementVisibility,
+  AnnouncementFilter,
+  AnnouncementRead,
+  UserReadAnnouncement,
+  ReadAnalyticsGroup,
+} from "./announcement.types";
 
 export {
   createAnnouncement,
@@ -20,7 +20,7 @@ export {
   getUserReadIds,
   getReadAnalytics,
   getReadCount,
-} from './service';
+} from "./service";
 
 // Firestore collection name constant for announcements
-export const ANNOUNCEMENTS_COLLECTION = 'announcements';
+export const ANNOUNCEMENTS_COLLECTION = "announcements";

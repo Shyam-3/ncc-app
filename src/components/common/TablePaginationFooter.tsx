@@ -1,6 +1,6 @@
-import React from 'react';
-import { Form } from 'react-bootstrap';
-import './TablePaginationFooter.css';
+import React from "react";
+import { Form } from "react-bootstrap";
+import "./TablePaginationFooter.css";
 
 const DEFAULT_ROWS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
@@ -43,7 +43,9 @@ const TablePaginationFooter: React.FC<TablePaginationFooterProps> = ({
         <Form.Select
           size="sm"
           value={rowsPerPage}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onRowsPerPageChange(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            onRowsPerPageChange(Number(e.target.value))
+          }
           className="role-rpp-select"
         >
           {rowsPerPageOptions.map((value) => (

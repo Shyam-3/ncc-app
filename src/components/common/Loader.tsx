@@ -1,17 +1,17 @@
-import { Spinner } from 'react-bootstrap';
+import { Spinner } from "react-bootstrap";
 
 interface LoaderProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   fullScreen?: boolean;
 }
 
-const spinnerPx: Record<NonNullable<LoaderProps['size']>, string> = {
-  sm: '1.5rem',
-  md: '3rem',
-  lg: '4rem',
+const spinnerPx: Record<NonNullable<LoaderProps["size"]>, string> = {
+  sm: "1.5rem",
+  md: "3rem",
+  lg: "4rem",
 };
 
-export function Loader({ size = 'md', fullScreen = false }: LoaderProps) {
+export function Loader({ size = "md", fullScreen = false }: LoaderProps) {
   const spinner = (
     <Spinner
       animation="border"

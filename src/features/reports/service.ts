@@ -1,6 +1,6 @@
-import { db } from '@/shared/config/firebase';
-import { Cadet } from '@/shared/types';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from "@/shared/config/firebase";
+import { Cadet } from "@/shared/types";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 
 export interface OnDutyReport {
   cadetId: string;
@@ -18,13 +18,14 @@ export interface OnDutyReport {
 }
 
 export async function saveOnDutyReport(report: OnDutyReport) {
-  await addDoc(collection(db, 'reports'), { ...report, type: 'on-duty' });
+  await addDoc(collection(db, "reports"), { ...report, type: "on-duty" });
 }
 
-export async function getCadetById(id: string): Promise<(Cadet & { id: string }) | null> {
-  const q = query(collection(db, 'users'), where('__name__', '==', id));
+export async function getCadetById(
+  id: string,
+): Promise<(Cadet & { id: string }) | null> {
+  const q = query(collection(db, "users"), where("__name__", "==", id));
   const snap = await getDocs(q);
   const d: any = snap.docs[0];
   return d ? { id: d.id, ...(d.data() as Cadet) } : null;
 }
-

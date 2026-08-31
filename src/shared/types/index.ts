@@ -1,8 +1,15 @@
 // Type definitions for the application
 
-import { AcademicYear, AttendanceStatus, Department, EventType, NccYear, UserRole } from '../config/constants';
+import {
+  AcademicYear,
+  AttendanceStatus,
+  Department,
+  EventType,
+  NccYear,
+  UserRole,
+} from "../config/constants";
 
-export type UserType = 'ano' | 'cadet';
+export type UserType = "ano" | "cadet";
 
 export interface User {
   uid: string;
@@ -10,7 +17,7 @@ export interface User {
   name: string;
   role: UserRole;
   userType?: UserType;
-  status: 'pending' | 'active' | 'inactive' | 'rejected';
+  status: "pending" | "active" | "inactive" | "rejected";
   createdAt: string;
   approvedAt?: string;
   approvedBy?: string;
@@ -25,7 +32,7 @@ export interface Cadet {
   email: string;
 
   // NCC Details
-  division: 'SD' | 'SW';
+  division: "SD" | "SW";
   regimentalNumber: string;
   dateOfEnrollment: string;
   rank: string;
@@ -93,7 +100,7 @@ export interface GalleryAlbum {
   id?: string;
   title: string;
   eventId?: string;
-  visibility: 'public' | 'private';
+  visibility: "public" | "private";
 }
 
 export interface Achievement {
@@ -125,5 +132,5 @@ export interface CmsDoc {
   sections: CmsSection[];
   updatedAt?: string;
   updatedBy?: string;
-  visibility?: 'public' | 'private';
+  visibility?: "public" | "private";
 }

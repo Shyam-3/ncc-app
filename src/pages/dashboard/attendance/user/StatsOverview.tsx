@@ -1,6 +1,6 @@
-import { Row, Col, Card, ProgressBar } from 'react-bootstrap';
-import type { CadetAttendanceStats } from '@/features/attendance/attendance.types';
-import { ATTENDANCE_THRESHOLDS } from '@/shared/config/constants';
+import { Row, Col, Card, ProgressBar } from "react-bootstrap";
+import type { CadetAttendanceStats } from "@/features/attendance/attendance.types";
+import { ATTENDANCE_THRESHOLDS } from "@/shared/config/constants";
 
 interface StatsOverviewProps {
   stats: CadetAttendanceStats | null;
@@ -20,12 +20,12 @@ export function StatsOverview({ stats, batchAverage }: StatsOverviewProps) {
 
   const rateVariant =
     stats.attendanceRate >= ATTENDANCE_THRESHOLDS.EXCELLENT
-      ? 'success'
+      ? "success"
       : stats.attendanceRate >= ATTENDANCE_THRESHOLDS.GOOD
-      ? 'info'
-      : stats.attendanceRate >= ATTENDANCE_THRESHOLDS.LOW
-      ? 'warning'
-      : 'danger';
+        ? "info"
+        : stats.attendanceRate >= ATTENDANCE_THRESHOLDS.LOW
+          ? "warning"
+          : "danger";
 
   return (
     <div className="stats-overview">
@@ -77,12 +77,12 @@ export function StatsOverview({ stats, batchAverage }: StatsOverviewProps) {
               Batch Average: {batchAverage}%
               {stats.attendanceRate > batchAverage ? (
                 <span className="text-success ms-2">
-                  <i className="bi bi-arrow-up"></i>{' '}
+                  <i className="bi bi-arrow-up"></i>{" "}
                   {(stats.attendanceRate - batchAverage).toFixed(1)}% above
                 </span>
               ) : stats.attendanceRate < batchAverage ? (
                 <span className="text-danger ms-2">
-                  <i className="bi bi-arrow-down"></i>{' '}
+                  <i className="bi bi-arrow-down"></i>{" "}
                   {(batchAverage - stats.attendanceRate).toFixed(1)}% below
                 </span>
               ) : (
@@ -102,15 +102,21 @@ export function StatsOverview({ stats, batchAverage }: StatsOverviewProps) {
               <div className="small">
                 <div className="d-flex justify-content-between mb-1">
                   <span>Present</span>
-                  <span className="text-success fw-semibold">{stats.present}</span>
+                  <span className="text-success fw-semibold">
+                    {stats.present}
+                  </span>
                 </div>
                 <div className="d-flex justify-content-between mb-1">
                   <span>Absent</span>
-                  <span className="text-danger fw-semibold">{stats.absent}</span>
+                  <span className="text-danger fw-semibold">
+                    {stats.absent}
+                  </span>
                 </div>
                 <div className="d-flex justify-content-between">
                   <span>Total Sessions</span>
-                  <span className="text-primary fw-semibold">{stats.totalSessions}</span>
+                  <span className="text-primary fw-semibold">
+                    {stats.totalSessions}
+                  </span>
                 </div>
               </div>
             </Card.Body>

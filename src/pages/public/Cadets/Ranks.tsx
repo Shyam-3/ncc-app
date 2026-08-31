@@ -1,5 +1,5 @@
-import React from 'react';
-import { Container } from 'react-bootstrap';
+import React from "react";
+import { Container } from "react-bootstrap";
 
 const Ranks: React.FC = () => (
   <Container className="py-5">

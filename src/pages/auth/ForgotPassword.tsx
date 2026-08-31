@@ -1,24 +1,32 @@
-import { useAuth } from '@/features/auth/AuthContext';
-import { mapFirebaseAuthError } from '@/shared/utils/firebaseErrors';
-import React, { FormEvent, useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import './ForgotPassword.css';
+import { useAuth } from "@/features/auth/AuthContext";
+import { mapFirebaseAuthError } from "@/shared/utils/firebaseErrors";
+import React, { FormEvent, useState } from "react";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  Row,
+} from "react-bootstrap";
+import { Link } from "react-router-dom";
+import "./ForgotPassword.css";
 
 const ForgotPassword: React.FC = () => {
   const { resetPassword } = useAuth();
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [formErrors, setFormErrors] = useState<{email?: string}>({});
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState<{ email?: string }>({});
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const validateForm = (): boolean => {
-    const errors: {email?: string} = {};
+    const errors: { email?: string } = {};
     if (!email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!email.includes('@')) {
-      errors.email = 'Valid email is required';
+      errors.email = "Email is required";
+    } else if (!email.includes("@")) {
+      errors.email = "Valid email is required";
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -27,13 +35,15 @@ const ForgotPassword: React.FC = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return;
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
     try {
       setLoading(true);
       await resetPassword(email);
-      setMessage('Password reset link sent! Check your inbox and Spam/Junk folder.');
-      setEmail('');
+      setMessage(
+        "Password reset link sent! Check your inbox and Spam/Junk folder.",
+      );
+      setEmail("");
     } catch (err: any) {
       setError(mapFirebaseAuthError(err?.code));
     } finally {
@@ -65,7 +75,8 @@ const ForgotPassword: React.FC = () => {
                     value={email}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       setEmail(e.target.value);
-                      if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
+                      if (formErrors.email)
+                        setFormErrors({ ...formErrors, email: undefined });
                     }}
                     isInvalid={!!formErrors.email}
                   />
@@ -74,8 +85,13 @@ const ForgotPassword: React.FC = () => {
                   </Form.Control.Feedback>
                 </Form.Group>
 
-                <Button type="submit" variant="primary" className="w-100" disabled={loading}>
-                  {loading ? 'Sending…' : 'Send Reset Link'}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-100"
+                  disabled={loading}
+                >
+                  {loading ? "Sending…" : "Send Reset Link"}
                 </Button>
               </Form>
 
@@ -92,4 +108,3 @@ const ForgotPassword: React.FC = () => {
 };
 
 export default ForgotPassword;
-

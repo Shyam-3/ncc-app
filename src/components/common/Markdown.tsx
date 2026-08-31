@@ -1,5 +1,5 @@
-import { marked } from 'marked';
-import React from 'react';
+import { marked } from "marked";
+import React from "react";
 
 type MarkdownProps = {
   content: string;
@@ -10,7 +10,10 @@ type MarkdownProps = {
 const Markdown: React.FC<MarkdownProps> = ({ content, className }) => {
   const html = React.useMemo(() => marked.parse(content), [content]);
   return (
-    <div className={className} dangerouslySetInnerHTML={{ __html: html as string }} />
+    <div
+      className={className}
+      dangerouslySetInnerHTML={{ __html: html as string }}
+    />
   );
 };
 

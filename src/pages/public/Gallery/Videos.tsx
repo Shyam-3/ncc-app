@@ -1,5 +1,5 @@
-import React from 'react';
-import { Container, Ratio } from 'react-bootstrap';
+import React from "react";
+import { Container, Ratio } from "react-bootstrap";
 
 const Videos: React.FC = () => (
   <Container className="py-5">

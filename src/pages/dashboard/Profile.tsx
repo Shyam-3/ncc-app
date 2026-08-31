@@ -1,9 +1,20 @@
-import { doc, getDoc, updateDoc, collection } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { formatISTDate } from '@/shared/utils/dateTime';
+import { doc, getDoc, updateDoc, collection } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  Modal,
+  Row,
+  Spinner,
+} from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { formatISTDate } from "@/shared/utils/dateTime";
 import {
   ACADEMIC_YEARS,
   DEPARTMENT_DEFS,
@@ -11,14 +22,17 @@ import {
   NCC_YEARS,
   ROMAN_YEAR_MAP,
   BLOOD_GROUPS,
-} from '../../shared/config/constants';
-import { db } from '../../shared/config/firebase';
-import { checkUniqueField, updateTakenNumberBatch } from '../../shared/utils/dbValidators';
-import { useAuth } from '@/features/auth/AuthContext';
-import { isAnoUser } from '@/shared/utils/userType';
-import { writeBatch } from 'firebase/firestore';
-import ProfilePhoto from '@/components/ProfilePhoto';
-import { uploadCadetPhoto, uploadAnoPhoto } from '@/shared/utils/cloudinary';
+} from "../../shared/config/constants";
+import { db } from "../../shared/config/firebase";
+import {
+  checkUniqueField,
+  updateTakenNumberBatch,
+} from "../../shared/utils/dbValidators";
+import { useAuth } from "@/features/auth/AuthContext";
+import { isAnoUser } from "@/shared/utils/userType";
+import { writeBatch } from "firebase/firestore";
+import ProfilePhoto from "@/components/ProfilePhoto";
+import { uploadCadetPhoto, uploadAnoPhoto } from "@/shared/utils/cloudinary";
 
 interface UserProfile {
   name: string;
@@ -26,10 +40,10 @@ interface UserProfile {
   role: string;
   photoURL?: string | null;
   cloudinaryPublicId?: string | null;
-  userType?: 'ano' | 'cadet';
-  status?: 'pending' | 'active' | 'inactive' | 'rejected';
+  userType?: "ano" | "cadet";
+  status?: "pending" | "active" | "inactive" | "rejected";
   dateOfBirth?: string;
-  division?: 'SD' | 'SW';
+  division?: "SD" | "SW";
   regimentalNumber?: string;
   dateOfEnrollment?: string;
   nccYear?: string;
@@ -54,33 +68,35 @@ const Profile: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [confirmSave, setConfirmSave] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
-  
+
   const [editForm, setEditForm] = useState({
-    name: '',
-    regimentalNumber: '',
-    dateOfEnrollment: '',
-    nccYear: '',
-    rank: 'CDT',
-    year: '',
-    residentialStatus: '',
-    department: '',
-    rollNo: '',
-    registerNumber: '',
-    phone: '',
-    bloodGroup: '',
-    fatherName: '',
-    address: '',
+    name: "",
+    regimentalNumber: "",
+    dateOfEnrollment: "",
+    nccYear: "",
+    rank: "CDT",
+    year: "",
+    residentialStatus: "",
+    department: "",
+    rollNo: "",
+    registerNumber: "",
+    phone: "",
+    bloodGroup: "",
+    fatherName: "",
+    address: "",
   });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-  const isAdminEditor = !isAnoUser(profile) && (profile?.role === 'admin' || profile?.role === 'superadmin');
+  const isAdminEditor =
+    !isAnoUser(profile) &&
+    (profile?.role === "admin" || profile?.role === "superadmin");
   const isAnoProfile = isAnoUser(profile);
   const fiveYearDepartments = new Set<string>(
-    DEPARTMENT_DEFS.filter(d => d.courseTenure === 5).map(d => d.code)
+    DEPARTMENT_DEFS.filter((d) => d.courseTenure === 5).map((d) => d.code),
   );
   const academicYearOptions = fiveYearDepartments.has(editForm.department)
     ? ACADEMIC_YEARS
-    : ACADEMIC_YEARS.filter(y => y !== '5th Year');
+    : ACADEMIC_YEARS.filter((y) => y !== "5th Year");
 
   const handlePhotoUpload = async (file: File) => {
     if (!currentUser || !profile) return;
@@ -91,42 +107,50 @@ const Profile: React.FC = () => {
         result = await uploadAnoPhoto(file, profile.name);
       } else {
         if (!profile.dateOfEnrollment || !profile.division) {
-          toast.error('Missing enrollment date or division. Contact admin.');
+          toast.error("Missing enrollment date or division. Contact admin.");
           return;
         }
         result = await uploadCadetPhoto(
           file,
           profile.name,
           profile.dateOfEnrollment,
-          profile.division as 'SD' | 'SW'
+          profile.division as "SD" | "SW",
         );
       }
-      
+
       const batch = writeBatch(db);
-      const userRef = doc(db, 'users', currentUser.uid);
-      
+      const userRef = doc(db, "users", currentUser.uid);
+
       // Update user document
       batch.update(userRef, {
         photoURL: result.secure_url,
         cloudinaryPublicId: result.public_id,
       });
-      
+
       // If they had an old photo, queue it for deletion
       if (profile.cloudinaryPublicId) {
-        batch.set(doc(collection(db, 'cloudinary_cleanup')), {
+        batch.set(doc(collection(db, "cloudinary_cleanup")), {
           publicId: profile.cloudinaryPublicId,
-          reason: 'photo_updated',
+          reason: "photo_updated",
           createdAt: new Date().toISOString(),
         });
       }
-      
+
       await batch.commit();
 
-      setProfile(prev => prev ? { ...prev, photoURL: result.secure_url, cloudinaryPublicId: result.public_id } : prev);
-      toast.success('Profile photo updated!');
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              photoURL: result.secure_url,
+              cloudinaryPublicId: result.public_id,
+            }
+          : prev,
+      );
+      toast.success("Profile photo updated!");
     } catch (err) {
-      console.error('Photo upload failed:', err);
-      toast.error('Failed to upload photo. Please try again.');
+      console.error("Photo upload failed:", err);
+      toast.error("Failed to upload photo. Please try again.");
     } finally {
       setPhotoUploading(false);
     }
@@ -137,7 +161,7 @@ const Profile: React.FC = () => {
     setPhotoUploading(true);
     try {
       const batch = writeBatch(db);
-      const userRef = doc(db, 'users', currentUser.uid);
+      const userRef = doc(db, "users", currentUser.uid);
 
       // Clear photo fields from user document
       batch.update(userRef, {
@@ -147,20 +171,24 @@ const Profile: React.FC = () => {
 
       // Queue old photo for cleanup if it existed
       if (profile.cloudinaryPublicId) {
-        batch.set(doc(collection(db, 'cloudinary_cleanup')), {
+        batch.set(doc(collection(db, "cloudinary_cleanup")), {
           publicId: profile.cloudinaryPublicId,
-          reason: 'photo_removed',
+          reason: "photo_removed",
           createdAt: new Date().toISOString(),
         });
       }
 
       await batch.commit();
 
-      setProfile(prev => prev ? { ...prev, photoURL: undefined, cloudinaryPublicId: undefined } : prev);
-      toast.success('Profile photo removed');
+      setProfile((prev) =>
+        prev
+          ? { ...prev, photoURL: undefined, cloudinaryPublicId: undefined }
+          : prev,
+      );
+      toast.success("Profile photo removed");
     } catch (err) {
-      console.error('Photo removal failed:', err);
-      toast.error('Failed to remove photo. Please try again.');
+      console.error("Photo removal failed:", err);
+      toast.error("Failed to remove photo. Please try again.");
     } finally {
       setPhotoUploading(false);
     }
@@ -169,32 +197,32 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!currentUser) return;
-      
+
       try {
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if (userDoc.exists()) {
           const data = userDoc.data() as UserProfile;
           setProfile(data);
           setEditForm({
-            name: data.name || '',
-            regimentalNumber: data.regimentalNumber || '',
-            dateOfEnrollment: data.dateOfEnrollment || '',
-            nccYear: data.nccYear || '1st Year',
-            rank: data.rank || 'CDT',
-            year: data.year || '1st Year',
-            residentialStatus: data.residentialStatus || '',
-            department: data.department || '',
-            rollNo: data.rollNo || '',
-            registerNumber: data.registerNumber || '',
-            phone: data.phone || '',
-            bloodGroup: data.bloodGroup || '',
-            fatherName: data.fatherName || '',
-            address: data.address || '',
+            name: data.name || "",
+            regimentalNumber: data.regimentalNumber || "",
+            dateOfEnrollment: data.dateOfEnrollment || "",
+            nccYear: data.nccYear || "1st Year",
+            rank: data.rank || "CDT",
+            year: data.year || "1st Year",
+            residentialStatus: data.residentialStatus || "",
+            department: data.department || "",
+            rollNo: data.rollNo || "",
+            registerNumber: data.registerNumber || "",
+            phone: data.phone || "",
+            bloodGroup: data.bloodGroup || "",
+            fatherName: data.fatherName || "",
+            address: data.address || "",
           });
         }
       } catch (error) {
-        console.error('Failed to fetch profile:', error);
-        toast.error('Failed to load profile');
+        console.error("Failed to fetch profile:", error);
+        toast.error("Failed to load profile");
       } finally {
         setLoading(false);
       }
@@ -206,20 +234,20 @@ const Profile: React.FC = () => {
   const handleOpenEdit = () => {
     if (profile) {
       setEditForm({
-        name: profile.name || '',
-        regimentalNumber: profile.regimentalNumber || '',
-        dateOfEnrollment: profile.dateOfEnrollment || '',
-        nccYear: profile.nccYear || '1st Year',
-        rank: profile.rank || 'CDT',
-        year: profile.year || '1st Year',
-        residentialStatus: profile.residentialStatus || '',
-        department: profile.department || '',
-        rollNo: profile.rollNo || '',
-        registerNumber: profile.registerNumber || '',
-        phone: profile.phone || '',
-        bloodGroup: profile.bloodGroup || '',
-        fatherName: profile.fatherName || '',
-        address: profile.address || '',
+        name: profile.name || "",
+        regimentalNumber: profile.regimentalNumber || "",
+        dateOfEnrollment: profile.dateOfEnrollment || "",
+        nccYear: profile.nccYear || "1st Year",
+        rank: profile.rank || "CDT",
+        year: profile.year || "1st Year",
+        residentialStatus: profile.residentialStatus || "",
+        department: profile.department || "",
+        rollNo: profile.rollNo || "",
+        registerNumber: profile.registerNumber || "",
+        phone: profile.phone || "",
+        bloodGroup: profile.bloodGroup || "",
+        fatherName: profile.fatherName || "",
+        address: profile.address || "",
       });
       setEditErrors({});
       setShowEditModal(true);
@@ -228,18 +256,18 @@ const Profile: React.FC = () => {
 
   const handleEditChange = (name: string, value: string) => {
     if (editErrors[name]) {
-      setEditErrors(prev => {
+      setEditErrors((prev) => {
         const next = { ...prev };
         delete next[name];
         return next;
       });
     }
-    setEditForm(prev => {
+    setEditForm((prev) => {
       const next = { ...prev, [name]: value };
-      if (name === 'department') {
-        const dept = DEPARTMENT_DEFS.find(d => d.code === value);
-        if (dept && dept.courseTenure !== 5 && prev.year === '5th Year') {
-          next.year = '4th Year';
+      if (name === "department") {
+        const dept = DEPARTMENT_DEFS.find((d) => d.code === value);
+        if (dept && dept.courseTenure !== 5 && prev.year === "5th Year") {
+          next.year = "4th Year";
         }
       }
       return next;
@@ -250,37 +278,41 @@ const Profile: React.FC = () => {
     const nextErrors: Record<string, string> = {};
 
     if (!editForm.name.trim()) {
-      nextErrors.name = 'Full name is required';
+      nextErrors.name = "Full name is required";
     }
 
     if (!editForm.phone.trim()) {
-      nextErrors.phone = 'Phone number is required';
+      nextErrors.phone = "Phone number is required";
     } else if (!editForm.phone.match(/^\d{10}$/)) {
-      nextErrors.phone = 'Phone number must be exactly 10 digits';
+      nextErrors.phone = "Phone number must be exactly 10 digits";
     }
 
     if (!editForm.bloodGroup.trim()) {
-      nextErrors.bloodGroup = 'Blood group is required';
+      nextErrors.bloodGroup = "Blood group is required";
     } else if (!BLOOD_GROUPS.includes(editForm.bloodGroup)) {
-      nextErrors.bloodGroup = 'Invalid blood group';
+      nextErrors.bloodGroup = "Invalid blood group";
     }
 
     if (!isAnoProfile && !editForm.residentialStatus.trim()) {
-      nextErrors.residentialStatus = 'Residential status is required';
+      nextErrors.residentialStatus = "Residential status is required";
     }
 
     if (isAdminEditor) {
-      if (!editForm.regimentalNumber.trim()) nextErrors.regimentalNumber = 'Regimental number is required';
-      if (!editForm.dateOfEnrollment) nextErrors.dateOfEnrollment = 'Date of enrollment is required';
-      if (!editForm.nccYear) nextErrors.nccYear = 'Year is required';
-      if (!editForm.rank) nextErrors.rank = 'Rank is required';
-      if (!editForm.year) nextErrors.year = 'Academic year is required';
-      if (!editForm.department) nextErrors.department = 'Department is required';
-      if (!editForm.rollNo.trim()) nextErrors.rollNo = 'Roll number is required';
+      if (!editForm.regimentalNumber.trim())
+        nextErrors.regimentalNumber = "Regimental number is required";
+      if (!editForm.dateOfEnrollment)
+        nextErrors.dateOfEnrollment = "Date of enrollment is required";
+      if (!editForm.nccYear) nextErrors.nccYear = "Year is required";
+      if (!editForm.rank) nextErrors.rank = "Rank is required";
+      if (!editForm.year) nextErrors.year = "Academic year is required";
+      if (!editForm.department)
+        nextErrors.department = "Department is required";
+      if (!editForm.rollNo.trim())
+        nextErrors.rollNo = "Roll number is required";
       if (!editForm.registerNumber.trim()) {
-        nextErrors.registerNumber = 'Register number is required';
+        nextErrors.registerNumber = "Register number is required";
       } else if (!editForm.registerNumber.match(/^\d{16}$/)) {
-        nextErrors.registerNumber = 'Register number must be exactly 16 digits';
+        nextErrors.registerNumber = "Register number must be exactly 16 digits";
       }
     }
 
@@ -288,7 +320,9 @@ const Profile: React.FC = () => {
     const isValid = Object.keys(nextErrors).length === 0;
     if (!isValid) {
       setTimeout(() => {
-        document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document
+          .querySelector(".is-invalid")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
     }
     return isValid;
@@ -301,35 +335,48 @@ const Profile: React.FC = () => {
     setSaving(true);
     try {
       if (isAdminEditor) {
-        const [isRegimentalUnique, isRegisterUnique, isRollUnique] = await Promise.all([
-          checkUniqueField('regimentalNumber', editForm.regimentalNumber, currentUser.uid),
-          checkUniqueField('registerNumber', editForm.registerNumber, currentUser.uid),
-          checkUniqueField('rollNo', editForm.rollNo, currentUser.uid),
-        ]);
+        const [isRegimentalUnique, isRegisterUnique, isRollUnique] =
+          await Promise.all([
+            checkUniqueField(
+              "regimentalNumber",
+              editForm.regimentalNumber,
+              currentUser.uid,
+            ),
+            checkUniqueField(
+              "registerNumber",
+              editForm.registerNumber,
+              currentUser.uid,
+            ),
+            checkUniqueField("rollNo", editForm.rollNo, currentUser.uid),
+          ]);
 
         const uniqueErrors: Record<string, string> = {};
         if (!isRegimentalUnique) {
-          uniqueErrors.regimentalNumber = 'This Regimental Number is already in use';
+          uniqueErrors.regimentalNumber =
+            "This Regimental Number is already in use";
         }
         if (!isRegisterUnique) {
-          uniqueErrors.registerNumber = 'This Register Number is already in use';
+          uniqueErrors.registerNumber =
+            "This Register Number is already in use";
         }
         if (!isRollUnique) {
-          uniqueErrors.rollNo = 'This Roll Number is already in use';
+          uniqueErrors.rollNo = "This Roll Number is already in use";
         }
 
         if (Object.keys(uniqueErrors).length > 0) {
-          setEditErrors(prev => ({ ...prev, ...uniqueErrors }));
-          toast.error('One or more identification numbers are already in use');
+          setEditErrors((prev) => ({ ...prev, ...uniqueErrors }));
+          toast.error("One or more identification numbers are already in use");
           setTimeout(() => {
-            document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document
+              .querySelector(".is-invalid")
+              ?.scrollIntoView({ behavior: "smooth", block: "center" });
           }, 100);
           setSaving(false);
           return;
         }
 
         const batch = writeBatch(db);
-        const userRef = doc(db, 'users', currentUser.uid);
+        const userRef = doc(db, "users", currentUser.uid);
 
         batch.update(userRef, {
           name: editForm.name,
@@ -344,14 +391,32 @@ const Profile: React.FC = () => {
           registerNumber: editForm.registerNumber,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
-          fatherName: editForm.fatherName || '',
-          address: editForm.address || '',
+          fatherName: editForm.fatherName || "",
+          address: editForm.address || "",
         });
 
         // Update the taken numbers registry
-        updateTakenNumberBatch(batch, 'regimentalNumber', profile.regimentalNumber, editForm.regimentalNumber, currentUser.uid);
-        updateTakenNumberBatch(batch, 'registerNumber', profile.registerNumber, editForm.registerNumber, currentUser.uid);
-        updateTakenNumberBatch(batch, 'rollNo', profile.rollNo, editForm.rollNo, currentUser.uid);
+        updateTakenNumberBatch(
+          batch,
+          "regimentalNumber",
+          profile.regimentalNumber,
+          editForm.regimentalNumber,
+          currentUser.uid,
+        );
+        updateTakenNumberBatch(
+          batch,
+          "registerNumber",
+          profile.registerNumber,
+          editForm.registerNumber,
+          currentUser.uid,
+        );
+        updateTakenNumberBatch(
+          batch,
+          "rollNo",
+          profile.rollNo,
+          editForm.rollNo,
+          currentUser.uid,
+        );
 
         await batch.commit();
 
@@ -369,8 +434,8 @@ const Profile: React.FC = () => {
           registerNumber: editForm.registerNumber,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
-          fatherName: editForm.fatherName || '',
-          address: editForm.address || '',
+          fatherName: editForm.fatherName || "",
+          address: editForm.address || "",
         });
       } else {
         const updatePayload: Record<string, string> = {
@@ -382,31 +447,33 @@ const Profile: React.FC = () => {
           updatePayload.rank = editForm.rank;
         }
         if (!isAnoProfile) {
-          updatePayload.fatherName = editForm.fatherName || '';
+          updatePayload.fatherName = editForm.fatherName || "";
           updatePayload.residentialStatus = editForm.residentialStatus;
-          updatePayload.address = editForm.address || '';
+          updatePayload.address = editForm.address || "";
         }
-        await updateDoc(doc(db, 'users', currentUser.uid), updatePayload);
+        await updateDoc(doc(db, "users", currentUser.uid), updatePayload);
 
         setProfile({
           ...profile,
           name: editForm.name,
           phone: editForm.phone,
           bloodGroup: editForm.bloodGroup,
-          ...(isAnoProfile ? { rank: editForm.rank } : {
-            fatherName: editForm.fatherName || '',
-            residentialStatus: editForm.residentialStatus,
-            address: editForm.address || '',
-          }),
+          ...(isAnoProfile
+            ? { rank: editForm.rank }
+            : {
+                fatherName: editForm.fatherName || "",
+                residentialStatus: editForm.residentialStatus,
+                address: editForm.address || "",
+              }),
         });
       }
 
-      toast.success('Profile updated successfully');
+      toast.success("Profile updated successfully");
       setShowEditModal(false);
       setConfirmSave(false);
     } catch (error) {
-      console.error('Failed to update profile:', error);
-      toast.error('Failed to update profile');
+      console.error("Failed to update profile:", error);
+      toast.error("Failed to update profile");
     } finally {
       setSaving(false);
     }
@@ -420,7 +487,7 @@ const Profile: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner as="span" animation="border"  size="sm" />
+        <Spinner as="span" animation="border" size="sm" />
         <p className="mt-3">Loading profile...</p>
       </Container>
     );
@@ -435,27 +502,27 @@ const Profile: React.FC = () => {
   }
 
   const formatDate = (value?: string) => {
-    if (!value) return '-';
+    if (!value) return "-";
     const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? '-' : formatISTDate(d);
+    return Number.isNaN(d.getTime()) ? "-" : formatISTDate(d);
   };
 
   const formatYear = (value?: string) => {
-    if (!value) return '-';
-    const cleaned = value.replace(' Year', '').trim();
+    if (!value) return "-";
+    const cleaned = value.replace(" Year", "").trim();
     return ROMAN_YEAR_MAP[cleaned] || cleaned;
   };
 
   const getRankName = (code?: string) => {
-    if (!code) return 'Cadet';
-    return NCC_RANKS.find(r => r.code === code)?.name || code;
+    if (!code) return "Cadet";
+    return NCC_RANKS.find((r) => r.code === code)?.name || code;
   };
 
-  const getNccYear = (value?: string) => formatYear(value || '1st Year');
+  const getNccYear = (value?: string) => formatYear(value || "1st Year");
 
   const getDepartmentFullName = (code?: string) => {
-    if (!code) return '-';
-    const dept = DEPARTMENT_DEFS.find(d => d.code === code);
+    if (!code) return "-";
+    const dept = DEPARTMENT_DEFS.find((d) => d.code === code);
     return dept ? dept.name : code;
   };
 
@@ -470,7 +537,12 @@ const Profile: React.FC = () => {
                 Profile
               </h3>
               <div>
-                <Button variant="light" size="sm" onClick={handleOpenEdit} className="me-2">
+                <Button
+                  variant="light"
+                  size="sm"
+                  onClick={handleOpenEdit}
+                  className="me-2"
+                >
                   <i className="bi bi-pencil me-1"></i>
                   Edit
                 </Button>
@@ -499,44 +571,65 @@ const Profile: React.FC = () => {
               </h5>
               <Row className="mb-4 g-3">
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Name</Form.Label>
-                  <p className="mb-0">{profile.name || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Name
+                  </Form.Label>
+                  <p className="mb-0">{profile.name || "-"}</p>
                 </Col>
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Email</Form.Label>
-                  <p className="mb-0">{profile.email || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Email
+                  </Form.Label>
+                  <p className="mb-0">{profile.email || "-"}</p>
                 </Col>
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Phone</Form.Label>
-                  <p className="mb-0">+91 {profile.phone || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Phone
+                  </Form.Label>
+                  <p className="mb-0">+91 {profile.phone || "-"}</p>
                 </Col>
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
-                  <p className="mb-0">{profile.bloodGroup || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Blood Group
+                  </Form.Label>
+                  <p className="mb-0">{profile.bloodGroup || "-"}</p>
                 </Col>
                 {!isAnoProfile && (
                   <Col xs={12} md={6}>
-                    <Form.Label className="fw-bold text-muted small">Date of Birth</Form.Label>
+                    <Form.Label className="fw-bold text-muted small">
+                      Date of Birth
+                    </Form.Label>
                     <p className="mb-0">{formatDate(profile.dateOfBirth)}</p>
                   </Col>
                 )}
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Role</Form.Label>
+                  <Form.Label className="fw-bold text-muted small">
+                    Role
+                  </Form.Label>
                   <div>
                     <Badge
                       bg={
-                        profile.role === 'superadmin' ? 'danger' :
-                        profile.role === 'admin' ? 'primary' : 'secondary'
+                        profile.role === "superadmin"
+                          ? "danger"
+                          : profile.role === "admin"
+                            ? "primary"
+                            : "secondary"
                       }
                     >
                       {profile.role.toUpperCase()}
                     </Badge>
-                    {isAnoProfile && <Badge bg="dark" className="ms-2">ANO</Badge>}
+                    {isAnoProfile && (
+                      <Badge bg="dark" className="ms-2">
+                        ANO
+                      </Badge>
+                    )}
                   </div>
                 </Col>
                 {isAnoProfile && profile.rank && (
                   <Col xs={12} md={6}>
-                    <Form.Label className="fw-bold text-muted small">Rank / Designation</Form.Label>
+                    <Form.Label className="fw-bold text-muted small">
+                      Rank / Designation
+                    </Form.Label>
                     <p className="mb-0">{profile.rank}</p>
                   </Col>
                 )}
@@ -544,94 +637,129 @@ const Profile: React.FC = () => {
 
               {!isAnoProfile && (
                 <>
-              <hr />
+                  <hr />
 
-              <h5 className="mb-3 text-primary">
-                <i className="bi bi-shield-fill me-2"></i>
-                NCC
-              </h5>
-              <Row className="mb-4 g-3">
-                <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Division</Form.Label>
-                  <div>
-                    {profile.division ? (
-                      <Badge bg={profile.division === 'SD' ? 'info' : 'warning'}>
-                        {profile.division}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted">-</span>
-                    )}
-                  </div>
-                </Col>
-                <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Rank</Form.Label>
-                  <p className="mb-0">{getRankName(profile.rank || 'CDT')}</p>
-                </Col>
-                <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Regimental Number</Form.Label>
-                  <p className="mb-0">{profile.regimentalNumber || '-'}</p>
-                </Col>
-                <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Year</Form.Label>
-                  <p className="mb-0">{getNccYear(profile.nccYear)}</p>
-                </Col>
-                <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Date of Enrollment</Form.Label>
-                  <p className="mb-0">{formatDate(profile.dateOfEnrollment)}</p>
-                </Col>
-              </Row>
+                  <h5 className="mb-3 text-primary">
+                    <i className="bi bi-shield-fill me-2"></i>
+                    NCC
+                  </h5>
+                  <Row className="mb-4 g-3">
+                    <Col xs={12} md={4}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Division
+                      </Form.Label>
+                      <div>
+                        {profile.division ? (
+                          <Badge
+                            bg={profile.division === "SD" ? "info" : "warning"}
+                          >
+                            {profile.division}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </div>
+                    </Col>
+                    <Col xs={12} md={4}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Rank
+                      </Form.Label>
+                      <p className="mb-0">
+                        {getRankName(profile.rank || "CDT")}
+                      </p>
+                    </Col>
+                    <Col xs={12} md={4}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Regimental Number
+                      </Form.Label>
+                      <p className="mb-0">{profile.regimentalNumber || "-"}</p>
+                    </Col>
+                    <Col xs={12} md={4}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Year
+                      </Form.Label>
+                      <p className="mb-0">{getNccYear(profile.nccYear)}</p>
+                    </Col>
+                    <Col xs={12} md={4}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Date of Enrollment
+                      </Form.Label>
+                      <p className="mb-0">
+                        {formatDate(profile.dateOfEnrollment)}
+                      </p>
+                    </Col>
+                  </Row>
 
-              <hr />
+                  <hr />
 
-              <h5 className="mb-3 text-primary">
-                <i className="bi bi-mortarboard-fill me-2"></i>
-                Academic
-              </h5>
-              <Row className="mb-4 g-3">
-                <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Year</Form.Label>
-                  <p className="mb-0">{formatYear(profile.year || '1st Year')}</p>
-                </Col>
-                <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Department</Form.Label>
-                  <p className="mb-0">{getDepartmentFullName(profile.department)}</p>
-                </Col>
-                <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Roll Number</Form.Label>
-                  <p className="mb-0">{profile.rollNo || '-'}</p>
-                </Col>
-                <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Register Number</Form.Label>
-                  <p className="mb-0">{profile.registerNumber || '-'}</p>
-                </Col>
-              </Row>
+                  <h5 className="mb-3 text-primary">
+                    <i className="bi bi-mortarboard-fill me-2"></i>
+                    Academic
+                  </h5>
+                  <Row className="mb-4 g-3">
+                    <Col xs={12} md={6}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Year
+                      </Form.Label>
+                      <p className="mb-0">
+                        {formatYear(profile.year || "1st Year")}
+                      </p>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Department
+                      </Form.Label>
+                      <p className="mb-0">
+                        {getDepartmentFullName(profile.department)}
+                      </p>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Roll Number
+                      </Form.Label>
+                      <p className="mb-0">{profile.rollNo || "-"}</p>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Register Number
+                      </Form.Label>
+                      <p className="mb-0">{profile.registerNumber || "-"}</p>
+                    </Col>
+                  </Row>
 
-              <hr />
+                  <hr />
 
-              <h5 className="mb-3 text-primary">
-                <i className="bi bi-telephone-fill me-2"></i>
-                Additional
-              </h5>
-              <Row className="mb-4 g-3">
-                <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Father's / Guardian's Name</Form.Label>
-                  <p className="mb-0">{profile.fatherName || '-'}</p>
-                </Col>
-                <Col xs={12} md={12}>
-                  <Form.Label className="fw-bold text-muted small">Address</Form.Label>
-                  <p className="mb-0">{profile.address || '-'}</p>
-                </Col>
-              </Row>
+                  <h5 className="mb-3 text-primary">
+                    <i className="bi bi-telephone-fill me-2"></i>
+                    Additional
+                  </h5>
+                  <Row className="mb-4 g-3">
+                    <Col xs={12} md={4}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Father's / Guardian's Name
+                      </Form.Label>
+                      <p className="mb-0">{profile.fatherName || "-"}</p>
+                    </Col>
+                    <Col xs={12} md={12}>
+                      <Form.Label className="fw-bold text-muted small">
+                        Address
+                      </Form.Label>
+                      <p className="mb-0">{profile.address || "-"}</p>
+                    </Col>
+                  </Row>
                 </>
               )}
-
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
       {/* Edit Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered>
+      <Modal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        centered
+      >
         <Modal.Header closeButton>
           <Modal.Title>Edit Profile</Modal.Title>
         </Modal.Header>
@@ -642,41 +770,65 @@ const Profile: React.FC = () => {
               <Form.Control
                 type="text"
                 value={editForm.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('name', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleEditChange("name", e.target.value)
+                }
                 placeholder="Enter your full name"
                 isInvalid={Boolean(editErrors.name)}
               />
-              {editErrors.name && <Form.Text className="text-danger d-block mt-1">{editErrors.name}</Form.Text>}
+              {editErrors.name && (
+                <Form.Text className="text-danger d-block mt-1">
+                  {editErrors.name}
+                </Form.Text>
+              )}
             </Form.Group>
 
             {isAdminEditor && (
               <>
                 <Row className="g-3">
                   <Col xs={12} md={6}>
-                    <Form.Group className="mb-3" controlId="editRegimentalNumber">
+                    <Form.Group
+                      className="mb-3"
+                      controlId="editRegimentalNumber"
+                    >
                       <Form.Label>Regimental Number *</Form.Label>
                       <Form.Control
                         type="text"
                         value={editForm.regimentalNumber}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('regimentalNumber', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleEditChange("regimentalNumber", e.target.value)
+                        }
                         isInvalid={Boolean(editErrors.regimentalNumber)}
                       />
-                      {editErrors.regimentalNumber && <Form.Text className="text-danger d-block mt-1">{editErrors.regimentalNumber}</Form.Text>}
+                      {editErrors.regimentalNumber && (
+                        <Form.Text className="text-danger d-block mt-1">
+                          {editErrors.regimentalNumber}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
                 </Row>
 
                 <Row className="g-3">
                   <Col xs={12} md={6}>
-                    <Form.Group className="mb-3" controlId="editDateOfEnrollment">
+                    <Form.Group
+                      className="mb-3"
+                      controlId="editDateOfEnrollment"
+                    >
                       <Form.Label>Date of Enrollment *</Form.Label>
                       <Form.Control
                         type="date"
                         value={editForm.dateOfEnrollment}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('dateOfEnrollment', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleEditChange("dateOfEnrollment", e.target.value)
+                        }
                         isInvalid={Boolean(editErrors.dateOfEnrollment)}
                       />
-                      {editErrors.dateOfEnrollment && <Form.Text className="text-danger d-block mt-1">{editErrors.dateOfEnrollment}</Form.Text>}
+                      {editErrors.dateOfEnrollment && (
+                        <Form.Text className="text-danger d-block mt-1">
+                          {editErrors.dateOfEnrollment}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
                   <Col xs={12} md={6}>
@@ -684,15 +836,25 @@ const Profile: React.FC = () => {
                       <Form.Label>Year *</Form.Label>
                       <Form.Select
                         value={editForm.nccYear}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('nccYear', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          handleEditChange("nccYear", e.target.value)
+                        }
                         isInvalid={Boolean(editErrors.nccYear)}
                       >
-                        <option value="" disabled>Select Year</option>
-                        {NCC_YEARS.map(y => (
-                          <option key={y} value={y}>{y}</option>
+                        <option value="" disabled>
+                          Select Year
+                        </option>
+                        {NCC_YEARS.map((y) => (
+                          <option key={y} value={y}>
+                            {y}
+                          </option>
                         ))}
                       </Form.Select>
-                      {editErrors.nccYear && <Form.Text className="text-danger d-block mt-1">{editErrors.nccYear}</Form.Text>}
+                      {editErrors.nccYear && (
+                        <Form.Text className="text-danger d-block mt-1">
+                          {editErrors.nccYear}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
                 </Row>
@@ -703,15 +865,25 @@ const Profile: React.FC = () => {
                       <Form.Label>Rank *</Form.Label>
                       <Form.Select
                         value={editForm.rank}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('rank', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          handleEditChange("rank", e.target.value)
+                        }
                         isInvalid={Boolean(editErrors.rank)}
                       >
-                        <option value="" disabled>Select Rank</option>
-                        {NCC_RANKS.map(r => (
-                          <option key={r.code} value={r.code}>{r.name}</option>
+                        <option value="" disabled>
+                          Select Rank
+                        </option>
+                        {NCC_RANKS.map((r) => (
+                          <option key={r.code} value={r.code}>
+                            {r.name}
+                          </option>
                         ))}
                       </Form.Select>
-                      {editErrors.rank && <Form.Text className="text-danger d-block mt-1">{editErrors.rank}</Form.Text>}
+                      {editErrors.rank && (
+                        <Form.Text className="text-danger d-block mt-1">
+                          {editErrors.rank}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
                   <Col xs={12} md={6}>
@@ -719,15 +891,25 @@ const Profile: React.FC = () => {
                       <Form.Label>Academic Year *</Form.Label>
                       <Form.Select
                         value={editForm.year}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('year', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          handleEditChange("year", e.target.value)
+                        }
                         isInvalid={Boolean(editErrors.year)}
                       >
-                        <option value="" disabled>Select Year</option>
-                        {academicYearOptions.map(y => (
-                          <option key={y} value={y}>{y}</option>
+                        <option value="" disabled>
+                          Select Year
+                        </option>
+                        {academicYearOptions.map((y) => (
+                          <option key={y} value={y}>
+                            {y}
+                          </option>
                         ))}
                       </Form.Select>
-                      {editErrors.year && <Form.Text className="text-danger d-block mt-1">{editErrors.year}</Form.Text>}
+                      {editErrors.year && (
+                        <Form.Text className="text-danger d-block mt-1">
+                          {editErrors.year}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
                 </Row>
@@ -738,15 +920,25 @@ const Profile: React.FC = () => {
                       <Form.Label>Department *</Form.Label>
                       <Form.Select
                         value={editForm.department}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('department', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          handleEditChange("department", e.target.value)
+                        }
                         isInvalid={Boolean(editErrors.department)}
                       >
-                        <option value="" disabled>Select Department</option>
-                        {DEPARTMENT_DEFS.map(d => (
-                          <option key={d.code} value={d.code}>{d.code}</option>
+                        <option value="" disabled>
+                          Select Department
+                        </option>
+                        {DEPARTMENT_DEFS.map((d) => (
+                          <option key={d.code} value={d.code}>
+                            {d.code}
+                          </option>
                         ))}
                       </Form.Select>
-                      {editErrors.department && <Form.Text className="text-danger d-block mt-1">{editErrors.department}</Form.Text>}
+                      {editErrors.department && (
+                        <Form.Text className="text-danger d-block mt-1">
+                          {editErrors.department}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
                 </Row>
@@ -758,10 +950,16 @@ const Profile: React.FC = () => {
                       <Form.Control
                         type="text"
                         value={editForm.rollNo}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('rollNo', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleEditChange("rollNo", e.target.value)
+                        }
                         isInvalid={Boolean(editErrors.rollNo)}
                       />
-                      {editErrors.rollNo && <Form.Text className="text-danger d-block mt-1">{editErrors.rollNo}</Form.Text>}
+                      {editErrors.rollNo && (
+                        <Form.Text className="text-danger d-block mt-1">
+                          {editErrors.rollNo}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
                   <Col xs={12} md={6}>
@@ -770,12 +968,20 @@ const Profile: React.FC = () => {
                       <Form.Control
                         type="number"
                         value={editForm.registerNumber}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('registerNumber', e.target.value)}
-                        onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleEditChange("registerNumber", e.target.value)
+                        }
+                        onWheel={(e: React.WheelEvent<HTMLInputElement>) =>
+                          e.currentTarget.blur()
+                        }
                         min="0"
                         isInvalid={Boolean(editErrors.registerNumber)}
                       />
-                      {editErrors.registerNumber && <Form.Text className="text-danger d-block mt-1">{editErrors.registerNumber}</Form.Text>}
+                      {editErrors.registerNumber && (
+                        <Form.Text className="text-danger d-block mt-1">
+                          {editErrors.registerNumber}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
                 </Row>
@@ -787,95 +993,137 @@ const Profile: React.FC = () => {
               <Form.Control
                 type="number"
                 value={editForm.phone}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('phone', e.target.value)}
-                onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleEditChange("phone", e.target.value)
+                }
+                onWheel={(e: React.WheelEvent<HTMLInputElement>) =>
+                  e.currentTarget.blur()
+                }
                 placeholder="10-digit mobile"
                 min="0"
                 isInvalid={Boolean(editErrors.phone)}
               />
-              {editErrors.phone && <Form.Text className="text-danger d-block mt-1">{editErrors.phone}</Form.Text>}
+              {editErrors.phone && (
+                <Form.Text className="text-danger d-block mt-1">
+                  {editErrors.phone}
+                </Form.Text>
+              )}
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="editBloodGroup">
               <Form.Label>Blood Group</Form.Label>
               <Form.Select
                 value={editForm.bloodGroup}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('bloodGroup', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  handleEditChange("bloodGroup", e.target.value)
+                }
                 isInvalid={Boolean(editErrors.bloodGroup)}
               >
-                <option value="" disabled>Select Blood Group</option>
-                {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                <option value="" disabled>
+                  Select Blood Group
+                </option>
+                {BLOOD_GROUPS.map((bg) => (
+                  <option key={bg} value={bg}>
+                    {bg}
+                  </option>
+                ))}
               </Form.Select>
-              {editErrors.bloodGroup && <Form.Text className="text-danger d-block mt-1">{editErrors.bloodGroup}</Form.Text>}
+              {editErrors.bloodGroup && (
+                <Form.Text className="text-danger d-block mt-1">
+                  {editErrors.bloodGroup}
+                </Form.Text>
+              )}
             </Form.Group>
 
             {isAnoProfile && (
-            <Form.Group className="mb-3" controlId="editAnoRank">
-              <Form.Label>Rank / Designation</Form.Label>
-              <Form.Control
-                type="text"
-                value={editForm.rank}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('rank', e.target.value)}
-                placeholder="e.g., Major, Captain, Lieutenant"
-              />
-            </Form.Group>
+              <Form.Group className="mb-3" controlId="editAnoRank">
+                <Form.Label>Rank / Designation</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={editForm.rank}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleEditChange("rank", e.target.value)
+                  }
+                  placeholder="e.g., Major, Captain, Lieutenant"
+                />
+              </Form.Group>
             )}
 
             {!isAnoProfile && (
-            <Form.Group className="mb-3" controlId="editResidentialStatus">
-              <Form.Label>Residential Status</Form.Label>
-              <Form.Select
-                value={editForm.residentialStatus}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleEditChange('residentialStatus', e.target.value)}
-                isInvalid={Boolean(editErrors.residentialStatus)}
-              >
-                <option value="" disabled>Select Status</option>
-                <option value="Day Scholar">Day Scholar</option>
-                <option value="Hosteller">Hosteller</option>
-              </Form.Select>
-              {editErrors.residentialStatus && <Form.Text className="text-danger d-block mt-1">{editErrors.residentialStatus}</Form.Text>}
-            </Form.Group>
+              <Form.Group className="mb-3" controlId="editResidentialStatus">
+                <Form.Label>Residential Status</Form.Label>
+                <Form.Select
+                  value={editForm.residentialStatus}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    handleEditChange("residentialStatus", e.target.value)
+                  }
+                  isInvalid={Boolean(editErrors.residentialStatus)}
+                >
+                  <option value="" disabled>
+                    Select Status
+                  </option>
+                  <option value="Day Scholar">Day Scholar</option>
+                  <option value="Hosteller">Hosteller</option>
+                </Form.Select>
+                {editErrors.residentialStatus && (
+                  <Form.Text className="text-danger d-block mt-1">
+                    {editErrors.residentialStatus}
+                  </Form.Text>
+                )}
+              </Form.Group>
             )}
 
             {!isAnoProfile && (
-            <>
-            <Form.Group className="mb-3" controlId="editFatherName">
-              <Form.Label>Father's / Guardian's Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={editForm.fatherName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditChange('fatherName', e.target.value)}
-                placeholder="Enter father's or guardian's name"
-              />
-            </Form.Group>
+              <>
+                <Form.Group className="mb-3" controlId="editFatherName">
+                  <Form.Label>Father's / Guardian's Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={editForm.fatherName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleEditChange("fatherName", e.target.value)
+                    }
+                    placeholder="Enter father's or guardian's name"
+                  />
+                </Form.Group>
 
-            <Form.Group className="mb-3" controlId="editAddress">
-              <Form.Label>Address</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={editForm.address}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleEditChange('address', e.target.value)}
-                placeholder="Enter your full address"
-              />
-            </Form.Group>
-            </>
+                <Form.Group className="mb-3" controlId="editAddress">
+                  <Form.Label>Address</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={editForm.address}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      handleEditChange("address", e.target.value)
+                    }
+                    placeholder="Enter your full address"
+                  />
+                </Form.Group>
+              </>
             )}
 
             <Alert variant="warning" className="small">
               <i className="bi bi-exclamation-triangle me-2"></i>
               {isAnoProfile
-                ? 'ANO profiles can update name, rank, phone, and blood group.'
-                : 'Only name, residential status, and additional details can be modified by cadets.'}
+                ? "ANO profiles can update name, rank, phone, and blood group."
+                : "Only name, residential status, and additional details can be modified by cadets."}
             </Alert>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)} disabled={saving}>
+          <Button
+            variant="secondary"
+            onClick={() => setShowEditModal(false)}
+            disabled={saving}
+          >
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleRequestSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
+          <Button
+            variant="primary"
+            onClick={handleRequestSave}
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -888,8 +1136,20 @@ const Profile: React.FC = () => {
           <p>Save changes to your profile?</p>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setConfirmSave(false)} disabled={saving}>Cancel</Button>
-          <Button variant="primary" onClick={handleSaveChanges} disabled={saving}>Save</Button>
+          <Button
+            variant="secondary"
+            onClick={() => setConfirmSave(false)}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSaveChanges}
+            disabled={saving}
+          >
+            Save
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>
@@ -897,4 +1157,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-

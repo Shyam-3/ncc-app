@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Container, Spinner } from 'react-bootstrap';
-import { Markdown } from '../../components';
+import React, { useEffect, useState } from "react";
+import { Alert, Container, Spinner } from "react-bootstrap";
+import { Markdown } from "../../components";
 
 const Resources: React.FC = () => {
   const [study, setStudy] = useState<string | null>(null);
@@ -11,14 +11,20 @@ const Resources: React.FC = () => {
     let isMounted = true;
     const load = async () => {
       try {
-        const mods = import.meta.glob('../../../content/resources/*.md?raw');
-        const studyKey = '../../../content/resources/study-material.md?raw';
-        const manualsKey = '../../../content/resources/manuals.md?raw';
-        const studyLoader = mods[studyKey] as undefined | (() => Promise<{ default: string }>);
-        const manualsLoader = mods[manualsKey] as undefined | (() => Promise<{ default: string }>);
+        const mods = import.meta.glob("../../../content/resources/*.md?raw");
+        const studyKey = "../../../content/resources/study-material.md?raw";
+        const manualsKey = "../../../content/resources/manuals.md?raw";
+        const studyLoader = mods[studyKey] as
+          undefined | (() => Promise<{ default: string }>);
+        const manualsLoader = mods[manualsKey] as
+          undefined | (() => Promise<{ default: string }>);
         const [studyMod, manualsMod] = await Promise.all([
-          studyLoader ? studyLoader() : Promise.resolve<{ default: string } | null>(null),
-          manualsLoader ? manualsLoader() : Promise.resolve<{ default: string } | null>(null),
+          studyLoader
+            ? studyLoader()
+            : Promise.resolve<{ default: string } | null>(null),
+          manualsLoader
+            ? manualsLoader()
+            : Promise.resolve<{ default: string } | null>(null),
         ]);
         if (!isMounted) return;
         setStudy((studyMod as any)?.default ?? null);
@@ -28,7 +34,9 @@ const Resources: React.FC = () => {
       }
     };
     load();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -36,16 +44,22 @@ const Resources: React.FC = () => {
       <h1 className="mb-4">Resources</h1>
       {loading ? (
         <div className="d-flex align-items-center">
-          <Spinner as="span" animation="border" size="sm" className="me-2"  />
+          <Spinner as="span" animation="border" size="sm" className="me-2" />
           <span>Loading resources…</span>
         </div>
       ) : (
         <>
-          {study ? <Markdown content={study} /> : (
-            <Alert variant="secondary">Study materials will be published soon.</Alert>
+          {study ? (
+            <Markdown content={study} />
+          ) : (
+            <Alert variant="secondary">
+              Study materials will be published soon.
+            </Alert>
           )}
           <hr className="my-4" />
-          {manuals ? <Markdown content={manuals} /> : (
+          {manuals ? (
+            <Markdown content={manuals} />
+          ) : (
             <Alert variant="secondary">Manuals will be published soon.</Alert>
           )}
         </>

@@ -22,8 +22,14 @@ import { uploadAlumniPhoto } from "@/shared/utils/cloudinary";
 
 const COOLDOWN_KEY = "alumni_submit_cooldown";
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
-const YEAR_START = Array.from(  { length: 35 },  (_, i) => new Date().getFullYear() - 3 - i);
-const YEAR_END = Array.from(  { length: 35 },  (_, i) => new Date().getFullYear() - i);
+const YEAR_START = Array.from(
+  { length: 35 },
+  (_, i) => new Date().getFullYear() - 3 - i,
+);
+const YEAR_END = Array.from(
+  { length: 35 },
+  (_, i) => new Date().getFullYear() - i,
+);
 
 interface FormState {
   name: string;

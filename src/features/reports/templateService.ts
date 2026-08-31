@@ -1,12 +1,19 @@
-import { db } from '@/shared/config/firebase';
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { db } from "@/shared/config/firebase";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
 import {
   CATC_CAMP_TEMPLATE_DOC_ID,
   DEFAULT_CATC_CAMP_TEMPLATE,
   parseCatcCampTemplate,
   serializeCatcCampTemplate,
   type CatcCampTemplateData,
-} from './catcTemplateDefaults';
+} from "./catcTemplateDefaults";
 
 export interface OnDutyTemplate {
   content: string;
@@ -23,8 +30,8 @@ export interface ReportTemplate {
   updatedAt?: string;
 }
 
-export const ON_DUTY_TEMPLATE_DOC_ID = 'onDutyLetter';
-export const ON_DUTY_HEADER_TEMPLATE_DOC_ID = 'onDutyHeader';
+export const ON_DUTY_TEMPLATE_DOC_ID = "onDutyLetter";
+export const ON_DUTY_HEADER_TEMPLATE_DOC_ID = "onDutyHeader";
 export { CATC_CAMP_TEMPLATE_DOC_ID };
 
 export const DEFAULT_ON_DUTY_HEADER_TEMPLATE = `<div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #222; padding-bottom:10px;">
@@ -61,80 +68,91 @@ export const DEFAULT_ON_DUTY_TEMPLATE = `<div style="display:flex; justify-conte
 <p style="margin-top:64px; text-align:center;">Thanking you</p>`;
 
 export async function getOnDutyTemplate(): Promise<OnDutyTemplate> {
-  const templateRef = doc(db, 'reportTemplates', ON_DUTY_TEMPLATE_DOC_ID);
+  const templateRef = doc(db, "reportTemplates", ON_DUTY_TEMPLATE_DOC_ID);
   const snapshot = await getDoc(templateRef);
 
   if (!snapshot.exists()) {
     return {
       content: DEFAULT_ON_DUTY_TEMPLATE,
-      logoUrl: '',
+      logoUrl: "",
     };
   }
 
   const data = snapshot.data() as Partial<OnDutyTemplate>;
   return {
     content: data.content || DEFAULT_ON_DUTY_TEMPLATE,
-    logoUrl: data.logoUrl || '',
+    logoUrl: data.logoUrl || "",
   };
 }
 
 export async function getOnDutyHeaderTemplate(): Promise<OnDutyTemplate> {
-  const templateRef = doc(db, 'reportTemplates', ON_DUTY_HEADER_TEMPLATE_DOC_ID);
+  const templateRef = doc(
+    db,
+    "reportTemplates",
+    ON_DUTY_HEADER_TEMPLATE_DOC_ID,
+  );
   const snapshot = await getDoc(templateRef);
 
   if (!snapshot.exists()) {
     return {
       content: DEFAULT_ON_DUTY_HEADER_TEMPLATE,
-      logoUrl: '',
+      logoUrl: "",
     };
   }
 
   const data = snapshot.data() as Partial<OnDutyTemplate>;
   return {
     content: data.content || DEFAULT_ON_DUTY_HEADER_TEMPLATE,
-    logoUrl: data.logoUrl || '',
+    logoUrl: data.logoUrl || "",
   };
 }
 
-export async function getOnDutyTemplateById(templateId: string, fallbackContent = ''): Promise<OnDutyTemplate> {
-  const templateRef = doc(db, 'reportTemplates', templateId);
+export async function getOnDutyTemplateById(
+  templateId: string,
+  fallbackContent = "",
+): Promise<OnDutyTemplate> {
+  const templateRef = doc(db, "reportTemplates", templateId);
   const snapshot = await getDoc(templateRef);
 
   if (!snapshot.exists()) {
     return {
       content: fallbackContent,
-      logoUrl: '',
+      logoUrl: "",
     };
   }
 
   const data = snapshot.data() as Partial<OnDutyTemplate>;
   return {
     content: data.content || fallbackContent,
-    logoUrl: data.logoUrl || '',
+    logoUrl: data.logoUrl || "",
   };
 }
 
 export async function saveOnDutyTemplate(payload: OnDutyTemplate) {
-  const templateRef = doc(db, 'reportTemplates', ON_DUTY_TEMPLATE_DOC_ID);
-  await setDoc(templateRef, {
-    id: ON_DUTY_TEMPLATE_DOC_ID,
-    title: 'On-Duty Letter Template',
-    content: payload.content,
-    logoUrl: payload.logoUrl,
-    updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  const templateRef = doc(db, "reportTemplates", ON_DUTY_TEMPLATE_DOC_ID);
+  await setDoc(
+    templateRef,
+    {
+      id: ON_DUTY_TEMPLATE_DOC_ID,
+      title: "On-Duty Letter Template",
+      content: payload.content,
+      logoUrl: payload.logoUrl,
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
 }
 
 export async function listReportTemplates(): Promise<ReportTemplate[]> {
-  const snapshot = await getDocs(collection(db, 'reportTemplates'));
-  const items = snapshot.docs.map(docSnap => {
+  const snapshot = await getDocs(collection(db, "reportTemplates"));
+  const items = snapshot.docs.map((docSnap) => {
     const data = docSnap.data() as Partial<ReportTemplate>;
     return {
       id: docSnap.id,
       title: data.title || docSnap.id,
-      content: data.content || '',
-      logoUrl: data.logoUrl || '',
-      description: data.description || '',
+      content: data.content || "",
+      logoUrl: data.logoUrl || "",
+      description: data.description || "",
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     } as ReportTemplate;
@@ -143,8 +161,10 @@ export async function listReportTemplates(): Promise<ReportTemplate[]> {
   return items.sort((a, b) => a.title.localeCompare(b.title));
 }
 
-export async function getReportTemplate(templateId: string): Promise<ReportTemplate | null> {
-  const templateRef = doc(db, 'reportTemplates', templateId);
+export async function getReportTemplate(
+  templateId: string,
+): Promise<ReportTemplate | null> {
+  const templateRef = doc(db, "reportTemplates", templateId);
   const snapshot = await getDoc(templateRef);
   if (!snapshot.exists()) return null;
 
@@ -152,34 +172,38 @@ export async function getReportTemplate(templateId: string): Promise<ReportTempl
   return {
     id: snapshot.id,
     title: data.title || snapshot.id,
-    content: data.content || '',
-    logoUrl: data.logoUrl || '',
-    description: data.description || '',
+    content: data.content || "",
+    logoUrl: data.logoUrl || "",
+    description: data.description || "",
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   };
 }
 
 export async function saveReportTemplate(template: ReportTemplate) {
-  const templateRef = doc(db, 'reportTemplates', template.id);
-  await setDoc(templateRef, {
-    id: template.id,
-    title: template.title,
-    content: template.content,
-    logoUrl: template.logoUrl || '',
-    description: template.description || '',
-    createdAt: template.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  const templateRef = doc(db, "reportTemplates", template.id);
+  await setDoc(
+    templateRef,
+    {
+      id: template.id,
+      title: template.title,
+      content: template.content,
+      logoUrl: template.logoUrl || "",
+      description: template.description || "",
+      createdAt: template.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
 }
 
 export async function deleteReportTemplate(templateId: string) {
-  const templateRef = doc(db, 'reportTemplates', templateId);
+  const templateRef = doc(db, "reportTemplates", templateId);
   await deleteDoc(templateRef);
 }
 
 export async function getCatcCampTemplate(): Promise<CatcCampTemplateData> {
-  const templateRef = doc(db, 'reportTemplates', CATC_CAMP_TEMPLATE_DOC_ID);
+  const templateRef = doc(db, "reportTemplates", CATC_CAMP_TEMPLATE_DOC_ID);
   const snapshot = await getDoc(templateRef);
 
   if (!snapshot.exists()) {
@@ -187,18 +211,23 @@ export async function getCatcCampTemplate(): Promise<CatcCampTemplateData> {
   }
 
   const data = snapshot.data() as Partial<ReportTemplate>;
-  return parseCatcCampTemplate(data.content || serializeCatcCampTemplate(DEFAULT_CATC_CAMP_TEMPLATE));
+  return parseCatcCampTemplate(
+    data.content || serializeCatcCampTemplate(DEFAULT_CATC_CAMP_TEMPLATE),
+  );
 }
 
 export async function saveCatcCampTemplate(data: CatcCampTemplateData) {
-  const templateRef = doc(db, 'reportTemplates', CATC_CAMP_TEMPLATE_DOC_ID);
-  await setDoc(templateRef, {
-    id: CATC_CAMP_TEMPLATE_DOC_ID,
-    title: 'CATC Camp Document Template',
-    description: 'Page-wise content for CATC camp PDF generation (4 pages).',
-    content: serializeCatcCampTemplate(data),
-    logoUrl: '',
-    updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  const templateRef = doc(db, "reportTemplates", CATC_CAMP_TEMPLATE_DOC_ID);
+  await setDoc(
+    templateRef,
+    {
+      id: CATC_CAMP_TEMPLATE_DOC_ID,
+      title: "CATC Camp Document Template",
+      description: "Page-wise content for CATC camp PDF generation (4 pages).",
+      content: serializeCatcCampTemplate(data),
+      logoUrl: "",
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
 }
-

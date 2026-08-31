@@ -1,44 +1,55 @@
-import { NCC_YEARS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
-import { db } from '@/shared/config/firebase';
-import { toISTDateInputValue } from '@/shared/utils/dateTime';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Button, Card, Col, Container, Form, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
-import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import { TablePaginationFooter } from '@/components';
+import { NCC_YEARS, ROMAN_YEAR_MAP } from "@/shared/config/constants";
+import { db } from "@/shared/config/firebase";
+import { toISTDateInputValue } from "@/shared/utils/dateTime";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  ProgressBar,
+  Row,
+  Spinner,
+  Table,
+} from "react-bootstrap";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { TablePaginationFooter } from "@/components";
 import {
   generateCatcZip,
   DEFAULT_CAMP_LOCATION,
   type CatcCadet,
   type CatcFormData,
-} from '@/features/reports/catcDocService';
-import { getCatcCampTemplate } from '@/features/reports/templateService';
-import './CatcCampReport.css';
-import { isCadetUser } from '@/shared/utils/userType';
+} from "@/features/reports/catcDocService";
+import { getCatcCampTemplate } from "@/features/reports/templateService";
+import "./CatcCampReport.css";
+import { isCadetUser } from "@/shared/utils/userType";
 
 /* ──────────── Helpers ──────────── */
 
 const formatYearForSort = (value?: string) => {
   if (!value) return 99;
   const lower = value.toLowerCase();
-  if (lower.includes('1') || lower.includes('i ')) return 1;
-  if (lower.includes('2') || lower.includes('ii')) return 2;
-  if (lower.includes('3') || lower.includes('iii')) return 3;
-  if (lower.includes('4') || lower.includes('iv')) return 4;
-  if (lower.includes('5') || lower.includes('v')) return 5;
+  if (lower.includes("1") || lower.includes("i ")) return 1;
+  if (lower.includes("2") || lower.includes("ii")) return 2;
+  if (lower.includes("3") || lower.includes("iii")) return 3;
+  if (lower.includes("4") || lower.includes("iv")) return 4;
+  if (lower.includes("5") || lower.includes("v")) return 5;
   return 99;
 };
 
 const formatAcademicYear = (value?: string) => {
-  if (!value) return '-';
-  const cleaned = value.replace(' Year', '').trim();
+  if (!value) return "-";
+  const cleaned = value.replace(" Year", "").trim();
   return ROMAN_YEAR_MAP[cleaned] || cleaned;
 };
 
 /* ──────────── Component ──────────── */
 
-const CAMP_LOCATIONS = [DEFAULT_CAMP_LOCATION, 'Others'];
+const CAMP_LOCATIONS = [DEFAULT_CAMP_LOCATION, "Others"];
 
 const CatcCampReport: React.FC = () => {
   const navigate = useNavigate();
@@ -52,9 +63,11 @@ const CatcCampReport: React.FC = () => {
   const [selectedCadets, setSelectedCadets] = useState<Set<string>>(new Set());
 
   // Filters
-  const [divisionFilter, setDivisionFilter] = useState<'ALL' | 'SD' | 'SW'>('ALL');
-  const [nccYearFilter, setNccYearFilter] = useState<'ALL' | string>('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [divisionFilter, setDivisionFilter] = useState<"ALL" | "SD" | "SW">(
+    "ALL",
+  );
+  const [nccYearFilter, setNccYearFilter] = useState<"ALL" | string>("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -63,7 +76,7 @@ const CatcCampReport: React.FC = () => {
     fromDate: toISTDateInputValue(),
     toDate: toISTDateInputValue(),
     campLocation: DEFAULT_CAMP_LOCATION,
-    campLocationOther: '',
+    campLocationOther: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -80,7 +93,7 @@ const CatcCampReport: React.FC = () => {
 
   const fetchCadets = async () => {
     try {
-      const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
       const cadetUsers = snapshot.docs
         .map((d) => ({ uid: d.id, ...(d.data() as Record<string, unknown>) }))
@@ -88,7 +101,7 @@ const CatcCampReport: React.FC = () => {
       setUsers(cadetUsers);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load cadets');
+      toast.error("Failed to load cadets");
     } finally {
       setLoading(false);
     }
@@ -98,35 +111,46 @@ const CatcCampReport: React.FC = () => {
   const filteredCadets = useMemo(() => {
     let list = [...users];
 
-    if (divisionFilter !== 'ALL') list = list.filter((u) => (u.division || '') === divisionFilter);
-    if (nccYearFilter !== 'ALL') list = list.filter((u) => (u.nccYear || u.year || '') === nccYearFilter);
+    if (divisionFilter !== "ALL")
+      list = list.filter((u) => (u.division || "") === divisionFilter);
+    if (nccYearFilter !== "ALL")
+      list = list.filter((u) => (u.nccYear || u.year || "") === nccYearFilter);
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       list = list.filter(
         (u) =>
-          (u.name || '').toLowerCase().includes(term) ||
-          (u.registerNumber || '').toLowerCase().includes(term),
+          (u.name || "").toLowerCase().includes(term) ||
+          (u.registerNumber || "").toLowerCase().includes(term),
       );
     }
 
     return list.sort((a, b) => {
-      const yearDelta = formatYearForSort(a.nccYear || a.year) - formatYearForSort(b.nccYear || b.year);
+      const yearDelta =
+        formatYearForSort(a.nccYear || a.year) -
+        formatYearForSort(b.nccYear || b.year);
       if (yearDelta !== 0) return yearDelta;
-      return (a.registerNumber || '').localeCompare(b.registerNumber || '', undefined, { numeric: true });
+      return (a.registerNumber || "").localeCompare(
+        b.registerNumber || "",
+        undefined,
+        { numeric: true },
+      );
     });
   }, [users, divisionFilter, nccYearFilter, searchTerm]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredCadets.length / rowsPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredCadets.length / rowsPerPage),
+  );
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * rowsPerPage;
   const endIndex = Math.min(startIndex + rowsPerPage, filteredCadets.length);
   const paginatedCadets = filteredCadets.slice(startIndex, endIndex);
 
   const clearFilters = () => {
-    setDivisionFilter('ALL');
-    setNccYearFilter('ALL');
-    setSearchTerm('');
+    setDivisionFilter("ALL");
+    setNccYearFilter("ALL");
+    setSearchTerm("");
   };
 
   /* ---- Selection ---- */
@@ -140,14 +164,16 @@ const CatcCampReport: React.FC = () => {
   };
 
   const toggleSelectAllFiltered = () => {
-    setSelectedCadets(prev => {
+    setSelectedCadets((prev) => {
       const next = new Set(prev);
-      const allSelected = filteredCadets.length > 0 && filteredCadets.every(c => next.has(c.uid));
+      const allSelected =
+        filteredCadets.length > 0 &&
+        filteredCadets.every((c) => next.has(c.uid));
 
       if (allSelected) {
-        filteredCadets.forEach(c => next.delete(c.uid));
+        filteredCadets.forEach((c) => next.delete(c.uid));
       } else {
-        filteredCadets.forEach(c => next.add(c.uid));
+        filteredCadets.forEach((c) => next.add(c.uid));
       }
 
       return next;
@@ -162,11 +188,11 @@ const CatcCampReport: React.FC = () => {
         const nextErrors = { ...prevErrors };
         delete nextErrors[field];
 
-        if (field === 'fromDate' || field === 'toDate') {
+        if (field === "fromDate" || field === "toDate") {
           const from = new Date(next.fromDate).getTime();
           const to = new Date(next.toDate).getTime();
           if (!isNaN(from) && !isNaN(to) && to < from) {
-            nextErrors.toDate = 'To date cannot be earlier than from date.';
+            nextErrors.toDate = "To date cannot be earlier than from date.";
           } else {
             delete nextErrors.toDate;
           }
@@ -180,17 +206,21 @@ const CatcCampReport: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!formData.fromDate) errors.fromDate = 'From date is required';
-    if (!formData.toDate) errors.toDate = 'To date is required';
-    if (!formData.campLocation) errors.campLocation = 'Camp location is required';
-    if (formData.campLocation === 'Others' && !formData.campLocationOther.trim()) {
-      errors.campLocationOther = 'Please enter camp location';
+    if (!formData.fromDate) errors.fromDate = "From date is required";
+    if (!formData.toDate) errors.toDate = "To date is required";
+    if (!formData.campLocation)
+      errors.campLocation = "Camp location is required";
+    if (
+      formData.campLocation === "Others" &&
+      !formData.campLocationOther.trim()
+    ) {
+      errors.campLocationOther = "Please enter camp location";
     }
     if (formData.fromDate && formData.toDate) {
       const from = new Date(formData.fromDate).getTime();
       const to = new Date(formData.toDate).getTime();
       if (!isNaN(from) && !isNaN(to) && to < from) {
-        errors.toDate = 'To date cannot be earlier than from date.';
+        errors.toDate = "To date cannot be earlier than from date.";
       }
     }
     setFormErrors(errors);
@@ -200,17 +230,17 @@ const CatcCampReport: React.FC = () => {
   /* ---- Generate ---- */
   const handleGenerate = async () => {
     if (!validateForm()) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
     if (selectedCadets.size === 0) {
-      toast.error('Select at least one cadet');
+      toast.error("Select at least one cadet");
       return;
     }
 
     const selectedList = users.filter((u) => selectedCadets.has(u.uid));
     if (selectedList.length === 0) {
-      toast.error('No cadets found for the selection');
+      toast.error("No cadets found for the selection");
       return;
     }
 
@@ -219,13 +249,20 @@ const CatcCampReport: React.FC = () => {
 
     try {
       const template = await getCatcCampTemplate();
-      await generateCatcZip(selectedList, formData, (current, total) => {
-        setProgress({ current, total });
-      }, template);
-      toast.success(`${selectedList.length} CATC camp document(s) generated and downloaded!`);
+      await generateCatcZip(
+        selectedList,
+        formData,
+        (current, total) => {
+          setProgress({ current, total });
+        },
+        template,
+      );
+      toast.success(
+        `${selectedList.length} CATC camp document(s) generated and downloaded!`,
+      );
     } catch (error) {
       console.error(error);
-      toast.error('Failed to generate documents');
+      toast.error("Failed to generate documents");
     } finally {
       setGenerating(false);
     }
@@ -235,7 +272,7 @@ const CatcCampReport: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner as="span" animation="border"  size="sm" />
+        <Spinner as="span" animation="border" size="sm" />
         <p className="mt-3">Loading cadets...</p>
       </Container>
     );
@@ -248,7 +285,8 @@ const CatcCampReport: React.FC = () => {
         <Col>
           <h2 className="mb-1">CATC Camp Document Generator</h2>
           <p className="text-muted mb-0">
-            Generate individual CATC camp PDF documents per selected cadet, bundled as a single ZIP download.
+            Generate individual CATC camp PDF documents per selected cadet,
+            bundled as a single ZIP download.
           </p>
         </Col>
       </Row>
@@ -272,10 +310,16 @@ const CatcCampReport: React.FC = () => {
                       <Form.Control
                         type="date"
                         value={formData.fromDate}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('fromDate', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleFormChange("fromDate", e.target.value)
+                        }
                         isInvalid={Boolean(formErrors.fromDate)}
                       />
-                      {formErrors.fromDate && <Form.Text className="text-danger d-block">{formErrors.fromDate}</Form.Text>}
+                      {formErrors.fromDate && (
+                        <Form.Text className="text-danger d-block">
+                          {formErrors.fromDate}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
 
@@ -285,10 +329,16 @@ const CatcCampReport: React.FC = () => {
                       <Form.Control
                         type="date"
                         value={formData.toDate}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('toDate', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleFormChange("toDate", e.target.value)
+                        }
                         isInvalid={Boolean(formErrors.toDate)}
                       />
-                      {formErrors.toDate && <Form.Text className="text-danger d-block">{formErrors.toDate}</Form.Text>}
+                      {formErrors.toDate && (
+                        <Form.Text className="text-danger d-block">
+                          {formErrors.toDate}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
 
@@ -297,30 +347,45 @@ const CatcCampReport: React.FC = () => {
                       <Form.Label>Camp Location *</Form.Label>
                       <Form.Select
                         value={formData.campLocation}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleFormChange('campLocation', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          handleFormChange("campLocation", e.target.value)
+                        }
                         isInvalid={Boolean(formErrors.campLocation)}
                       >
                         {CAMP_LOCATIONS.map((loc) => (
-                          <option key={loc} value={loc}>{loc}</option>
+                          <option key={loc} value={loc}>
+                            {loc}
+                          </option>
                         ))}
                       </Form.Select>
-                      {formErrors.campLocation && <Form.Text className="text-danger d-block">{formErrors.campLocation}</Form.Text>}
+                      {formErrors.campLocation && (
+                        <Form.Text className="text-danger d-block">
+                          {formErrors.campLocation}
+                        </Form.Text>
+                      )}
                     </Form.Group>
                   </Col>
 
-                  {formData.campLocation === 'Others' && (
+                  {formData.campLocation === "Others" && (
                     <Col xs={12}>
                       <Form.Group controlId="catcCampLocationOther">
                         <Form.Label>Custom Camp Location *</Form.Label>
                         <Form.Control
                           type="text"
                           value={formData.campLocationOther}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('campLocationOther', e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleFormChange(
+                              "campLocationOther",
+                              e.target.value,
+                            )
+                          }
                           placeholder="Enter camp location"
                           isInvalid={Boolean(formErrors.campLocationOther)}
                         />
                         {formErrors.campLocationOther && (
-                          <Form.Text className="text-danger d-block">{formErrors.campLocationOther}</Form.Text>
+                          <Form.Text className="text-danger d-block">
+                            {formErrors.campLocationOther}
+                          </Form.Text>
                         )}
                       </Form.Group>
                     </Col>
@@ -334,29 +399,75 @@ const CatcCampReport: React.FC = () => {
         {/* ──── Cadet Selection ──── */}
         <Col lg={12}>
           <Card className="shadow-sm">
-            <Card.Header className="bg-info text-white">Cadet Selection</Card.Header>
+            <Card.Header className="bg-info text-white">
+              Cadet Selection
+            </Card.Header>
             <Card.Body>
               {/* Filters */}
               <Row className="g-2 mb-3">
                 <Col xs={12} sm={6} md={3}>
-                  <div className="btn-group w-100" role="group" aria-label="Division filter">
-                    <input type="radio" className="btn-check" name="catc-division-filter" id="catc-division-all" checked={divisionFilter === 'ALL'} onChange={() => setDivisionFilter('ALL')} />
-                    <label className="btn btn-outline-primary btn-sm" htmlFor="catc-division-all">Both</label>
-                    <input type="radio" className="btn-check" name="catc-division-filter" id="catc-division-sd" checked={divisionFilter === 'SD'} onChange={() => setDivisionFilter('SD')} />
-                    <label className="btn btn-outline-primary btn-sm" htmlFor="catc-division-sd">SD</label>
-                    <input type="radio" className="btn-check" name="catc-division-filter" id="catc-division-sw" checked={divisionFilter === 'SW'} onChange={() => setDivisionFilter('SW')} />
-                    <label className="btn btn-outline-primary btn-sm" htmlFor="catc-division-sw">SW</label>
+                  <div
+                    className="btn-group w-100"
+                    role="group"
+                    aria-label="Division filter"
+                  >
+                    <input
+                      type="radio"
+                      className="btn-check"
+                      name="catc-division-filter"
+                      id="catc-division-all"
+                      checked={divisionFilter === "ALL"}
+                      onChange={() => setDivisionFilter("ALL")}
+                    />
+                    <label
+                      className="btn btn-outline-primary btn-sm"
+                      htmlFor="catc-division-all"
+                    >
+                      Both
+                    </label>
+                    <input
+                      type="radio"
+                      className="btn-check"
+                      name="catc-division-filter"
+                      id="catc-division-sd"
+                      checked={divisionFilter === "SD"}
+                      onChange={() => setDivisionFilter("SD")}
+                    />
+                    <label
+                      className="btn btn-outline-primary btn-sm"
+                      htmlFor="catc-division-sd"
+                    >
+                      SD
+                    </label>
+                    <input
+                      type="radio"
+                      className="btn-check"
+                      name="catc-division-filter"
+                      id="catc-division-sw"
+                      checked={divisionFilter === "SW"}
+                      onChange={() => setDivisionFilter("SW")}
+                    />
+                    <label
+                      className="btn btn-outline-primary btn-sm"
+                      htmlFor="catc-division-sw"
+                    >
+                      SW
+                    </label>
                   </div>
                 </Col>
                 <Col xs={12} sm={6} md={3}>
                   <Form.Select
                     size="sm"
                     value={nccYearFilter}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNccYearFilter(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setNccYearFilter(e.target.value)
+                    }
                   >
                     <option value="ALL">All NCC Years</option>
                     {NCC_YEARS.map((item) => (
-                      <option key={item} value={item}>{item}</option>
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
                     ))}
                   </Form.Select>
                 </Col>
@@ -366,11 +477,18 @@ const CatcCampReport: React.FC = () => {
                     type="text"
                     placeholder="Search by name or register number"
                     value={searchTerm}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setSearchTerm(e.target.value)
+                    }
                   />
                 </Col>
                 <Col xs="auto">
-                  <Button variant="outline-secondary" size="sm" onClick={clearFilters} className="mt-md-0 mt-2">
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="mt-md-0 mt-2"
+                  >
                     <i className="bi bi-x-circle me-1"></i>
                     Clear Filters
                   </Button>
@@ -385,7 +503,12 @@ const CatcCampReport: React.FC = () => {
                       <th className="catc-select-col">
                         <Form.Check
                           type="checkbox"
-                          checked={filteredCadets.length > 0 && filteredCadets.every(c => selectedCadets.has(c.uid))}
+                          checked={
+                            filteredCadets.length > 0 &&
+                            filteredCadets.every((c) =>
+                              selectedCadets.has(c.uid),
+                            )
+                          }
                           onChange={toggleSelectAllFiltered}
                           aria-label="Select all filtered cadets"
                         />
@@ -398,10 +521,10 @@ const CatcCampReport: React.FC = () => {
                   </thead>
                   <tbody>
                     {paginatedCadets.map((cadet, index) => (
-                      <tr 
+                      <tr
                         key={cadet.uid}
                         onClick={() => toggleCadetSelection(cadet.uid)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                       >
                         <td>
                           <Form.Check
@@ -414,10 +537,12 @@ const CatcCampReport: React.FC = () => {
                         </td>
                         <td>{startIndex + index + 1}</td>
                         <td>
-                          <Badge bg="secondary">{formatAcademicYear(cadet.nccYear || cadet.year)}</Badge>
+                          <Badge bg="secondary">
+                            {formatAcademicYear(cadet.nccYear || cadet.year)}
+                          </Badge>
                         </td>
-                        <td>{cadet.name || '-'}</td>
-                        <td>{cadet.regimentalNumber || '-'}</td>
+                        <td>{cadet.name || "-"}</td>
+                        <td>{cadet.regimentalNumber || "-"}</td>
                       </tr>
                     ))}
                     {filteredCadets.length === 0 && (
@@ -436,19 +561,30 @@ const CatcCampReport: React.FC = () => {
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={setRowsPerPage}
                 onFirstPage={() => setCurrentPage(1)}
-                onPreviousPage={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                onNextPage={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                onPreviousPage={() =>
+                  setCurrentPage((page) => Math.max(1, page - 1))
+                }
+                onNextPage={() =>
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                }
                 onLastPage={() => setCurrentPage(totalPages)}
               />
             </Card.Body>
             <Card.Footer className="d-flex justify-content-between align-items-center">
               <small className="text-muted">
-                Total Selected: {selectedCadets.size} &nbsp;|&nbsp; Filtered: {filteredCadets.length}
+                Total Selected: {selectedCadets.size} &nbsp;|&nbsp; Filtered:{" "}
+                {filteredCadets.length}
               </small>
               <div>
                 {selectedCadets.size > 0 && (
-                  <Button variant="outline-secondary" size="sm" onClick={() => setSelectedCadets(new Set())} className="me-2">
-                    <i className="bi bi-x-circle me-1" />Clear Selection
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => setSelectedCadets(new Set())}
+                    className="me-2"
+                  >
+                    <i className="bi bi-x-circle me-1" />
+                    Clear Selection
                   </Button>
                 )}
                 <Button
@@ -458,7 +594,12 @@ const CatcCampReport: React.FC = () => {
                 >
                   {generating ? (
                     <>
-                      <Spinner as="span" animation="border" size="sm" className="me-2" />
+                      <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        className="me-2"
+                      />
                       Generating...
                     </>
                   ) : (
@@ -478,18 +619,31 @@ const CatcCampReport: React.FC = () => {
       {generating && (
         <div className="catc-progress-overlay">
           <div className="catc-progress-card">
-            <Spinner as="span" animation="border" variant="info" className="mb-3"  size="sm" />
+            <Spinner
+              as="span"
+              animation="border"
+              variant="info"
+              className="mb-3"
+              size="sm"
+            />
             <h5>Generating CATC Documents</h5>
             <p className="text-muted mb-2">
-              Processing {progress.current} of {progress.total} cadet{progress.total !== 1 ? 's' : ''}...
+              Processing {progress.current} of {progress.total} cadet
+              {progress.total !== 1 ? "s" : ""}...
             </p>
             <ProgressBar
-              now={progress.total > 0 ? (progress.current / progress.total) * 100 : 0}
+              now={
+                progress.total > 0
+                  ? (progress.current / progress.total) * 100
+                  : 0
+              }
               variant="info"
               animated
               className="mb-2"
             />
-            <small className="text-muted">Please wait, do not close this page.</small>
+            <small className="text-muted">
+              Please wait, do not close this page.
+            </small>
           </div>
         </div>
       )}

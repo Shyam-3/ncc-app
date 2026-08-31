@@ -1,19 +1,28 @@
-import React, { useState, useEffect, type ChangeEvent } from 'react';
-import { Button, Card, Col, Container, Form, Row, Spinner, Badge } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import type { NccYear } from '@/shared/config/constants';
-import { NCC_YEARS, ROMAN_YEAR_MAP } from '@/shared/config/constants';
-import { formatISTDate } from '@/shared/utils/dateTime';
+import React, { useState, useEffect, type ChangeEvent } from "react";
+import {
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  Row,
+  Spinner,
+  Badge,
+} from "react-bootstrap";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import type { NccYear } from "@/shared/config/constants";
+import { NCC_YEARS, ROMAN_YEAR_MAP } from "@/shared/config/constants";
+import { formatISTDate } from "@/shared/utils/dateTime";
 import {
   generateAnnualAttendanceExcel,
   getAnnualReportPreview,
   type AnnualReportPreview,
-} from '@/features/reports/annualReportService';
-import './AnnualAttendanceReport.css';
+} from "@/features/reports/annualReportService";
+import "./AnnualAttendanceReport.css";
 
 const AnnualAttendanceReport: React.FC = () => {
-  const [nccYear, setNccYear] = useState<NccYear>('1st Year');
+  const [nccYear, setNccYear] = useState<NccYear>("1st Year");
   const [officialOnly, setOfficialOnly] = useState(false);
   const [preview, setPreview] = useState<AnnualReportPreview | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -30,7 +39,7 @@ const AnnualAttendanceReport: React.FC = () => {
         if (!cancelled) setPreview(data);
       } catch (e: any) {
         console.error(e);
-        if (!cancelled) toast.error('Failed to load preview');
+        if (!cancelled) toast.error("Failed to load preview");
       } finally {
         if (!cancelled) setLoadingPreview(false);
       }
@@ -48,16 +57,16 @@ const AnnualAttendanceReport: React.FC = () => {
     try {
       setGenerating(true);
       await generateAnnualAttendanceExcel(nccYear, officialOnly);
-      toast.success('Excel report downloaded!');
+      toast.success("Excel report downloaded!");
     } catch (e: any) {
       console.error(e);
-      toast.error(e.message || 'Failed to generate report');
+      toast.error(e.message || "Failed to generate report");
     } finally {
       setGenerating(false);
     }
   }
 
-  const romanYear = ROMAN_YEAR_MAP[nccYear.replace(' Year', '')] || nccYear;
+  const romanYear = ROMAN_YEAR_MAP[nccYear.replace(" Year", "")] || nccYear;
 
   return (
     <Container className="py-4 annual-report-container">
@@ -94,13 +103,20 @@ const AnnualAttendanceReport: React.FC = () => {
             id="official-parade-only-check"
             label="Official Parade Only"
             checked={officialOnly}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setOfficialOnly(e.target.checked)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setOfficialOnly(e.target.checked)
+            }
             className="mb-3"
           />
 
           {loadingPreview && (
             <div className="text-center py-4">
-              <Spinner as="span" animation="border" size="sm" className="me-2"  />
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                className="me-2"
+              />
               Loading data...
             </div>
           )}
@@ -135,7 +151,8 @@ const AnnualAttendanceReport: React.FC = () => {
                   <div className="text-center mt-3">
                     <Badge bg="light" text="dark" className="date-range-badge">
                       <i className="bi bi-calendar3 me-1"></i>
-                      {formatISTDate(preview.dateRange.first)} — {formatISTDate(preview.dateRange.last)}
+                      {formatISTDate(preview.dateRange.first)} —{" "}
+                      {formatISTDate(preview.dateRange.last)}
                     </Badge>
                   </div>
                 )}
@@ -143,7 +160,8 @@ const AnnualAttendanceReport: React.FC = () => {
                 {preview.sessionCount === 0 && (
                   <div className="text-center text-muted mt-3">
                     <i className="bi bi-info-circle me-1"></i>
-                    No sessions found for {nccYear}. Create attendance sessions first.
+                    No sessions found for {nccYear}. Create attendance sessions
+                    first.
                   </div>
                 )}
               </Card.Body>
@@ -154,12 +172,19 @@ const AnnualAttendanceReport: React.FC = () => {
             variant="success"
             size="lg"
             className="w-100"
-            disabled={generating || loadingPreview || (preview?.sessionCount === 0)}
+            disabled={
+              generating || loadingPreview || preview?.sessionCount === 0
+            }
             onClick={handleGenerate}
           >
             {generating ? (
               <>
-                <Spinner as="span" animation="border" size="sm" className="me-2"  />
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  className="me-2"
+                />
                 Generating...
               </>
             ) : (

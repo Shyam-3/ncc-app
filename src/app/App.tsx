@@ -1,9 +1,9 @@
-import React from 'react';
-import { Toaster } from 'react-hot-toast';
-import { Footer, Navbar as AppNavbar, ScrollToTop } from '@/components';
-import AuthProvider from './providers/AuthProvider';
-import RouterProvider from './providers/RouterProvider';
-import AppRoutes from './routes';
+import React from "react";
+import { Toaster } from "react-hot-toast";
+import { Footer, Navbar as AppNavbar, ScrollToTop } from "@/components";
+import AuthProvider from "./providers/AuthProvider";
+import RouterProvider from "./providers/RouterProvider";
+import AppRoutes from "./routes";
 
 const App: React.FC = () => {
   return (

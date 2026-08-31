@@ -1,12 +1,12 @@
 // Attendance feature type definitions
 
-import type { Division, NccYear } from '@/shared/config/constants';
+import type { Division, NccYear } from "@/shared/config/constants";
 
 // Session status
-export type SessionStatus = 'draft' | 'open' | 'locked';
+export type SessionStatus = "draft" | "open" | "locked";
 
 // Attendance mark status
-export type AttendanceStatus = 'P' | 'A'; // Present, Absent
+export type AttendanceStatus = "P" | "A"; // Present, Absent
 
 // Cached session statistics
 export interface SessionStats {
@@ -73,13 +73,13 @@ export interface CadetAttendanceStats {
 
 // Status display helpers
 export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
-  P: 'Present',
-  A: 'Absent',
+  P: "Present",
+  A: "Absent",
 };
 
 export const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatus, string> = {
-  P: 'success',
-  A: 'danger',
+  P: "success",
+  A: "danger",
 };
 
 // Form data for creating/editing sessions

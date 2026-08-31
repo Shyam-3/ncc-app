@@ -12,7 +12,7 @@ import {
   Tooltip,
   Legend,
   Filler,
-} from 'chart.js';
+} from "chart.js";
 
 // Register Chart.js components
 ChartJS.register(
@@ -26,27 +26,27 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 // Color palette matching Bootstrap theme
 export const chartColors = {
-  present: 'rgb(25, 135, 84)',      // Bootstrap success
-  absent: 'rgb(220, 53, 69)',       // Bootstrap danger
+  present: "rgb(25, 135, 84)", // Bootstrap success
+  absent: "rgb(220, 53, 69)", // Bootstrap danger
   // Division colors
-  SD: 'rgb(13, 110, 253)',          // Blue
-  SW: 'rgb(25, 135, 84)',           // Green
-  JD: 'rgb(255, 193, 7)',           // Yellow
-  JW: 'rgb(111, 66, 193)',          // Purple
+  SD: "rgb(13, 110, 253)", // Blue
+  SW: "rgb(25, 135, 84)", // Green
+  JD: "rgb(255, 193, 7)", // Yellow
+  JW: "rgb(111, 66, 193)", // Purple
 };
 
 export const chartColorsTransparent = {
-  present: 'rgba(25, 135, 84, 0.2)',
-  absent: 'rgba(220, 53, 69, 0.2)',
-  SD: 'rgba(13, 110, 253, 0.2)',
-  SW: 'rgba(25, 135, 84, 0.2)',
-  JD: 'rgba(255, 193, 7, 0.2)',
-  JW: 'rgba(111, 66, 193, 0.2)',
+  present: "rgba(25, 135, 84, 0.2)",
+  absent: "rgba(220, 53, 69, 0.2)",
+  SD: "rgba(13, 110, 253, 0.2)",
+  SW: "rgba(25, 135, 84, 0.2)",
+  JD: "rgba(255, 193, 7, 0.2)",
+  JW: "rgba(111, 66, 193, 0.2)",
 };
 
 // Default chart options
@@ -55,7 +55,7 @@ export const defaultChartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: 'top' as const,
+      position: "top" as const,
     },
   },
 };
@@ -78,7 +78,7 @@ export const lineChartOptions = {
       callbacks: {
         label: (context: any) => {
           const value = context.parsed?.y ?? 0;
-          return `${context.dataset?.label || ''}: ${value.toFixed(1)}%`;
+          return `${context.dataset?.label || ""}: ${value.toFixed(1)}%`;
         },
       },
     },
@@ -115,7 +115,7 @@ export const pieChartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: 'right' as const,
+      position: "right" as const,
     },
   },
 };

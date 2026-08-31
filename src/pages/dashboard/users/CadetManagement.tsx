@@ -1,31 +1,61 @@
-import { calculateAge, checkUniqueField, updateTakenNumberBatch } from '@/shared/utils/dbValidators';
-import { formatISTDate } from '@/shared/utils/dateTime';
-import { DEPARTMENT_DEFS, ACADEMIC_YEARS, ROMAN_YEAR_MAP, NCC_RANKS, NCC_YEARS, BLOOD_GROUPS } from '@/shared/config/constants';
-import { db } from '@/shared/config/firebase';
-import { collection, doc, getDocs, orderBy, query, writeBatch } from 'firebase/firestore';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { TablePaginationFooter } from '@/components';
-import './CadetManagement.css';
+import {
+  calculateAge,
+  checkUniqueField,
+  updateTakenNumberBatch,
+} from "@/shared/utils/dbValidators";
+import { formatISTDate } from "@/shared/utils/dateTime";
+import {
+  DEPARTMENT_DEFS,
+  ACADEMIC_YEARS,
+  ROMAN_YEAR_MAP,
+  NCC_RANKS,
+  NCC_YEARS,
+  BLOOD_GROUPS,
+} from "@/shared/config/constants";
+import { db } from "@/shared/config/firebase";
+import {
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  writeBatch,
+} from "firebase/firestore";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  Modal,
+  Row,
+  Spinner,
+  Table,
+} from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { TablePaginationFooter } from "@/components";
+import "./CadetManagement.css";
 
 const maxDobDate = new Date();
 maxDobDate.setFullYear(maxDobDate.getFullYear() - 17);
-const maxDobString = maxDobDate.toISOString().split('T')[0];
+const maxDobString = maxDobDate.toISOString().split("T")[0];
 
-type UserRole = 'member' | 'admin' | 'superadmin';
+type UserRole = "member" | "admin" | "superadmin";
 
 interface CadetUser {
   uid: string;
   email: string;
   name: string;
   role: UserRole;
-  userType?: 'ano' | 'cadet';
+  userType?: "ano" | "cadet";
   createdAt: string;
   status: string;
   regimentalNumber?: string;
-  division?: 'SD' | 'SW';
+  division?: "SD" | "SW";
   dateOfBirth?: string;
   dateOfEnrollment?: string;
   nccYear?: string;
@@ -50,38 +80,42 @@ const CadetManagement: React.FC = () => {
   const [cadetView, setCadetView] = useState<CadetUser | null>(null);
   const [cadetEditMode, setCadetEditMode] = useState(false);
   const [confirmSave, setConfirmSave] = useState(false);
-  const [divisionFilter, setDivisionFilter] = useState<'ALL' | 'SD' | 'SW'>('ALL');
-  const [nccYearFilter, setNccYearFilter] = useState<'ALL' | string>('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [divisionFilter, setDivisionFilter] = useState<"ALL" | "SD" | "SW">(
+    "ALL",
+  );
+  const [nccYearFilter, setNccYearFilter] = useState<"ALL" | string>("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [cadetEditForm, setCadetEditForm] = useState({
-    name: '',
-    dateOfBirth: '',
-    division: '',
-    regimentalNumber: '',
-    dateOfEnrollment: '',
-    nccYear: '',
-    rank: 'CDT',
-    year: '',
-    residentialStatus: '',
-    department: '',
-    rollNo: '',
-    registerNumber: '',
-    phone: '',
-    bloodGroup: '',
-    fatherName: '',
-    address: '',
+    name: "",
+    dateOfBirth: "",
+    division: "",
+    regimentalNumber: "",
+    dateOfEnrollment: "",
+    nccYear: "",
+    rank: "CDT",
+    year: "",
+    residentialStatus: "",
+    department: "",
+    rollNo: "",
+    registerNumber: "",
+    phone: "",
+    bloodGroup: "",
+    fatherName: "",
+    address: "",
   });
-  const [cadetEditErrors, setCadetEditErrors] = useState<Record<string, string>>({});
+  const [cadetEditErrors, setCadetEditErrors] = useState<
+    Record<string, string>
+  >({});
 
   const editAcademicYearOptions = useMemo(() => {
     const fiveYearDepartments = new Set<string>(
-      DEPARTMENT_DEFS.filter(d => d.courseTenure === 5).map(d => d.code)
+      DEPARTMENT_DEFS.filter((d) => d.courseTenure === 5).map((d) => d.code),
     );
     return fiveYearDepartments.has(cadetEditForm.department)
       ? ACADEMIC_YEARS
-      : ACADEMIC_YEARS.filter(y => y !== '5th Year');
+      : ACADEMIC_YEARS.filter((y) => y !== "5th Year");
   }, [cadetEditForm.department]);
 
   useEffect(() => {
@@ -94,34 +128,42 @@ const CadetManagement: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, orderBy('createdAt', 'desc'));
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
-      setUsers(snapshot.docs.map(d => ({ uid: d.id, ...(d.data() as any) })) as CadetUser[]);
+      setUsers(
+        snapshot.docs.map((d) => ({
+          uid: d.id,
+          ...(d.data() as any),
+        })) as CadetUser[],
+      );
     } catch (e) {
       console.error(e);
-      toast.error('Failed to load cadets');
+      toast.error("Failed to load cadets");
     } finally {
       setLoading(false);
     }
   };
 
   const cadetUsers = useMemo(() => {
-    let list = users.filter(u => u.role === 'member' && (!u.userType || u.userType === 'cadet'));
+    let list = users.filter(
+      (u) => u.role === "member" && (!u.userType || u.userType === "cadet"),
+    );
 
-    if (divisionFilter !== 'ALL') {
-      list = list.filter(u => (u.division || '') === divisionFilter);
+    if (divisionFilter !== "ALL") {
+      list = list.filter((u) => (u.division || "") === divisionFilter);
     }
 
-    if (nccYearFilter !== 'ALL') {
-      list = list.filter(u => (u.nccYear || '') === nccYearFilter);
+    if (nccYearFilter !== "ALL") {
+      list = list.filter((u) => (u.nccYear || "") === nccYearFilter);
     }
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      list = list.filter(u =>
-        (u.regimentalNumber || '').toLowerCase().includes(term) ||
-        (u.name || '').toLowerCase().includes(term)
+      list = list.filter(
+        (u) =>
+          (u.regimentalNumber || "").toLowerCase().includes(term) ||
+          (u.name || "").toLowerCase().includes(term),
       );
     }
 
@@ -132,10 +174,15 @@ const CadetManagement: React.FC = () => {
     };
 
     list.sort((left, right) => {
-      const yearDifference = getNccYearRank(left.nccYear) - getNccYearRank(right.nccYear);
+      const yearDifference =
+        getNccYearRank(left.nccYear) - getNccYearRank(right.nccYear);
       if (yearDifference !== 0) return yearDifference;
 
-      return (left.regimentalNumber || '').localeCompare(right.regimentalNumber || '', undefined, { numeric: true });
+      return (left.regimentalNumber || "").localeCompare(
+        right.regimentalNumber || "",
+        undefined,
+        { numeric: true },
+      );
     });
 
     return list;
@@ -148,26 +195,26 @@ const CadetManagement: React.FC = () => {
   const paginatedCadets = cadetUsers.slice(startIndex, endIndex);
 
   const clearFilters = () => {
-    setDivisionFilter('ALL');
-    setNccYearFilter('ALL');
-    setSearchTerm('');
+    setDivisionFilter("ALL");
+    setNccYearFilter("ALL");
+    setSearchTerm("");
   };
 
   const formatDate = (value?: string) => {
-    if (!value) return '-';
+    if (!value) return "-";
     const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? '-' : formatISTDate(d);
+    return Number.isNaN(d.getTime()) ? "-" : formatISTDate(d);
   };
 
   const formatYear = (value?: string) => {
-    if (!value) return '-';
-    const cleaned = value.replace(' Year', '').trim();
+    if (!value) return "-";
+    const cleaned = value.replace(" Year", "").trim();
     return ROMAN_YEAR_MAP[cleaned] || cleaned;
   };
 
   const getRankName = (code?: string) => {
-    if (!code) return 'Cadet';
-    return NCC_RANKS.find(r => r.code === code)?.name || code;
+    if (!code) return "Cadet";
+    return NCC_RANKS.find((r) => r.code === code)?.name || code;
   };
 
   const openCadetView = (u: CadetUser) => {
@@ -176,22 +223,22 @@ const CadetManagement: React.FC = () => {
     setConfirmSave(false);
     setCadetEditErrors({});
     setCadetEditForm({
-      name: u.name || '',
-      dateOfBirth: u.dateOfBirth || '',
-      division: u.division || '',
-      regimentalNumber: u.regimentalNumber || '',
-      dateOfEnrollment: u.dateOfEnrollment || '',
-      nccYear: u.nccYear || '1st Year',
-      rank: u.rank || 'CDT',
-      year: u.year || '1st Year',
-      residentialStatus: u.residentialStatus || '',
-      department: u.department || '',
-      rollNo: u.rollNo || '',
-      registerNumber: u.registerNumber || '',
-      phone: u.phone || '',
-      bloodGroup: u.bloodGroup || '',
-      fatherName: u.fatherName || '',
-      address: u.address || '',
+      name: u.name || "",
+      dateOfBirth: u.dateOfBirth || "",
+      division: u.division || "",
+      regimentalNumber: u.regimentalNumber || "",
+      dateOfEnrollment: u.dateOfEnrollment || "",
+      nccYear: u.nccYear || "1st Year",
+      rank: u.rank || "CDT",
+      year: u.year || "1st Year",
+      residentialStatus: u.residentialStatus || "",
+      department: u.department || "",
+      rollNo: u.rollNo || "",
+      registerNumber: u.registerNumber || "",
+      phone: u.phone || "",
+      bloodGroup: u.bloodGroup || "",
+      fatherName: u.fatherName || "",
+      address: u.address || "",
     });
   };
 
@@ -202,18 +249,18 @@ const CadetManagement: React.FC = () => {
 
   const handleCadetEditChange = (name: string, value: string) => {
     if (cadetEditErrors[name]) {
-      setCadetEditErrors(prev => {
+      setCadetEditErrors((prev) => {
         const next = { ...prev };
         delete next[name];
         return next;
       });
     }
-    setCadetEditForm(prev => {
+    setCadetEditForm((prev) => {
       const next = { ...prev, [name]: value };
-      if (name === 'department') {
-        const dept = DEPARTMENT_DEFS.find(d => d.code === value);
-        if (dept && dept.courseTenure !== 5 && prev.year === '5th Year') {
-          next.year = '4th Year';
+      if (name === "department") {
+        const dept = DEPARTMENT_DEFS.find((d) => d.code === value);
+        if (dept && dept.courseTenure !== 5 && prev.year === "5th Year") {
+          next.year = "4th Year";
         }
       }
       return next;
@@ -223,41 +270,49 @@ const CadetManagement: React.FC = () => {
   const validateCadetEdit = () => {
     const nextErrors: Record<string, string> = {};
 
-    if (!cadetEditForm.name.trim()) nextErrors.name = 'Name is required';
+    if (!cadetEditForm.name.trim()) nextErrors.name = "Name is required";
     if (!cadetEditForm.dateOfBirth) {
-      nextErrors.dateOfBirth = 'Date of birth is required';
+      nextErrors.dateOfBirth = "Date of birth is required";
     } else {
       const age = calculateAge(cadetEditForm.dateOfBirth);
       if (age < 17) {
-        nextErrors.dateOfBirth = 'Cadets must be at least 17 years old';
+        nextErrors.dateOfBirth = "Cadets must be at least 17 years old";
       }
     }
-    if (!cadetEditForm.division) nextErrors.division = 'Division is required';
-    if (!cadetEditForm.regimentalNumber.trim()) nextErrors.regimentalNumber = 'Regimental number is required';
-    if (!cadetEditForm.dateOfEnrollment) nextErrors.dateOfEnrollment = 'Date of enrollment is required';
-    if (!cadetEditForm.nccYear) nextErrors.nccYear = 'Year is required';
-    if (!cadetEditForm.rank) nextErrors.rank = 'Rank is required';
-    if (!cadetEditForm.year) nextErrors.year = 'Academic year is required';
-    if (!cadetEditForm.residentialStatus) nextErrors.residentialStatus = 'Residential status is required';
-    if (!cadetEditForm.department) nextErrors.department = 'Department is required';
-    if (!cadetEditForm.rollNo.trim()) nextErrors.rollNo = 'Roll number is required';
+    if (!cadetEditForm.division) nextErrors.division = "Division is required";
+    if (!cadetEditForm.regimentalNumber.trim())
+      nextErrors.regimentalNumber = "Regimental number is required";
+    if (!cadetEditForm.dateOfEnrollment)
+      nextErrors.dateOfEnrollment = "Date of enrollment is required";
+    if (!cadetEditForm.nccYear) nextErrors.nccYear = "Year is required";
+    if (!cadetEditForm.rank) nextErrors.rank = "Rank is required";
+    if (!cadetEditForm.year) nextErrors.year = "Academic year is required";
+    if (!cadetEditForm.residentialStatus)
+      nextErrors.residentialStatus = "Residential status is required";
+    if (!cadetEditForm.department)
+      nextErrors.department = "Department is required";
+    if (!cadetEditForm.rollNo.trim())
+      nextErrors.rollNo = "Roll number is required";
     if (!cadetEditForm.registerNumber.trim()) {
-      nextErrors.registerNumber = 'Register number is required';
+      nextErrors.registerNumber = "Register number is required";
     } else if (!cadetEditForm.registerNumber.match(/^\d{16}$/)) {
-      nextErrors.registerNumber = 'Register number must be exactly 16 digits';
+      nextErrors.registerNumber = "Register number must be exactly 16 digits";
     }
     if (!cadetEditForm.phone.trim()) {
-      nextErrors.phone = 'Phone number is required';
+      nextErrors.phone = "Phone number is required";
     } else if (cadetEditForm.phone.match(/^\d{10}$/) === null) {
-      nextErrors.phone = 'Phone number must be exactly 10 digits';
+      nextErrors.phone = "Phone number must be exactly 10 digits";
     }
-    if (!cadetEditForm.bloodGroup.trim()) nextErrors.bloodGroup = 'Blood group is required';
+    if (!cadetEditForm.bloodGroup.trim())
+      nextErrors.bloodGroup = "Blood group is required";
 
     setCadetEditErrors(nextErrors);
     const isValid = Object.keys(nextErrors).length === 0;
     if (!isValid) {
       setTimeout(() => {
-        document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document
+          .querySelector(".is-invalid")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
     }
     return isValid;
@@ -273,22 +328,37 @@ const CadetManagement: React.FC = () => {
     if (!validateCadetEdit()) return;
     setSaving(true);
     try {
-      const [isRegimentalUnique, isRegisterUnique, isRollUnique] = await Promise.all([
-        checkUniqueField('regimentalNumber', cadetEditForm.regimentalNumber, cadetView.uid),
-        checkUniqueField('registerNumber', cadetEditForm.registerNumber, cadetView.uid),
-        checkUniqueField('rollNo', cadetEditForm.rollNo, cadetView.uid),
-      ]);
+      const [isRegimentalUnique, isRegisterUnique, isRollUnique] =
+        await Promise.all([
+          checkUniqueField(
+            "regimentalNumber",
+            cadetEditForm.regimentalNumber,
+            cadetView.uid,
+          ),
+          checkUniqueField(
+            "registerNumber",
+            cadetEditForm.registerNumber,
+            cadetView.uid,
+          ),
+          checkUniqueField("rollNo", cadetEditForm.rollNo, cadetView.uid),
+        ]);
 
       const uniqueErrors: Record<string, string> = {};
-      if (!isRegimentalUnique) uniqueErrors.regimentalNumber = 'This Regimental Number is already in use';
-      if (!isRegisterUnique) uniqueErrors.registerNumber = 'This Register Number is already in use';
-      if (!isRollUnique) uniqueErrors.rollNo = 'This Roll Number is already in use';
+      if (!isRegimentalUnique)
+        uniqueErrors.regimentalNumber =
+          "This Regimental Number is already in use";
+      if (!isRegisterUnique)
+        uniqueErrors.registerNumber = "This Register Number is already in use";
+      if (!isRollUnique)
+        uniqueErrors.rollNo = "This Roll Number is already in use";
 
       if (Object.keys(uniqueErrors).length > 0) {
-        setCadetEditErrors(prev => ({ ...prev, ...uniqueErrors }));
-        toast.error('One or more identification numbers are already in use');
+        setCadetEditErrors((prev) => ({ ...prev, ...uniqueErrors }));
+        toast.error("One or more identification numbers are already in use");
         setTimeout(() => {
-          document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          document
+            .querySelector(".is-invalid")
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
         }, 100);
         setSaving(false);
         setConfirmSave(false);
@@ -296,7 +366,7 @@ const CadetManagement: React.FC = () => {
       }
 
       const batch = writeBatch(db);
-      const userRef = doc(db, 'users', cadetView.uid);
+      const userRef = doc(db, "users", cadetView.uid);
 
       batch.update(userRef, {
         name: cadetEditForm.name,
@@ -318,58 +388,86 @@ const CadetManagement: React.FC = () => {
         lastUpdated: new Date().toISOString(),
       });
 
-      updateTakenNumberBatch(batch, 'regimentalNumber', cadetView.regimentalNumber, cadetEditForm.regimentalNumber, cadetView.uid);
-      updateTakenNumberBatch(batch, 'registerNumber', cadetView.registerNumber, cadetEditForm.registerNumber, cadetView.uid);
-      updateTakenNumberBatch(batch, 'rollNo', cadetView.rollNo, cadetEditForm.rollNo, cadetView.uid);
+      updateTakenNumberBatch(
+        batch,
+        "regimentalNumber",
+        cadetView.regimentalNumber,
+        cadetEditForm.regimentalNumber,
+        cadetView.uid,
+      );
+      updateTakenNumberBatch(
+        batch,
+        "registerNumber",
+        cadetView.registerNumber,
+        cadetEditForm.registerNumber,
+        cadetView.uid,
+      );
+      updateTakenNumberBatch(
+        batch,
+        "rollNo",
+        cadetView.rollNo,
+        cadetEditForm.rollNo,
+        cadetView.uid,
+      );
 
       await batch.commit();
 
-      setUsers(prev => prev.map(u => u.uid === cadetView.uid ? {
-        ...u,
-        name: cadetEditForm.name,
-        dateOfBirth: cadetEditForm.dateOfBirth,
-        division: cadetView.division,
-        regimentalNumber: cadetEditForm.regimentalNumber,
-        dateOfEnrollment: cadetEditForm.dateOfEnrollment,
-        nccYear: cadetEditForm.nccYear,
-        rank: cadetEditForm.rank,
-        year: cadetEditForm.year,
-        residentialStatus: cadetEditForm.residentialStatus,
-        department: cadetEditForm.department,
-        rollNo: cadetEditForm.rollNo,
-        registerNumber: cadetEditForm.registerNumber,
-        phone: cadetEditForm.phone,
-        bloodGroup: cadetEditForm.bloodGroup,
-        fatherName: cadetEditForm.fatherName,
-        address: cadetEditForm.address,
-      } : u));
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.uid === cadetView.uid
+            ? {
+                ...u,
+                name: cadetEditForm.name,
+                dateOfBirth: cadetEditForm.dateOfBirth,
+                division: cadetView.division,
+                regimentalNumber: cadetEditForm.regimentalNumber,
+                dateOfEnrollment: cadetEditForm.dateOfEnrollment,
+                nccYear: cadetEditForm.nccYear,
+                rank: cadetEditForm.rank,
+                year: cadetEditForm.year,
+                residentialStatus: cadetEditForm.residentialStatus,
+                department: cadetEditForm.department,
+                rollNo: cadetEditForm.rollNo,
+                registerNumber: cadetEditForm.registerNumber,
+                phone: cadetEditForm.phone,
+                bloodGroup: cadetEditForm.bloodGroup,
+                fatherName: cadetEditForm.fatherName,
+                address: cadetEditForm.address,
+              }
+            : u,
+        ),
+      );
 
-      setCadetView(prev => prev ? {
-        ...prev,
-        name: cadetEditForm.name,
-        dateOfBirth: cadetEditForm.dateOfBirth,
-        division: cadetView.division,
-        regimentalNumber: cadetEditForm.regimentalNumber,
-        dateOfEnrollment: cadetEditForm.dateOfEnrollment,
-        nccYear: cadetEditForm.nccYear,
-        rank: cadetEditForm.rank,
-        year: cadetEditForm.year,
-        residentialStatus: cadetEditForm.residentialStatus,
-        department: cadetEditForm.department,
-        rollNo: cadetEditForm.rollNo,
-        registerNumber: cadetEditForm.registerNumber,
-        phone: cadetEditForm.phone,
-        bloodGroup: cadetEditForm.bloodGroup,
-        fatherName: cadetEditForm.fatherName,
-        address: cadetEditForm.address,
-      } : prev);
+      setCadetView((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: cadetEditForm.name,
+              dateOfBirth: cadetEditForm.dateOfBirth,
+              division: cadetView.division,
+              regimentalNumber: cadetEditForm.regimentalNumber,
+              dateOfEnrollment: cadetEditForm.dateOfEnrollment,
+              nccYear: cadetEditForm.nccYear,
+              rank: cadetEditForm.rank,
+              year: cadetEditForm.year,
+              residentialStatus: cadetEditForm.residentialStatus,
+              department: cadetEditForm.department,
+              rollNo: cadetEditForm.rollNo,
+              registerNumber: cadetEditForm.registerNumber,
+              phone: cadetEditForm.phone,
+              bloodGroup: cadetEditForm.bloodGroup,
+              fatherName: cadetEditForm.fatherName,
+              address: cadetEditForm.address,
+            }
+          : prev,
+      );
 
-      toast.success('Cadet profile updated');
+      toast.success("Cadet profile updated");
       setCadetEditMode(false);
       setConfirmSave(false);
     } catch (e) {
       console.error(e);
-      toast.error('Update failed');
+      toast.error("Update failed");
     } finally {
       setSaving(false);
     }
@@ -378,7 +476,7 @@ const CadetManagement: React.FC = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner as="span" animation="border"  size="sm" />
+        <Spinner as="span" animation="border" size="sm" />
         <p className="mt-3">Loading cadet management...</p>
       </Container>
     );
@@ -398,7 +496,8 @@ const CadetManagement: React.FC = () => {
         </Card.Header>
         <Card.Body>
           <Alert variant="info">
-            View member profiles. Admins and super admins can edit the full cadet record from the profile view.
+            View member profiles. Admins and super admins can edit the full
+            cadet record from the profile view.
           </Alert>
           <Row className="mb-3 g-3">
             <Col xs={12} md={3}>
@@ -409,42 +508,63 @@ const CadetManagement: React.FC = () => {
                   className="btn-check"
                   name="division-filter-cadets"
                   id="division-cadets-all"
-                  checked={divisionFilter === 'ALL'}
-                  onChange={() => setDivisionFilter('ALL')}
+                  checked={divisionFilter === "ALL"}
+                  onChange={() => setDivisionFilter("ALL")}
                 />
-                <label className="btn btn-outline-primary" htmlFor="division-cadets-all">Both</label>
+                <label
+                  className="btn btn-outline-primary"
+                  htmlFor="division-cadets-all"
+                >
+                  Both
+                </label>
 
                 <input
                   type="radio"
                   className="btn-check"
                   name="division-filter-cadets"
                   id="division-cadets-sd"
-                  checked={divisionFilter === 'SD'}
-                  onChange={() => setDivisionFilter('SD')}
+                  checked={divisionFilter === "SD"}
+                  onChange={() => setDivisionFilter("SD")}
                 />
-                <label className="btn btn-outline-primary" htmlFor="division-cadets-sd">SD</label>
+                <label
+                  className="btn btn-outline-primary"
+                  htmlFor="division-cadets-sd"
+                >
+                  SD
+                </label>
 
                 <input
                   type="radio"
                   className="btn-check"
                   name="division-filter-cadets"
                   id="division-cadets-sw"
-                  checked={divisionFilter === 'SW'}
-                  onChange={() => setDivisionFilter('SW')}
+                  checked={divisionFilter === "SW"}
+                  onChange={() => setDivisionFilter("SW")}
                 />
-                <label className="btn btn-outline-primary" htmlFor="division-cadets-sw">SW</label>
+                <label
+                  className="btn btn-outline-primary"
+                  htmlFor="division-cadets-sw"
+                >
+                  SW
+                </label>
               </div>
             </Col>
             <Col xs={12} md={3}>
               <Form.Label className="small fw-semibold">Year</Form.Label>
               <Form.Select
                 value={nccYearFilter}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNccYearFilter(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setNccYearFilter(e.target.value)
+                }
               >
-                <option value="" disabled>Select NCC Year</option>
+                <option value="" disabled>
+                  Select NCC Year
+                </option>
                 <option value="ALL">All Years</option>
-                {NCC_YEARS.map(y => (
-                  <option key={y} value={y}>{y}</option>
+                {NCC_YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
                 ))}
               </Form.Select>
             </Col>
@@ -454,11 +574,17 @@ const CadetManagement: React.FC = () => {
                 type="text"
                 placeholder="Search by name or regimental number..."
                 value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchTerm(e.target.value)
+                }
               />
             </Col>
             <Col xs={12} md={2} className="d-flex align-items-end">
-              <Button variant="outline-secondary" className="w-100" onClick={clearFilters}>
+              <Button
+                variant="outline-secondary"
+                className="w-100"
+                onClick={clearFilters}
+              >
                 <i className="bi bi-x-circle me-1"></i>
                 Clear Filters
               </Button>
@@ -467,35 +593,46 @@ const CadetManagement: React.FC = () => {
           <Table striped bordered hover responsive className="cadet-mgmt-table">
             <thead>
               <tr>
-                <th>S.No</th>
-                <th>Name</th>
-                <th>Regimental Number</th>
-                <th>SD/SW</th>
-                <th>Year</th>
-                <th>Actions</th>
+                <th rowSpan={2}>S.No</th>
+                <th rowSpan={2}>Name</th>
+                <th rowSpan={2}>SD/SW</th>
+                <th rowSpan={2}>Regimental Number</th>
+                <th colSpan={2} className="year-header">
+                  Year
+                </th>
+                <th rowSpan={2}>Actions</th>
+              </tr>
+              <tr>
+                <th>NCC</th>
+                <th>Academic</th>
               </tr>
             </thead>
             <tbody>
               {paginatedCadets.map((u, index) => (
                 <tr key={u.uid}>
                   <td>{startIndex + index + 1}</td>
-                  <td className="col-left" dir="ltr">{u.name || 'N/A'}</td>
-                  <td>{u.regimentalNumber || '-'}</td>
+                  <td className="col-left" dir="ltr">
+                    {u.name || "N/A"}
+                  </td>
                   <td>
                     {u.division ? (
-                      <Badge bg={u.division === 'SD' ? 'info' : 'warning'}>{u.division}</Badge>
+                      <Badge bg={u.division === "SD" ? "info" : "warning"}>
+                        {u.division}
+                      </Badge>
                     ) : (
                       <span className="text-muted">-</span>
                     )}
                   </td>
-                  <td>{formatYear(u.nccYear || '1st Year')}</td>
+                  <td>{u.regimentalNumber || "-"}</td>
+                  <td>{formatYear(u.nccYear)}</td>
+                  <td>{formatYear(u.year)}</td>
                   <td>
                     <Button
                       size="sm"
                       variant="outline-primary"
                       className="rounded-circle d-inline-flex align-items-center justify-content-center"
                       onClick={() => openCadetView(u)}
-                      aria-label={`View ${u.name || 'cadet'} profile`}
+                      aria-label={`View ${u.name || "cadet"} profile`}
                       title="View profile"
                     >
                       <i className="bi bi-eye-fill"></i>
@@ -504,7 +641,11 @@ const CadetManagement: React.FC = () => {
                 </tr>
               ))}
               {cadetUsers.length === 0 && (
-                <tr><td colSpan={6} className="text-center text-muted">No cadets found</td></tr>
+                <tr>
+                  <td colSpan={7} className="text-center text-muted">
+                    No cadets found
+                  </td>
+                </tr>
               )}
             </tbody>
           </Table>
@@ -514,8 +655,12 @@ const CadetManagement: React.FC = () => {
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={setRowsPerPage}
             onFirstPage={() => setCurrentPage(1)}
-            onPreviousPage={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            onNextPage={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            onPreviousPage={() =>
+              setCurrentPage((page) => Math.max(1, page - 1))
+            }
+            onNextPage={() =>
+              setCurrentPage((page) => Math.min(totalPages, page + 1))
+            }
             onLastPage={() => setCurrentPage(totalPages)}
           />
         </Card.Body>
@@ -523,7 +668,9 @@ const CadetManagement: React.FC = () => {
 
       <Modal show={!!cadetView} onHide={closeCadetView} centered size="xl">
         <Modal.Header closeButton>
-          <Modal.Title>{cadetEditMode ? 'Edit Cadet Profile' : 'Cadet Profile'}</Modal.Title>
+          <Modal.Title>
+            {cadetEditMode ? "Edit Cadet Profile" : "Cadet Profile"}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {!cadetEditMode && cadetView && (
@@ -531,19 +678,27 @@ const CadetManagement: React.FC = () => {
               <h6 className="text-primary mb-2">Personal</h6>
               <Row className="g-3 mb-3">
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Name</Form.Label>
-                  <p className="mb-0">{cadetView.name || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Name
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.name || "-"}</p>
                 </Col>
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Email</Form.Label>
-                  <p className="mb-0">{cadetView.email || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Email
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.email || "-"}</p>
                 </Col>
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Date of Birth</Form.Label>
+                  <Form.Label className="fw-bold text-muted small">
+                    Date of Birth
+                  </Form.Label>
                   <p className="mb-0">{formatDate(cadetView.dateOfBirth)}</p>
                 </Col>
                 <Col xs={12} md={6}>
-                  <Form.Label className="fw-bold text-muted small">Role</Form.Label>
+                  <Form.Label className="fw-bold text-muted small">
+                    Role
+                  </Form.Label>
                   <p className="mb-0">{cadetView.role}</p>
                 </Col>
               </Row>
@@ -553,24 +708,38 @@ const CadetManagement: React.FC = () => {
               <h6 className="text-primary mb-2">NCC</h6>
               <Row className="g-3 mb-3">
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Division</Form.Label>
-                  <p className="mb-0">{cadetView.division || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Division
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.division || "-"}</p>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Rank</Form.Label>
-                  <p className="mb-0">{getRankName(cadetView.rank || 'CDT')}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Rank
+                  </Form.Label>
+                  <p className="mb-0">{getRankName(cadetView.rank || "CDT")}</p>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Regimental Number</Form.Label>
-                  <p className="mb-0">{cadetView.regimentalNumber || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Regimental Number
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.regimentalNumber || "-"}</p>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Year</Form.Label>
-                  <p className="mb-0">{formatYear(cadetView.nccYear || '1st Year')}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Year
+                  </Form.Label>
+                  <p className="mb-0">
+                    {formatYear(cadetView.nccYear || "1st Year")}
+                  </p>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Date of Enrollment</Form.Label>
-                  <p className="mb-0">{formatDate(cadetView.dateOfEnrollment)}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Date of Enrollment
+                  </Form.Label>
+                  <p className="mb-0">
+                    {formatDate(cadetView.dateOfEnrollment)}
+                  </p>
                 </Col>
               </Row>
 
@@ -579,22 +748,32 @@ const CadetManagement: React.FC = () => {
               <h6 className="text-primary mb-2">Academic</h6>
               <Row className="g-3 mb-3">
                 <Col xs={12} md={3}>
-                  <Form.Label className="fw-bold text-muted small">Year</Form.Label>
-                  <p className="mb-0">{formatYear(cadetView.year || '1st Year')}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Year
+                  </Form.Label>
+                  <p className="mb-0">
+                    {formatYear(cadetView.year || "1st Year")}
+                  </p>
                 </Col>
                 <Col xs={12} md={3}>
-                  <Form.Label className="fw-bold text-muted small">Department</Form.Label>
-                  <p className="mb-0">{cadetView.department || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Department
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.department || "-"}</p>
                 </Col>
                 <Col xs={12} md={3}>
-                  <Form.Label className="fw-bold text-muted small">Roll Number</Form.Label>
-                  <p className="mb-0">{cadetView.rollNo || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Roll Number
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.rollNo || "-"}</p>
                 </Col>
               </Row>
               <Row className="g-3 mb-3">
                 <Col xs={12} md={3}>
-                  <Form.Label className="fw-bold text-muted small">Register Number</Form.Label>
-                  <p className="mb-0">{cadetView.registerNumber || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Register Number
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.registerNumber || "-"}</p>
                 </Col>
               </Row>
 
@@ -603,20 +782,28 @@ const CadetManagement: React.FC = () => {
               <h6 className="text-primary mb-2">Additional</h6>
               <Row className="g-3">
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Phone</Form.Label>
-                  <p className="mb-0">{cadetView.phone || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Phone
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.phone || "-"}</p>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Blood Group</Form.Label>
-                  <p className="mb-0">{cadetView.bloodGroup || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Blood Group
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.bloodGroup || "-"}</p>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Form.Label className="fw-bold text-muted small">Father's / Guardian's Name</Form.Label>
-                  <p className="mb-0">{cadetView.fatherName || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Father's / Guardian's Name
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.fatherName || "-"}</p>
                 </Col>
                 <Col xs={12} md={12}>
-                  <Form.Label className="fw-bold text-muted small">Address</Form.Label>
-                  <p className="mb-0">{cadetView.address || '-'}</p>
+                  <Form.Label className="fw-bold text-muted small">
+                    Address
+                  </Form.Label>
+                  <p className="mb-0">{cadetView.address || "-"}</p>
                 </Col>
               </Row>
             </>
@@ -632,10 +819,16 @@ const CadetManagement: React.FC = () => {
                     <Form.Control
                       type="text"
                       value={cadetEditForm.name}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('name', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleCadetEditChange("name", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.name)}
                     />
-                    {cadetEditErrors.name && <Form.Text className="text-danger">{cadetEditErrors.name}</Form.Text>}
+                    {cadetEditErrors.name && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.name}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={6}>
@@ -644,30 +837,55 @@ const CadetManagement: React.FC = () => {
                     <Form.Control
                       type="date"
                       value={cadetEditForm.dateOfBirth}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('dateOfBirth', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleCadetEditChange("dateOfBirth", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.dateOfBirth)}
                       max={maxDobString}
                     />
-                    {cadetEditErrors.dateOfBirth && <Form.Text className="text-danger">{cadetEditErrors.dateOfBirth}</Form.Text>}
+                    {cadetEditErrors.dateOfBirth && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.dateOfBirth}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={6}>
                   <Form.Group controlId="editCadetEmail">
                     <Form.Label>Email</Form.Label>
-                    <Form.Control type="text" value={cadetView?.email || ''} readOnly plaintext />
+                    <Form.Control
+                      type="text"
+                      value={cadetView?.email || ""}
+                      readOnly
+                      plaintext
+                    />
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={6}>
                   <Form.Group controlId="editCadetRole">
                     <Form.Label>Role</Form.Label>
-                    <Form.Control type="text" value={cadetView?.role || ''} readOnly plaintext />
+                    <Form.Control
+                      type="text"
+                      value={cadetView?.role || ""}
+                      readOnly
+                      plaintext
+                    />
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={6}>
                   <Form.Group controlId="editCadetDivision">
                     <Form.Label>Division *</Form.Label>
-                    <Form.Control type="text" value={cadetView?.division || ''} readOnly plaintext />
-                    {cadetEditErrors.division && <Form.Text className="text-danger">{cadetEditErrors.division}</Form.Text>}
+                    <Form.Control
+                      type="text"
+                      value={cadetView?.division || ""}
+                      readOnly
+                      plaintext
+                    />
+                    {cadetEditErrors.division && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.division}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
               </Row>
@@ -681,15 +899,25 @@ const CadetManagement: React.FC = () => {
                     <Form.Label>Rank *</Form.Label>
                     <Form.Select
                       value={cadetEditForm.rank}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('rank', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        handleCadetEditChange("rank", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.rank)}
                     >
-                      <option value="" disabled>Select Rank</option>
-                      {NCC_RANKS.map(r => (
-                        <option key={r.code} value={r.code}>{r.name}</option>
+                      <option value="" disabled>
+                        Select Rank
+                      </option>
+                      {NCC_RANKS.map((r) => (
+                        <option key={r.code} value={r.code}>
+                          {r.name}
+                        </option>
                       ))}
                     </Form.Select>
-                    {cadetEditErrors.rank && <Form.Text className="text-danger">{cadetEditErrors.rank}</Form.Text>}
+                    {cadetEditErrors.rank && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.rank}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={4}>
@@ -698,10 +926,19 @@ const CadetManagement: React.FC = () => {
                     <Form.Control
                       type="text"
                       value={cadetEditForm.regimentalNumber}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('regimentalNumber', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleCadetEditChange(
+                          "regimentalNumber",
+                          e.target.value,
+                        )
+                      }
                       isInvalid={Boolean(cadetEditErrors.regimentalNumber)}
                     />
-                    {cadetEditErrors.regimentalNumber && <Form.Text className="text-danger">{cadetEditErrors.regimentalNumber}</Form.Text>}
+                    {cadetEditErrors.regimentalNumber && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.regimentalNumber}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={4}>
@@ -709,15 +946,25 @@ const CadetManagement: React.FC = () => {
                     <Form.Label>Year *</Form.Label>
                     <Form.Select
                       value={cadetEditForm.nccYear}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('nccYear', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        handleCadetEditChange("nccYear", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.nccYear)}
                     >
-                      <option value="" disabled>Select Year</option>
-                      {NCC_YEARS.map(y => (
-                        <option key={y} value={y}>{y}</option>
+                      <option value="" disabled>
+                        Select Year
+                      </option>
+                      {NCC_YEARS.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
                       ))}
                     </Form.Select>
-                    {cadetEditErrors.nccYear && <Form.Text className="text-danger">{cadetEditErrors.nccYear}</Form.Text>}
+                    {cadetEditErrors.nccYear && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.nccYear}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={4}>
@@ -726,10 +973,19 @@ const CadetManagement: React.FC = () => {
                     <Form.Control
                       type="date"
                       value={cadetEditForm.dateOfEnrollment}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('dateOfEnrollment', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleCadetEditChange(
+                          "dateOfEnrollment",
+                          e.target.value,
+                        )
+                      }
                       isInvalid={Boolean(cadetEditErrors.dateOfEnrollment)}
                     />
-                    {cadetEditErrors.dateOfEnrollment && <Form.Text className="text-danger">{cadetEditErrors.dateOfEnrollment}</Form.Text>}
+                    {cadetEditErrors.dateOfEnrollment && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.dateOfEnrollment}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
               </Row>
@@ -743,15 +999,25 @@ const CadetManagement: React.FC = () => {
                     <Form.Label>Year *</Form.Label>
                     <Form.Select
                       value={cadetEditForm.year}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('year', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        handleCadetEditChange("year", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.year)}
                     >
-                      <option value="" disabled>Select Year</option>
-                      {editAcademicYearOptions.map(y => (
-                        <option key={y} value={y}>{y}</option>
+                      <option value="" disabled>
+                        Select Year
+                      </option>
+                      {editAcademicYearOptions.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
                       ))}
                     </Form.Select>
-                    {cadetEditErrors.year && <Form.Text className="text-danger">{cadetEditErrors.year}</Form.Text>}
+                    {cadetEditErrors.year && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.year}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={3}>
@@ -759,15 +1025,25 @@ const CadetManagement: React.FC = () => {
                     <Form.Label>Department *</Form.Label>
                     <Form.Select
                       value={cadetEditForm.department}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('department', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        handleCadetEditChange("department", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.department)}
                     >
-                      <option value="" disabled>Select Department</option>
-                      {DEPARTMENT_DEFS.map(d => (
-                        <option key={d.code} value={d.code}>{d.code}</option>
+                      <option value="" disabled>
+                        Select Department
+                      </option>
+                      {DEPARTMENT_DEFS.map((d) => (
+                        <option key={d.code} value={d.code}>
+                          {d.code}
+                        </option>
                       ))}
                     </Form.Select>
-                    {cadetEditErrors.department && <Form.Text className="text-danger">{cadetEditErrors.department}</Form.Text>}
+                    {cadetEditErrors.department && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.department}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={3}>
@@ -776,10 +1052,16 @@ const CadetManagement: React.FC = () => {
                     <Form.Control
                       type="text"
                       value={cadetEditForm.rollNo}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('rollNo', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleCadetEditChange("rollNo", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.rollNo)}
                     />
-                    {cadetEditErrors.rollNo && <Form.Text className="text-danger">{cadetEditErrors.rollNo}</Form.Text>}
+                    {cadetEditErrors.rollNo && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.rollNo}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={3}>
@@ -788,12 +1070,20 @@ const CadetManagement: React.FC = () => {
                     <Form.Control
                       type="number"
                       value={cadetEditForm.registerNumber}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('registerNumber', e.target.value)}
-                      onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleCadetEditChange("registerNumber", e.target.value)
+                      }
+                      onWheel={(e: React.WheelEvent<HTMLInputElement>) =>
+                        e.currentTarget.blur()
+                      }
                       min="0"
                       isInvalid={Boolean(cadetEditErrors.registerNumber)}
                     />
-                    {cadetEditErrors.registerNumber && <Form.Text className="text-danger">{cadetEditErrors.registerNumber}</Form.Text>}
+                    {cadetEditErrors.registerNumber && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.registerNumber}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
               </Row>
@@ -807,14 +1097,25 @@ const CadetManagement: React.FC = () => {
                     <Form.Label>Residential Status *</Form.Label>
                     <Form.Select
                       value={cadetEditForm.residentialStatus}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('residentialStatus', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        handleCadetEditChange(
+                          "residentialStatus",
+                          e.target.value,
+                        )
+                      }
                       isInvalid={Boolean(cadetEditErrors.residentialStatus)}
                     >
-                      <option value="" disabled>Select Status</option>
+                      <option value="" disabled>
+                        Select Status
+                      </option>
                       <option value="Day Scholar">Day Scholar</option>
                       <option value="Hosteller">Hosteller</option>
                     </Form.Select>
-                    {cadetEditErrors.residentialStatus && <Form.Text className="text-danger">{cadetEditErrors.residentialStatus}</Form.Text>}
+                    {cadetEditErrors.residentialStatus && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.residentialStatus}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={4}>
@@ -823,10 +1124,16 @@ const CadetManagement: React.FC = () => {
                     <Form.Control
                       type="tel"
                       value={cadetEditForm.phone}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('phone', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleCadetEditChange("phone", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.phone)}
                     />
-                    {cadetEditErrors.phone && <Form.Text className="text-danger">{cadetEditErrors.phone}</Form.Text>}
+                    {cadetEditErrors.phone && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.phone}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={4}>
@@ -834,13 +1141,23 @@ const CadetManagement: React.FC = () => {
                     <Form.Label>Blood Group</Form.Label>
                     <Form.Select
                       value={cadetEditForm.bloodGroup}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleCadetEditChange('bloodGroup', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        handleCadetEditChange("bloodGroup", e.target.value)
+                      }
                       isInvalid={Boolean(cadetEditErrors.bloodGroup)}
                     >
                       <option value="">Select Blood Group</option>
-                      {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                      {BLOOD_GROUPS.map((bg) => (
+                        <option key={bg} value={bg}>
+                          {bg}
+                        </option>
+                      ))}
                     </Form.Select>
-                    {cadetEditErrors.bloodGroup && <Form.Text className="text-danger">{cadetEditErrors.bloodGroup}</Form.Text>}
+                    {cadetEditErrors.bloodGroup && (
+                      <Form.Text className="text-danger">
+                        {cadetEditErrors.bloodGroup}
+                      </Form.Text>
+                    )}
                   </Form.Group>
                 </Col>
                 <Col xs={12} md={6}>
@@ -849,7 +1166,9 @@ const CadetManagement: React.FC = () => {
                     <Form.Control
                       type="text"
                       value={cadetEditForm.fatherName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCadetEditChange('fatherName', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleCadetEditChange("fatherName", e.target.value)
+                      }
                     />
                   </Form.Group>
                 </Col>
@@ -860,7 +1179,9 @@ const CadetManagement: React.FC = () => {
                       as="textarea"
                       rows={3}
                       value={cadetEditForm.address}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleCadetEditChange('address', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        handleCadetEditChange("address", e.target.value)
+                      }
                     />
                   </Form.Group>
                 </Col>
@@ -869,14 +1190,30 @@ const CadetManagement: React.FC = () => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={closeCadetView} disabled={saving}>Close</Button>
+          <Button
+            variant="secondary"
+            onClick={closeCadetView}
+            disabled={saving}
+          >
+            Close
+          </Button>
           {!cadetEditMode && (
-            <Button variant="primary" onClick={() => setCadetEditMode(true)}>Edit</Button>
+            <Button variant="primary" onClick={() => setCadetEditMode(true)}>
+              Edit
+            </Button>
           )}
           {cadetEditMode && (
             <>
-              <Button variant="outline-secondary" onClick={() => setCadetEditMode(false)} disabled={saving}>Cancel</Button>
-              <Button variant="primary" onClick={requestSave} disabled={saving}>Save</Button>
+              <Button
+                variant="outline-secondary"
+                onClick={() => setCadetEditMode(false)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={requestSave} disabled={saving}>
+                Save
+              </Button>
             </>
           )}
         </Modal.Footer>
@@ -887,11 +1224,25 @@ const CadetManagement: React.FC = () => {
           <Modal.Title>Confirm Save</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Save profile changes for <strong>{cadetView?.name}</strong>?</p>
+          <p>
+            Save profile changes for <strong>{cadetView?.name}</strong>?
+          </p>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setConfirmSave(false)} disabled={saving}>Cancel</Button>
-          <Button variant="primary" onClick={handleUpdateCadet} disabled={saving}>Save</Button>
+          <Button
+            variant="secondary"
+            onClick={() => setConfirmSave(false)}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleUpdateCadet}
+            disabled={saving}
+          >
+            Save
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>
@@ -899,4 +1250,3 @@ const CadetManagement: React.FC = () => {
 };
 
 export default CadetManagement;
-

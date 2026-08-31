@@ -1,31 +1,31 @@
 :root {
   /* ===== NCC Logo Color Theme ===== */
   /* Lapis Lazuli (Dark Blue) - Primary */
-  --primary-color: #2D3092;
+  --primary-color: #2d3092;
   /* Secondary - slightly lighter blue derived from primary */
   --secondary-color: #3a3fa6;
   /* Success - kept neutral green */
   --success-color: #198754;
   /* Funky Red - Danger / Accent */
-  --danger-color: #EF1C25;
+  --danger-color: #ef1c25;
   /* Warning - kept amber */
   --warning-color: #ffc107;
   /* Vivid Cerulean (Light Blue) - Info */
-  --info-color: #00AEEF;
+  --info-color: #00aeef;
 
   /* ===== Bootstrap CSS Variable Overrides ===== */
   /* These control bg-primary, btn-primary, text-primary, badge, etc. */
-  --bs-primary: #2D3092;
+  --bs-primary: #2d3092;
   --bs-primary-rgb: 45, 48, 146;
 
-  --bs-danger: #EF1C25;
+  --bs-danger: #ef1c25;
   --bs-danger-rgb: 239, 28, 37;
 
-  --bs-info: #00AEEF;
+  --bs-info: #00aeef;
   --bs-info-rgb: 0, 174, 239;
 
   /* Link color */
-  --bs-link-color: #2D3092;
+  --bs-link-color: #2d3092;
   --bs-link-color-rgb: 45, 48, 146;
   --bs-link-hover-color: #232672;
   --bs-link-hover-color-rgb: 35, 38, 114;
@@ -34,56 +34,56 @@
 /* ===== Bootstrap Component Color Overrides ===== */
 /* Primary buttons */
 .btn-primary {
-  --bs-btn-bg: #2D3092;
-  --bs-btn-border-color: #2D3092;
+  --bs-btn-bg: #2d3092;
+  --bs-btn-border-color: #2d3092;
   --bs-btn-hover-bg: #232672;
   --bs-btn-hover-border-color: #1e2163;
   --bs-btn-active-bg: #1e2163;
   --bs-btn-active-border-color: #1a1d56;
-  --bs-btn-disabled-bg: #2D3092;
-  --bs-btn-disabled-border-color: #2D3092;
+  --bs-btn-disabled-bg: #2d3092;
+  --bs-btn-disabled-border-color: #2d3092;
 }
 
 .btn-outline-primary {
-  --bs-btn-color: #2D3092;
-  --bs-btn-border-color: #2D3092;
-  --bs-btn-hover-bg: #2D3092;
-  --bs-btn-hover-border-color: #2D3092;
-  --bs-btn-active-bg: #2D3092;
-  --bs-btn-active-border-color: #2D3092;
+  --bs-btn-color: #2d3092;
+  --bs-btn-border-color: #2d3092;
+  --bs-btn-hover-bg: #2d3092;
+  --bs-btn-hover-border-color: #2d3092;
+  --bs-btn-active-bg: #2d3092;
+  --bs-btn-active-border-color: #2d3092;
 }
 
 /* Danger buttons */
 .btn-danger {
-  --bs-btn-bg: #EF1C25;
-  --bs-btn-border-color: #EF1C25;
+  --bs-btn-bg: #ef1c25;
+  --bs-btn-border-color: #ef1c25;
   --bs-btn-hover-bg: #d4171f;
   --bs-btn-hover-border-color: #c8151d;
   --bs-btn-active-bg: #c8151d;
   --bs-btn-active-border-color: #b8131a;
-  --bs-btn-disabled-bg: #EF1C25;
-  --bs-btn-disabled-border-color: #EF1C25;
+  --bs-btn-disabled-bg: #ef1c25;
+  --bs-btn-disabled-border-color: #ef1c25;
 }
 
 .btn-outline-danger {
-  --bs-btn-color: #EF1C25;
-  --bs-btn-border-color: #EF1C25;
-  --bs-btn-hover-bg: #EF1C25;
-  --bs-btn-hover-border-color: #EF1C25;
-  --bs-btn-active-bg: #EF1C25;
-  --bs-btn-active-border-color: #EF1C25;
+  --bs-btn-color: #ef1c25;
+  --bs-btn-border-color: #ef1c25;
+  --bs-btn-hover-bg: #ef1c25;
+  --bs-btn-hover-border-color: #ef1c25;
+  --bs-btn-active-bg: #ef1c25;
+  --bs-btn-active-border-color: #ef1c25;
 }
 
 /* Info buttons */
 .btn-info {
-  --bs-btn-bg: #00AEEF;
-  --bs-btn-border-color: #00AEEF;
+  --bs-btn-bg: #00aeef;
+  --bs-btn-border-color: #00aeef;
   --bs-btn-hover-bg: #009ad4;
   --bs-btn-hover-border-color: #008ec4;
   --bs-btn-active-bg: #008ec4;
   --bs-btn-active-border-color: #0082b5;
-  --bs-btn-disabled-bg: #00AEEF;
-  --bs-btn-disabled-border-color: #00AEEF;
+  --bs-btn-disabled-bg: #00aeef;
+  --bs-btn-disabled-border-color: #00aeef;
   --bs-btn-color: #fff;
   --bs-btn-hover-color: #fff;
   --bs-btn-active-color: #fff;
@@ -106,35 +106,50 @@
 }
 
 /* Text utilities */
-.text-primary { color: #2D3092 !important; }
-.text-danger { color: #EF1C25 !important; }
-.text-info { color: #00AEEF !important; }
+.text-primary {
+  color: #2d3092 !important;
+}
+.text-danger {
+  color: #ef1c25 !important;
+}
+.text-info {
+  color: #00aeef !important;
+}
 
 /* Missing utility class - used in Home.tsx */
-.text-purple { color: #7c3aed !important; }
+.text-purple {
+  color: #7c3aed !important;
+}
 
 /* Badge overrides */
-.badge.bg-primary { background-color: #2D3092 !important; }
-.badge.bg-danger { background-color: #EF1C25 !important; }
-.badge.bg-info { background-color: #00AEEF !important; color: #fff !important; }
+.badge.bg-primary {
+  background-color: #2d3092 !important;
+}
+.badge.bg-danger {
+  background-color: #ef1c25 !important;
+}
+.badge.bg-info {
+  background-color: #00aeef !important;
+  color: #fff !important;
+}
 
 /* Form focus ring */
 .form-control:focus,
 .form-select:focus {
-  border-color: #2D3092;
+  border-color: #2d3092;
   box-shadow: 0 0 0 0.25rem rgba(45, 48, 146, 0.25);
 }
 
 .form-check-input:checked {
-  background-color: #2D3092;
-  border-color: #2D3092;
+  background-color: #2d3092;
+  border-color: #2d3092;
 }
 
 /* Nav tabs & pills */
 .nav-link.active,
 .nav-tabs .nav-link.active {
-  color: #2D3092;
-  border-bottom-color: #2D3092;
+  color: #2d3092;
+  border-bottom-color: #2d3092;
 }
 
 .nav-link:hover,
@@ -144,27 +159,33 @@
 
 /* Pagination */
 .page-link {
-  color: #2D3092;
+  color: #2d3092;
 }
 
 .page-item.active .page-link {
-  background-color: #2D3092;
-  border-color: #2D3092;
+  background-color: #2d3092;
+  border-color: #2d3092;
 }
 
 /* Progress bar */
 .progress-bar {
-  background-color: #2D3092;
+  background-color: #2d3092;
 }
 
 /* Border utilities */
-.border-primary { border-color: #2D3092 !important; }
-.border-danger { border-color: #EF1C25 !important; }
-.border-info { border-color: #00AEEF !important; }
+.border-primary {
+  border-color: #2d3092 !important;
+}
+.border-danger {
+  border-color: #ef1c25 !important;
+}
+.border-info {
+  border-color: #00aeef !important;
+}
 
 /* Scrollbar - themed */
 ::-webkit-scrollbar-thumb {
-  background: #2D3092;
+  background: #2d3092;
   border-radius: 5px;
 }
 
@@ -174,16 +195,16 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 /* Custom utilities */
@@ -197,7 +218,9 @@ code {
 
 /* Card hover effects */
 .card {
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .card:hover {
@@ -207,13 +230,23 @@ code {
 
 /* Animation keyframes */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Animation utility classes */
@@ -230,24 +263,41 @@ code {
   transform: translateY(24px);
   animation: slideUp 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
 }
-.stagger > *:nth-child(1) { animation-delay: 0.05s; }
-.stagger > *:nth-child(2) { animation-delay: 0.15s; }
-.stagger > *:nth-child(3) { animation-delay: 0.25s; }
-.stagger > *:nth-child(4) { animation-delay: 0.35s; }
-.stagger > *:nth-child(5) { animation-delay: 0.45s; }
-.stagger > *:nth-child(6) { animation-delay: 0.55s; }
+.stagger > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.25s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.35s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.45s;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 0.55s;
+}
 
 /* Hover lift refinement */
 .hover-lift {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 .hover-lift:hover {
   transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 0.75rem 1.25rem rgba(0,0,0,0.18);
+  box-shadow: 0 0.75rem 1.25rem rgba(0, 0, 0, 0.18);
 }
 
 /* Fade-in when visible helper */
-.is-visible { opacity: 1 !important; transform: none !important; }
+.is-visible {
+  opacity: 1 !important;
+  transform: none !important;
+}
 
 /* Navbar styling */
 .navbar {
@@ -278,7 +328,7 @@ code {
   /* Create backdrop blur when navbar is open */
   .navbar-collapse.show::before,
   .navbar-collapse.collapsing::before {
-    content: '';
+    content: "";
     position: fixed;
     top: 0;
     left: 0;
@@ -289,7 +339,7 @@ code {
     -webkit-backdrop-filter: blur(8px);
     z-index: -1;
   }
-  
+
   /* Sidebar from right */
   .navbar-collapse {
     position: fixed;
@@ -308,22 +358,22 @@ code {
     padding: 1rem 0;
     text-align: left;
   }
-  
+
   .navbar-collapse.show {
     transform: translateX(0);
   }
-  
+
   .navbar-collapse.collapsing {
     height: auto !important;
     transform: translateX(100%);
   }
-  
+
   .navbar-nav {
     align-items: flex-start;
     text-align: left !important;
     padding: 0 1rem;
   }
-  
+
   .navbar-nav .nav-link,
   .navbar-nav .dropdown-toggle {
     text-align: left;
@@ -331,13 +381,13 @@ code {
     padding: 0.75rem 0.5rem;
     color: rgba(255, 255, 255, 0.95) !important;
   }
-  
+
   .navbar-nav .nav-link:hover,
   .navbar-nav .dropdown-toggle:hover {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
   }
-  
+
   /* In-drawer accordion: stay in document flow, but let Bootstrap toggle .show */
   .navbar-collapse.show .navbar-nav .dropdown-menu {
     position: static;
@@ -437,15 +487,15 @@ code {
   .card h3 {
     font-size: 1.25rem;
   }
-  
+
   .card h4 {
     font-size: 1.1rem;
   }
-  
+
   .card h5 {
     font-size: 1rem;
   }
-  
+
   .card p,
   .card .text-muted {
     font-size: 0.9rem;
@@ -457,15 +507,15 @@ code {
   .card h3 {
     font-size: 1.1rem;
   }
-  
+
   .card h4 {
     font-size: 1rem;
   }
-  
+
   .card h5 {
     font-size: 0.95rem;
   }
-  
+
   .card p,
   .card .text-muted {
     font-size: 0.85rem;
@@ -477,15 +527,15 @@ code {
   .card h3 {
     font-size: 1rem;
   }
-  
+
   .card h4 {
     font-size: 0.95rem;
   }
-  
+
   .card h5 {
     font-size: 0.9rem;
   }
-  
+
   .card p,
   .card .text-muted {
     font-size: 0.8rem;
@@ -554,7 +604,7 @@ footer {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2D3092;
+  background: #2d3092;
   border-radius: 5px;
 }
 
@@ -699,16 +749,16 @@ footer p {
   footer h5 {
     font-size: 1.1rem;
   }
-  
+
   footer h6 {
     font-size: 0.875rem;
   }
-  
+
   footer p,
   footer ul li {
     font-size: 0.8rem;
   }
-  
+
   footer .bi {
     font-size: 0.85rem;
   }

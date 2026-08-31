@@ -1,5 +1,5 @@
-import React from 'react';
-import { Container, Table } from 'react-bootstrap';
+import React from "react";
+import { Container, Table } from "react-bootstrap";
 
 const CadetList: React.FC = () => (
   <Container className="py-5">
@@ -14,12 +14,12 @@ const CadetList: React.FC = () => (
         </tr>
       </thead>
       <tbody>
-        {[1,2,3,4,5].map(i => (
+        {[1, 2, 3, 4, 5].map((i) => (
           <tr key={i}>
             <td>{i}</td>
             <td>Cadet {i}</td>
-            <td>2024{i.toString().padStart(3,'0')}</td>
-            <td>{["1st","2nd","3rd"][i%3]} Year</td>
+            <td>2024{i.toString().padStart(3, "0")}</td>
+            <td>{["1st", "2nd", "3rd"][i % 3]} Year</td>
           </tr>
         ))}
       </tbody>

@@ -9,3 +9,8 @@
 .cadet-mgmt-table .col-left {
   text-align: left;
 }
+
+/* Year sub-header styling */
+.cadet-mgmt-table .year-header {
+  border-bottom: 0;
+}
