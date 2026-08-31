@@ -32,7 +32,6 @@ if (import.meta.env.DEV) {
     .filter(([, v]) => !v)
     .map(([k]) => k);
   if (missing.length) {
-    // eslint-disable-next-line no-console
     console.warn("[Firebase] Missing env keys:", missing.join(", "));
   }
 }
@@ -42,7 +41,6 @@ let app;
 try {
   app = initializeApp(firebaseConfig);
 } catch (e) {
-  // eslint-disable-next-line no-console
   console.error(
     "[Firebase] initializeApp failed. Check your .env and Vite restart.",
     e,
@@ -61,11 +59,9 @@ if (import.meta.env.PROD && firebaseConfig.measurementId) {
     if (supported) {
       try {
         getAnalytics(app);
-        // eslint-disable-next-line no-console
         if (import.meta.env.DEV)
           console.info("[Firebase] Analytics initialized.");
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.warn("[Firebase] Analytics init failed:", e);
       }
     }
